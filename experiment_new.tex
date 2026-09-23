@@ -18,7 +18,7 @@ We evaluate SOMA through five questions. \textbf{RQ1}: Can a small surrogate pre
 \paragraph{\textbf{RQ1: Response similarity to the original model.}}
 After the warm-start stage, the surrogate should preserve the original model's behavior within the current dialogue state. Table~\ref{tab:llama-pct} reports response similarity on the LLaMA family. SOMA achieves the highest average similarity across all six datasets. The gap over Surrogate shows the behavior loss caused by directly replacing the large model with a smaller model. The gap over History-FT shows that local adaptation helps, but becomes stronger when SOMA selects training examples from weak-alignment directions. The largest gains appear on MATH and Multi-Char, where later turns depend on accumulated reasoning states, constraints, and roles. \rev{Table~\ref{tab:qwen-pct} repeats the evaluation on the Qwen family. Absolute similarities are lower because the capacity gap between Qwen-3-8B and Qwen-3-0.6B is wider, which makes local imitation harder, yet SOMA is again the best method on every dataset.}
 
-\begin{table}[!b]
+\begin{table}[!t]
 \centering
 \caption{Response similarity to the original model on the LLaMA family. Higher is better.}
 \label{tab:llama-pct}
@@ -39,7 +39,7 @@ RouteLLM       & 95.3 $\pm$ 1.44 & 92.5 $\pm$ 1.07 & 91.0 $\pm$ 1.86 & 91.4 $\pm
 \vspace{-3mm}
 \end{table}
 
-\begin{table}[!b]
+\begin{table}[!t]
 \centering
 \caption{Response similarity to the original model on the Qwen family. Higher is better.}
 \label{tab:qwen-pct}

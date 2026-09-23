@@ -34,6 +34,10 @@ it in `main.tex`). Any further edit needs a recompile and a page check.
   placed at page bottoms (`[!b]`), all other §5 floats `[!t]`; figure widths trimmed.
 - Paragraph-final "dangling" lines: none shorter than 1/3 of the text width on pages 1–9
   (checked with a `pdftotext -bbox-layout` script).
+- Follow-up (user feedback): all §5 floats are `[!t]` (tables/figures at page tops; Table 1
+  therefore sits above the Section 5 heading on page 7), and the gap below §4.3 left by the
+  page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; page 6
+  now ends within ~1 line of the text block.
 
 ## Round 1 — review-driven wording (main text)
 
