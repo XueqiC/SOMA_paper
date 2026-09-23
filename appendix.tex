@@ -486,7 +486,7 @@ If both hold, the total decision error (warm–start approximation plus detectio
 \bigskip
 \textbf{Coverage and Suboptimality to Determine the Number of Soft–Prompt Candidates.}
 
-\paragraph{Statement: Theorem~\ref{thm:coverage}.}
+\begin{theorem}[Coverage of the Best Local Direction]\label{thm:coverage}
 Let the active local subspace be $r_{\mathrm{act}}$-dimensional with $r_{\mathrm{act}}\ge 2$, and draw $M$ i.i.d.\ unit vectors $\boldsymbol{u}_1,\ldots,\boldsymbol{u}_M\sim\mathrm{Unif}(\mathbb{S}^{r_{\mathrm{act}}-1})$. Let $p_{r_{\mathrm{act}}}(\theta)=\frac{1}{2}I_{\sin^2\theta}\!\left(\frac{r_{\mathrm{act}}-1}{2},\frac{1}{2}\right)$ be the spherical-cap probability of falling within angle $\theta\in(0,\pi/2]$ of the dominant direction $\boldsymbol v_1$, where $I_x(\cdot,\cdot)$ is the regularized incomplete beta function. Then
 \[
 \Pr\!\Big(\min_{m\le M}\angle(\boldsymbol{u}_m,\boldsymbol{v}_1)\le \theta\Big)
@@ -495,6 +495,7 @@ Let the active local subspace be $r_{\mathrm{act}}$-dimensional with $r_{\mathrm
 1-\Big(1-(\sin\theta)^{\,r_{\mathrm{act}}-1}\Big)^M .
 \]
 For $r_{\mathrm{act}}=1$, one candidate suffices.
+\end{theorem}
 
 \paragraph{Proof of Theorem~\ref{thm:coverage}.}
 \textbf{Step 1: Exact cap probability.}

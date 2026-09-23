@@ -2,17 +2,12 @@
 
 \subsection{Notations}
 
-A multi-turn dialogue prefix of length $k$ is $\mathcal{D}_k=\{(q_1,a_1),\ldots,(q_k,a_k)\}$, where $q_t$ is the user query at turn $t$ and $a_t$ is the model response. We write $F$ for the original model, a proprietary black-box LLM as is common in machine-learning-as-a-service (MLaaS), and $G$ for the small surrogate. The textual response of model $M\in\{F,G\}$ at turn $t$ is $a_t^M$. Let $f_M(\cdot)$ map an input sequence to the hidden space, so that $\mathbf{h}_t=f_M(q_{\le t})\in\mathbb{R}^d$ is the hidden state at turn $t$; the first $k$ hidden states $\mathcal{H}_k=\{\mathbf{h}_1,\ldots,\mathbf{h}_k\}$ induce a local region $\mathcal{M}_k^M\subset\mathbb{R}^d$. A soft prompt of length $L$ is a matrix $\mathbf{P}\in\mathbb{R}^{L\times d}$. Appendix~\ref{sec:notation} lists all symbols.
+A multi-turn dialogue prefix of length $k$ is $\mathcal{D}_k=\{(q_1,a_1),\ldots,(q_k,a_k)\}$, where $q_t$ is the user query at turn $t$ and $a_t$ is the model response. We write $F$ for the original model, a black-box LLM as in MLaaS, and $G$ for the small surrogate; the response of $M\in\{F,G\}$ at turn $t$ is $a_t^M$. Let $f_M(\cdot)$ map an input sequence to the hidden space, so that the hidden states $\mathbf{h}_t=f_M(q_{\le t})\in\mathbb{R}^d$ of the first $k$ turns induce a local region $\mathcal{M}_k^M\subset\mathbb{R}^d$. A soft prompt of length $L$ is a matrix $\mathbf{P}\in\mathbb{R}^{L\times d}$. Appendix~\ref{sec:notation} lists all symbols used in the paper.
 
 \subsection{Exploring Token--Turn Patterns in Multi-Turn LLM Dialogues}
 \label{sec:long_tail}
 
-Standard serving processes each new request together with the entire history, so the cost of a turn grows with the length of the conversation. The amount of \emph{new} information in a turn, however, need not grow at all. We therefore first study token usage across turns.
-
-
-We consider four representative settings: \textit{ShareGPT}~\citep{chen2024sharegpt4v} for open-ended human--LLM chat, \textit{ReMeDi}~\citep{yan2022remedi} for doctor--patient consultation, \textit{Craigslist Bargain}~\citep{he2018decoupling} for negotiation, and \textit{Multi-Character}~\citep{agentlans_multi-character_dialogue_2024} for multi-party role-play. Together they cover different speaker roles, task goals, and interaction structures. For each dataset, we compute the average token count at turn \(t\) and normalize it by the average of Turn~1.
-
-\begin{wrapfigure}[13]{r}{0.42\textwidth}
+\begin{wrapfigure}[14]{r}{0.42\textwidth}
   \vspace{-11pt}
   \centering
   \includegraphics[width=0.419\textwidth]{figure/long_tail.pdf}
@@ -21,7 +16,12 @@ We consider four representative settings: \textit{ShareGPT}~\citep{chen2024share
   \vspace{-11pt}
   \label{fig:longtail-token-decay}
 \end{wrapfigure}
-Figure~\ref{fig:longtail-token-decay} shows a consistent long-tail pattern. Early turns are token-heavy: they introduce the task, the topic, the constraints, and the speaker's intent. Later turns are much shorter and settle at a low, stable level. Shorter does not mean independent. Many later turns read as local updates to a dialogue state that has already been established, so the marginal new input shrinks while standard serving keeps re-processing the full prefix. This mismatch motivates an adaptive strategy: let the original model establish the early dialogue state, and hand subsequent turns to a cheaper surrogate for as long as they stay within that state, instead of recomputing the full history.
+Standard serving processes each new request together with the entire history, so the cost of a turn grows with the length of the conversation. The amount of \emph{new} information in a turn, however, need not grow at all. We therefore first study token usage across turns.
+
+
+We examine four representative settings, which together cover different speaker roles, task goals, and interaction structures: \textit{ShareGPT}~\citep{chen2024sharegpt4v} for open-ended human--LLM chat, \textit{ReMeDi}~\citep{yan2022remedi} for doctor--patient consultation, \textit{Craigslist Bargain}~\citep{he2018decoupling} for negotiation, and \textit{Multi-Character}~\citep{agentlans_multi-character_dialogue_2024} for multi-party role-play. For each dataset, we compute the average token count at turn \(t\) and normalize it by the average of Turn~1.
+
+Figure~\ref{fig:longtail-token-decay} shows a consistent long-tail pattern. Early turns are token-heavy because they introduce the task, the topic, the constraints, and the speaker's intent; later turns are much shorter and settle at a low, stable level. Shorter does not mean independent: many later turns are local updates to an established dialogue state, so the marginal new input shrinks while standard serving keeps re-processing the full prefix. This mismatch motivates an adaptive strategy: let the original model establish the early dialogue state, and hand subsequent turns to a cheaper surrogate for as long as they stay within that state, instead of re-processing the whole history.
 
 \subsection{Local Manifold Approximation for Multi-Turn Dialogues}
 
@@ -41,4 +41,4 @@ Given a dialogue prefix \(\mathcal{D}_{k}\) and an original model \(F\), learn a
 where \(\mathcal{M}^{F}_{k}(\mathcal{D}_{k})\) and \(\mathcal{M}^{G}_{k}(\mathcal{D}_{k})\) denote the local representation regions induced by the prefix, and \(\mathrm{dist}(\cdot,\cdot)\) measures their discrepancy.
 \end{problem}
 
-This formulation leads directly to SOMA. The early turns are used to expose where the surrogate disagrees with the original model within the current dialogue state, and these locally informative examples are then used to adapt the surrogate. After adaptation, the surrogate serves later turns only while the dialogue remains close to the learned region; when the conversation drifts, the system returns to the original model and refreshes the local state.
+This formulation leads directly to SOMA: the early turns expose where the surrogate disagrees with the original model within the current dialogue state, these examples adapt the surrogate, and the adapted surrogate serves later turns only while the dialogue remains close to the learned region.

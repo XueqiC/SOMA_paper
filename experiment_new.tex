@@ -10,7 +10,7 @@ We evaluate SOMA through five questions. \textbf{RQ1}: Can a small surrogate pre
 
 \textbf{Metrics.} We mainly measure teacher-fidelity similarity, i.e., how closely each method preserves the original model's response, using three LLM judges: GPT-OSS~\citep{openai2025gptoss120bgptoss20bmodel}, DeepSeek-V3, and Gemma-2-27B. To complement similarity with task-grounded quality, we report EM accuracy on MATH. Efficiency is measured by token usage, throughput, and end-to-end \rev{wall-clock} latency, \rev{which for SOMA includes soft-prompt mining, LoRA adaptation, and gating. All models are served with vLLM~0.10.2 with automatic prefix caching enabled, so every baseline already benefits from KV-cache reuse across the turns of a session.}
 
-\textbf{Implementation.} We set the warm-start window, acceptance batch, prompt candidates, and switch threshold according to the analysis in Section~\ref{sec:theory}. After switching, SOMA discards soft prompts, performs no further LoRA updates, and only keeps the lightweight drift check in Section~\ref{sec:method}. More details, including hyperparameter ranges, are in Appendix~\ref{sec:app_implementation}.
+\textbf{Implementation.} We set the warm-start window, acceptance batch, candidate count, and switch threshold from Section~\ref{sec:theory}; after switching, SOMA performs no further LoRA updates and keeps only the drift check. Appendix~\ref{sec:app_implementation} lists all hyperparameters.
 
 \subsection{Experimental Results}
 \label{sec:exp_res}
@@ -144,7 +144,7 @@ SOMA reduces post-switch cost by serving the adapted surrogate with compressed c
     \label{fig:mt_radar}
   \end{subfigure}
   \vspace{-2mm}
-  \caption{Component and capability analysis. Both anti-degeneration regularization and expectation-weighted divergence improve mining on LLaMA (a) and Qwen (b), and SOMA gains across MT-Bench-101 abilities (c).}
+  \caption{Component and capability analysis. Both anti-degeneration regularization and expectation-weighted divergence improve mining on LLaMA (a) and Qwen (b), and the MT-Bench-101 ability profile shows that SOMA's gains are spread across dialogue skills (c).}
   \label{fig:token_ablation}
 \vspace{-3mm}
 \end{figure}
