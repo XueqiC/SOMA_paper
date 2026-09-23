@@ -1,0 +1,60 @@
+\section{Introduction}\label{sec:intro} 
+
+
+
+
+% \yd{expensive - mitigate expensive existing works are not good - our observations and this observation gives us a very unique and interesting opportunity (i.e., to local estimate it) but directly use is not good - we propose a framework which is wonderful}
+
+
+
+Large language models (LLMs) such as the GPT series~\citep{radford2019language, brown2020language, achiam2023gpt}, LLaMA~\citep{touvron2023llama}, Claude~\citep{anthropic_introducing_claude_2023}, and DeepSeek~\citep{guo2025deepseek} have demonstrated strong performance in real-world machine-learning-as-a-service (MLaaS) applications, ranging from chat assistants to code generation~\citep{park2023thinking, dong2023towards, liu2024exploring, li2026llmclinicalgraphstructure, yu2026health}. As LLMs are increasingly deployed in interactive settings, \textit{multi-turn LLM serving}, involving extended interactions between humans and LLMs or among multiple LLM agents, has emerged as a key research focus, as it better reflects real-world usage scenarios~\citep{yi2024survey, li2025beyond, zhao2025amplifying}.  Existing research reveals that multi-turn interactions are widespread, underscoring the need for serving systems capable of handling extended conversations in a context-aware manner~\citep{chen2024sharegpt4v, gao2024cost}.
+However, supporting efficient context-dependent 
+% \yd{is this word some terminology in this domain? why do we need to put it here?} 
+% \xq{yes, they mean we need whole history to process the later turns for LLM, but since I mention stateless later, I will just remove it}
+multi-turn interaction remains a key challenge, as most LLM serving systems are stateless and require resending the entire conversation history, including all prior queries and responses, with each new query to generate a new response~\citep{ananda2025beyond, moon2025accelerating}. This leads to redundant computation, high latency, and rising serving costs as conversations lengthen.
+
+Previous work has explored efficient multi-turn LLM serving through two main approaches. One line of work focuses on \textit{single-model methods} that compress dialogue history~\citep{wang2025recursively, chen2024compress, xiao2024efficient}, retrieve memory from external modules~\citep{melz2023enhancing, gutierrez2024hipporag}, or reuse attention computations~\citep{gao2024cost, jeong2025accelerating, anthropic_prompt_caching_2024}. However, these still rely heavily on large LLMs for every turn, leading to high monetary cost, latency, and GPU usage. They also often truncate or overlook extended context, limiting reasoning over long dialogues. Another line adopts \textit{multi-model methods}, routing simple queries to smaller models while escalating harder ones to larger LLMs~\citep{behera2025towards, schick2023toolformer, ding2024hybrid, shnitzer2023large}. Yet, small models struggle to generalize across dialogue complexity, and model switching introduces additional overhead. Moreover, LLMs are known to rely on early turns~\citep{xiao2024efficient, laban2025llms}, compounding the difficulty of maintaining coherence in multi-turn settings. 
+% \yd{I think we did involve both types of baselines into our experiments, right? make sure the answer is yes and do a call back in experimental setup when introducing baselines like ``there are mainly two mainstreams of models xxx" (of course also mention your straightforward methods there as well)} Recognizing these limitations, we ask: 
+%\xq{sure}
+% \yd{i changed the ``design" to ``achieve" since only designing something is still NOT what people want.}\xq{sure}
+% \yd{your question should be whether something is possible, not whether ``you/we" can achieve xx. People care about what the nature allows, not what ``you/we" can do.}
+
+\textit{\textbf{Is it possible to achieve an efficient, context-aware multi-turn LLM serving framework that avoids recomputing the full history at every turn while preserving response quality?}}
+
+
+% \yd{mention to achieve this goal, we perform in-depth explorations, and it reveals xxx. Plus, I think the logic in this paragraph is unnecessarily complex. follow: to handle gap, we explored more - reveal phenomenon - this phenomenon really makes sense with real-world examples - intuitively, directly dealing with the short turns with a small model can improve efficiency - but we still need to make it context-relevant, i.e., to make it aware of the context contained in the big head - mention existing strategies and mention they are not good and mention this is really difficult}
+To achieve this goal, we perform in-depth explorations of real-world multi-turn dialogues across different domains and reveal an interesting long-tail distribution in token counts across turns: early turns are substantially longer, while later turns gradually decrease in length. This phenomenon aligns with the intuition of prior work that early turns typically carry the substantive openings set issues and anchors, including questions, requests, and proposals, while later turns are typically minimal acknowledgments~\citep{he2018decoupling, stolcke2000dialogue}.
+% \yd{mention this phenomenon aligns with our intuition of how people typically interacting with the model} 
+This long-tail trend gives rise to an intuitive idea: since later turns are relatively short, a smaller language model might suffice to generate responses more cost-efficiently. 
+% \yd{starting from here, we involved some irrelevant redundant logic. simply say that the problem comes from the big head: if small models still need to process the head, efficiency is still a problem.} 
+However, the bottleneck lies in the “big head”: if the small model must still process the early, information-dense context, the response quality will be degraded. Specifically, while a small language model may behave reasonably at the start, its responses drift from the large model as the dialogue progresses because most grounding is established early, and later turns remain highly dependent on that context. Therefore, simply handing later turns to a small model without modeling the accumulated context degrades quality. To address this, the small language model must not only process shorter inputs but also approximate the larger model’s behavior within the local manifold of its output or hidden space to capture the contextual dependencies shaped by prior dialogue. This defines a local manifold approximation problem, where the small language model aims to replicate the target model’s behavior induced by the current conversational context.
+
+Building on these insights, we propose a novel framework for efficient multi-turn LLM serving that enables a small language model to locally approximate the behavior of a large language model within a constrained region of the reasoning manifold. Specifically, we present SOMA (\textit{S}oft-prompts for l\textit{O}cal \textit{M}anifold \textit{A}pproximation) to dynamically adapt the small language model to the local behavior of the larger model conditioned on early turn interactions. This is achieved through a three-stage pipeline: (1) \textit{Soft prompt tuning}, where we efficiently explore the local reasoning manifold induced by the early conversational context to identify directions of maximal behavioral divergence between the small and large language model
+% , which represent the small tangent-space steps that most increase their output mismatch in the immediate neighborhood of the current context
+; (2) \textit{Localized fine-tuning}, where we efficiently fine-tune the small language model on a small number of input–output pairs to align it with the larger model within this context-specific region of the manifold; and (3) \textit{Efficiency inference}, where we incorporate the extractive summary to minimize computational overhead and the rollback mechanism that monitor potential topic shift to maintain service quality. Together, these components allow the small model to effectively approximate the larger model’s reasoning process within the context of a given session, enabling both cost-effective and context-aware multi-turn serving. Extensive experiments show the effectiveness of our proposed method. Overall, our contributions are: 
+% \yd{your contributions are too detailed. do this: 1 - Explorations revealing the phenomenon of xxx; 2 - Novel framework for xxx; 3 - Theoretical analysis of xxx; 3 - empirical evaluation for xxx. 4 in total.}
+% \yd{name each with textbf bold font. make all exactly 2-rows or 3-rows}
+\begin{itemize}[left=0pt,itemsep=2pt]
+\item \textbf{Long-tail pattern in multi-turn dialogues.} 
+We first reveal a previously under-explored long-tail pattern in multi-turn dialogues: the first few turns concentrate heavy context, while later turns are shorter yet more dependent on previous turns. This key empirical characterization suggests that substantial computational and monetary savings can be achieved if a smaller and cheaper language model can replace a large one to process the later turns when given the accumulated context.
+
+% (The separate "Empirical characterization" point is merged above per feedback.)
+
+% \item \textbf{Empirical characterization.} \yd{we shall remove this -- merge this one into the previous one very briefly would be good enough}
+% We quantify tail heaviness across multiple datasets and show strong context reliance as conversations progress. The measurements reveal that a small language model could potentially replace a large language model during the conversation to serve later turns. This empirical characterization suggests that a small model can replace a 
+
+\item \textbf{SOMA: Efficient multi-turn serving.} It first learns soft prompts that expose the largest surrogate–original response dissimilarity, then adapts the surrogate localized LoRA accordingly, enabling prompt-free inference with a simple cosine gate for switching and rollback.
+
+\item \textbf{Theory analysis and empirical evaluation.} 
+We provide concentration-based bounds for switching, coverage guarantees for prompt-direction search, and suboptimality limits for selected directions. Guided by these results, empirical studies show the effectiveness of SOMA in real world.
+\end{itemize}
+
+
+% \yd{no need to do this any more. We shall remove this paragraph. We are tight on page limit.}
+% The paper is structured as follows: Section~\ref{sec:prelim} introduces preliminaries and empirically characterizes the long-tail token–turn pattern in multi-turn dialogues. Section~\ref{sec:method} presents details of SOMA, including soft-prompt mining to expose least-aligned directions, localized LoRA fine-tuning to adapt the surrogate, and efficiency-aware inference with switching and rollback. Section~\ref{sec:theory} develops the theoretical foundations, including warm-start generalization and detection bounds for switching as well as coverage guarantees for prompt-direction search. Section~\ref{sec:exp} reports empirical experiment results across six datasets. Section~\ref{sec:conclusion} concludes the work.
+
+
+
+
+
+

@@ -1,0 +1,728 @@
+\section*{Technical Appendices and Supplementary Material}
+
+
+\section{Notations}\label{sec:notation}
+
+This section summarizes all notations used throughout this paper. 
+
+% \begin{table}[h]
+% \centering
+% \small
+% \setlength{\tabcolsep}{8pt}
+% \begin{tabular}{l l}
+% \toprule
+% \textbf{Notations} & \textbf{Definitions or Descriptions} \\ 
+% \midrule
+% % \multicolumn{2}{l}{\textbf{Dialogue / Data}}\\
+% $\mathcal{D}_n=\{(q_t,a_t)\}_{t=1}^n$ & Dialogue prefix of $n$ turns (user $q_t$, model $a_t$) \\
+% $q_{\le t}$ & Full history up to turn $t$: $\{q_1,a_1,\dots,q_{t-1},a_{t-1},q_t\}$ \\
+% $T_0$ & \# initial turns used for mining/adaptation ($\mathcal{W}$) \\
+% $\mathcal{B}$ & Replay buffer of $(q_{\le t}, a_t^F)$ pairs \\
+% \midrule
+% % \multicolumn{2}{l}{\textbf{Models / Spaces}}\\
+% $F,\;G$ & Original (large, black-box) and surrogate (small) models \\
+% $\mathcal{M}$ & A generic model; $\mathcal{M}(q_{\le t})=a_t$ \\
+% $h_t=f_{\mathcal{M}}(q_{\le t})\in\mathbb{R}^d$ & Hidden state at turn $t$ \\
+% $\mathcal{H}_k=\{h_1,\dots,h_k\}$ & Hidden states for first $k$ turns \\
+% $\mathcal{M}_k^{T},\;\mathcal{M}_k^{S}$ & Teacher / student local response manifolds \\
+% $p_F(\cdot\mid q_{\le t}),\;p_G(\cdot\mid q_{\le t};\theta)$ & Next-token distributions (teacher / student) \\
+% $a_t^F,\;a_t^G$ & Text responses from $F$ and $G$ at turn $t$ \\
+% \midrule
+% % \multicolumn{2}{l}{\textbf{Soft Prompts \& LoRA}}\\
+% $P\in\mathbb{R}^{L\times d}$ & Soft prompt  \\
+% $\{P_j\}_{j=1}^{k}$ & Bank of $k$ mined soft-prompt directions \\
+% $\tilde{s}=V(P)$ & Verbalized prompt sent to black-box teacher $F$ \\
+% $\Theta_{\text{LoRA}}$ & Trainable LoRA parameters attached to $G$ \\
+% $r_{\text{LoRA}}$ & LoRA rank (e.g., $2\!-\!8$) \\
+% \midrule
+% % \multicolumn{2}{l}{\textbf{Vocab / Embeddings}}\\
+% $\mathcal{V}$ & Student tokenizer vocabulary \\
+% $E\in\mathbb{R}^{d\times|\mathcal{V}|}$ & Student embedding matrix; $e_v$ is column for token $v$ \\
+% $y_t$ & Teacher token at decoding step $t$ \\
+% $\mathcal{N}_k(y_t)$ & Semantic neighborhood of $y_t$ (top-$k$ by cosine in $E$) \\
+% $\pi_G(\cdot\mid P,q_{\le t})$ & Student token distribution under prompt $P$ \\
+% $\bar e_t = E^\top \pi_G(\cdot\mid P,q_{\le t})$ & Student expectation embedding at step $t$ \\
+% $\phi(\cdot)$ & Frozen sentence encoder for fast semantic similarity \\
+% \midrule
+% % \multicolumn{2}{l}{\textbf{Objectives / Scores}}\\
+% $D(\cdot\|\cdot)$ & Distributional divergence (e.g., KL) \\
+% $\widehat{D}_t$ & Fast semantic switch score at turn $t$ \\
+% $\mathcal{L}_{\text{mine}}$ & Mining loss (semantic unlikelihood + weights) \\
+% $\mathcal{L}_{\text{KD}}$ & Black-box KD loss for LoRA distillation (NLL on teacher text) \\
+% $\mathcal{L}_{\text{sem}}$ & Semantic alignment: $1-\cos(\phi(a_t^F),\phi(a_t^G))$ \\
+% $\mathcal{L}_{\text{stab}}$ & Stability: $\mathrm{KL}(p_G^{\text{pre}}\|p_G^{\text{post}})$ \\
+% $w_t$ & Expectation-space weight for step $t$ \\
+% \midrule
+% % \multicolumn{2}{l}{\textbf{Switching / Drift}}\\
+% $m$ & Switch window length (consecutive turns) \\
+% $\varepsilon,\varepsilon'$ & Switch threshold and watchdog threshold \\
+% $\tau_{\text{drift}}$ & Topic-drift threshold (embedding-space) \\
+% \midrule
+% % \multicolumn{2}{l}{\textbf{Theory / Complexity}}\\
+% $\rho$ & Locality radius of admissible context perturbations \\
+% $L$ & Lipschitz constant (local smoothness) \\
+% $r$ & Effective rank of teacher–student discrepancy \\
+% $\{\lambda_i\}$ & Eigenvalues of discrepancy Fisher / spectrum \\
+% $N=k\,T_0\,B$ & Sample count in local KD ($B$ teacher samples per direction) \\
+% $\sigma^2$ & Noise proxy for black-box KD / estimator \\
+% $\mathcal{R}(\Theta)$ & Capacity/regularization term for tuned params \\
+% $\gamma(\rho,L)$ & Local smoothness term in error bound \\
+% \bottomrule
+% \end{tabular}
+% \caption{Notations used throughout this paper.}\label{tab:notations}
+% % Scalars are lowercase (e.g., $n$), vectors bold lowercase (e.g., $\boldsymbol{\theta}$), matrices bold uppercase (e.g., $\mathbf{W}$), and sets calligraphic (e.g., $\mathcal{D}_n$).
+% \end{table}
+
+\begin{table}[h]
+\centering
+\caption{Notation summary.}
+\label{tab:notation}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$\mathcal{D}_k$ & Dialogue prefix $\{(q_t,a_t)\}_{t=1}^k$ \\
+$q_{\le t}$ & Full history up to turn $t$ \\
+$F,\,G$ & Original (large) model; surrogate (small) model \\
+$\mathbf{h}_t=f_M(q_{\le t})$ & Hidden state at turn $t$ for model $M$ \\
+$\mathcal{H}_k$ & $\{\mathbf{h}_1,\ldots,\mathbf{h}_k\}$, first-$k$ hidden states \\
+$\mathcal{M}_k^M$ & Local response manifold induced by $\mathcal{D}_k$ under $M$ \\
+$\mathcal{V}$, $E$ & $G$’s vocabulary; embedding matrix $E\in\mathbb{R}^{d\times|\mathcal{V}|}$ \\
+$\Pi_t$ & Next-token distribution of $G$ at turn $t$; entry $\Pi_t[v]$ \\
+$\mathbf{e}_v$ & Embedding of token $v$ (column of $E$) \\
+$\mathbf{P}\in\mathbb{R}^{L\times d}$ & Soft prompt (row-wise prompt tokens in embedding space) \\
+$\mathsf{V}(\mathbf{P})$ & Verbalization for prompt $\mathbf{P}$\\
+$N_k(u)$ & $k$ nearest neighbors of token $u$ by cosine in $E$ \\
+$\overline{\mathbf{e}}_{t,i}$ & Expected embedding $\overline{\mathbf{e}}_{t,i}=E^\top \Pi_{t,i}$ at position $i$ \\
+$w_{t,i}$ & Expectation-weighted factor for semantic divergence loss \\
+$|B|_{\mathrm{eff}}$ & Effective batch size (accounts for dependence) \\
+$\Delta$ & Empirical improvement (old–new) on a post-warm-start batch \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Related Work}\label{sec:related}
+
+\textbf{Efficient LLM for Multi-turn Dialogues.} Recent efforts to improve multi-turn LLM serving efficiency fall into two main paradigms. The first involves \textbf{single-model approaches} that reduce context length or reuse computation. These include \textit{summarization and context compression}~\citep{wang2025recursively, chen2024compress, xiao2024efficient}, \textit{memory augmentation}~\citep{melz2023enhancing, gutierrez2024hipporag}, and \textit{caching and attention reuse}~\citep{gao2024cost, jeong2025accelerating, anthropic_prompt_caching_2024}. While effective in lowering per-turn cost, these methods still rely on repeated large-model inference, which also leads to high API expenses, latency, and GPU demand. Moreover, they may truncate or underutilize dialogue context, harming performance on complex tasks. The second paradigm adopts \textbf{multi-model approach}, using smaller models for simple queries and escalating difficult ones to larger LLMs~\citep{behera2025towards, schick2023toolformer, ding2024hybrid}, typically via model routing~\citep{shnitzer2023large} and distillation~\citep{hinton2015distilling}. However, pre-trained small models often generalize poorly on complex multi-turn dialogues, while switching models adds inefficiency. 
+% Furthermore, recent studies show that LLMs overly rely on early conversational turns~\citep{xiao2023efficient, laban2025llms}, making it harder to maintain coherence and reasoning quality in extended dialogues.
+
+
+\textbf{Local Manifold Approximation.}  
+Local manifold approximation techniques aim to exploit the manifold hypothesis by modeling high-dimensional data as lying on locally low-dimensional subspaces, enabling more efficient representation and inference. Classical approaches such as Locally Linear Embedding (LLE)~\citep{roweis2000nonlinear} and Local Tangent Space Alignment (LTSA)~\citep{zhang2007linear} approximate local neighborhoods through linear projections, while kernel-based methods like Laplacian eigenmaps~\citep{belkin2003laplacian} and diffusion maps~\citep{coifman2006diffusion} preserve local geometric structure via nonlinear embeddings. Recent work has extended these ideas using deep learning. For instance, neural network–based tangent space estimators~\citep{sun2020zernet} and local contrastive learning methods~\citep{xiong2020loco, zeng2021contrastive} enable the extraction of manifold-aware representations in complex domains. In computer vision, local manifold modeling underpins point cloud upsampling~\citep{fang2025non} by fitting Gaussian patches to local regions, while in representation learning, neighbor-preserving mappings such as t-SNE~\citep{van2008visualizing} and UMAP~\citep{mcinnes2018umap} uncover latent structure by maintaining local proximity. In graph-based learning, manifold-regularized GNNs~\citep{ngo2023enhancing} exploit smoothness over graph-induced manifolds to enhance generalization. Despite their effectiveness across domains, local manifold approximation remains largely unexplored in the context of efficient multi-turn LLM serving, where dynamically adapting smaller models to the local reasoning manifold conditioned on dialogue history presents a promising and under-investigated direction.
+
+\section{Reproducibility}
+In this section, we introduce the details of the experiments in this
+paper for reproducibility. At the same time, we have uploaded all necessary code to our GitHub repository to reproduce the results presented in this paper: 
+% \url{https://anonymous.4open.science/r/SOMA-4175}
+\url{https://github.com/LabRAI/SOMA}
+. All major experiments are encapsulated as shell scripts, which can be conveniently executed. We introduce the details for reproducibility in the subsections below.
+
+\subsection{Real-World Datasets}\label{sec:app_dataset}
+
+In this section, we briefly present the real-world datasets used in this paper, and all these datasets are commonly used datasets in multi-turn conversation tasks. \textit{ShareGPT}~\citep{chen2024sharegpt4v} is a large-scale collection of high-quality image–text conversations and captions. \textit{ReMeDi}~\citep{yan2022remedi} is a multi-domain Chinese medical dialogue corpus of doctor–patient conversations. \textit{Craigslist}~\citep{he2018decoupling} contains multi-turn buyer–seller negotiation chats from Craigslist, enabling study of bargaining strategies and goal-directed dialogue. \textit{Multi-Char}~\citep{agentlans_multi-character_dialogue_2024} provides multi-character conversational scenarios with role specifications to evaluate coordination and role consistency in multi-party dialogue. \textit{MATH}~\citep{hendrycks2021measuring} is a benchmark of competition-style math problems with step-by-step solutions designed to assess mathematical reasoning in language models. \textit{MT-Bench}~\citep{zheng2023judging} is a multi-turn benchmark to assess response quality across diverse tasks. In this study, we filter out the non-context-dependent dialogues in these datasets. 
+% All these datasets are implemented based on Torchvision 0.17.1~\cite{torchvision2016}.
+% ShareGPT~\citep{chen2024sharegpt4v}, ReMeDi~\citep{yan2022remedi}, Craigslist~\citep{he2018decoupling}, Multi-Char~\citep{agentlans_multi-character_dialogue_2024}, MATH~\citep{hendrycks2021measuring}, and MT-Bench~\citep{zheng2023judging}
+
+\subsection{Implementation of SOMA}\label{sec:app_implementation}
+
+We implement SOMA based on PyTorch with HuggingFace Transformers, serve inference via vLLM with FlashAttention~\citep{shah2024flashattention}, and run on one node with $4\times$ 80G A100 GPUs. Soft–prompt tuning optimizes only the prompt tensor $\mathbf{P}\!\in\!\mathbb{R}^{L\times d}$ on the surrogate $G$ using AdamW, cosine decay, gradient clipping, and a KV cache for a single forward pass per turn. The objective combines unlikelihood on a semantic neighborhood, an expectation–weighted penalty using the truncated top–$m$ expectation, and a light anti-degeneration entropy term. The mined prompt–response pairs are then used to adapt $G$ with LoRA on attention projections (rank $r$), keeping the base weights frozen; early stopping is triggered by validation divergence. At inference, a cosine closeness gate with a lightweight sentence encoder decides a one–time switch to the adapted surrogate; the window $W$ and acceptance batch $|B|$ follow the detection bound, the number of parallel candidates $M$ follows the coverage guarantee, and $(k,m)$ follow the efficiency analysis. Prompt length $L\!\in\!\{4, 8,16,32,64\}$; learning rate $\eta\!\in\![1\!\times\!10^{-4},\,5\!\times\!10^{-3}]$; AdamW weight decay $\lambda_{\mathrm{wd}}\!\in\![0,\,10^{-2}]$; gradient clip $\in[0.5,\,1.0]$; neighborhood size $k\!\in\!\{20,50,100\}$; expectation truncation $m\!\in\!\{50,100,200\}$; temperature $\tau\!\in\![0.4,\,1.2]$; expectation weight $\lambda\!\in\![0.5,\,2.0]$; anti–degeneration weight $\beta\!\in\![0.02,\,0.15]$; LoRA rank $r\!\in\!\{4, 8,16,32\}$ with scale $\alpha_{\text{lora}}\!\in\!\{4, 8,16,32\}$; LoRA LR $\eta_{\text{lora}}\!\in\![5\!\times\!10^{-5},\,2\!\times\!10^{-3}]$; warm–start window $W\!\in\![3,\,12]$ turns; acceptance batch $|B|\!\in\![6,\,24]$ contexts; parallel candidates $M\!\in\!\{3,4,5\}$; switch threshold $\varepsilon\!\in\![0.05,\,0.12]$ with $m_{\text{cons}}\!\in\!\{2,3\}$. 
+% These choices keep computation modest while aligning with the theory–driven bounds used in the paper.
+
+
+\subsection{Implementation of Baselines}\label{sec:app_baseline}
+
+\textbf{Original}: We query the large model (family-appropriate: LLaMA-3.1-70B or Qwen-3-8B) with the full dialogue history at every turn to get the responses.
+
+\textbf{Surrogate}: We query the small model (LLaMA-2-7B or Qwen-3-0.6B) with the full dialogue history at every turn to get the responses.
+
+\textbf{History-Prefix}: The surrogate receives the entire conversation produced by the Original up to $t{-}1$ and generates $a_t$; no parameter updates are performed. The switching is the same as SOMA.
+
+\textbf{History-FT}: We fine-tune the surrogate on $(S_t, a_t^{F})$ pairs where $S_t$ is the Original’s full context up to $t$ and $a_t^{F}$ is the next reply, using LoRA on attention projections with early stopping; inference then runs the fine-tuned surrogate without the Original. The switching is the same as SOMA.
+
+\textbf{LLMLingua-2}~\citep{pan2024llmlingua}: We compress the Original’s history at each turn with LLMLingua-2 and feed the compressed summary to the surrogate; we follow the authors’ recommended settings.
+
+\textbf{RouteLLM}~\citep{ong2024routellmlearningroutellms}: We adopt the released router to choose between the Original and the surrogate per turn (complex vs.\ simple queries), following the original settings from the paper.
+
+\subsection{Data Filtering}
+
+To ensure that SOMA is evaluated on context-dependent dialogues, we prompt multiple strong LLMs, including GPT-OSS, DeepSeek-V3, and Gemma-2-27B, with the classification prompt shown in Figure~\ref{fig:context_filter}, and retain only conversations that all three models recognize as context-dependent. This avoids model-specific biases and yields a high-quality subset of dialogues where later turns meaningfully depend on earlier turns, matching the use cases in this paper.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figure/context_filter.pdf}
+    \caption{Instructions for the LLM to filter context-dependent dialogue.}
+    \label{fig:context_filter}
+\end{figure}
+
+\subsection{Implementation of LLM Judge}\label{sec:app_judge}
+
+The prompt for the LLM judge to evaluate the response similarity score is shown in Figure~\ref{fig:LLM_judge} following the recommendation from~\citep{bai2024mt}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figure/judge.pdf}
+    \caption{Instructions for the LLM judge to evaluate the response similarity.}
+    \label{fig:LLM_judge}
+\end{figure}
+
+\subsection{Packages Required for Implementation}
+We perform all experiments on a server equipped with Nvidia A6000 GPUs. Below we list the key packages and their versions used in our implementation:
+
+\begin{itemize}
+  \item \textbf{Python} == 3.10
+  \item \textbf{pytorch} == 2.8.0 \,+\, CUDA 12.8
+  \item \textbf{torchvision} == 0.19.0
+  \item \textbf{torchaudio} == 2.8.0
+  \item \textbf{numpy} == 1.26.x
+  \item \textbf{pandas} == 2.2.x
+  \item \textbf{scipy} == 1.12.x
+  \item \textbf{cmake} == 3.28+
+  \item \textbf{ninja} == 1.11+
+  \item \textbf{ipython} == 8.x
+  % \item \textbf{jupyter\_core} == 5.x \quad \textbf{jupyter\_client} == 8.x
+  \item \textbf{psutil} == 5.9+
+  \item \textbf{vllm} == 0.10.2
+  \item \textbf{transformers} == 4.56.1
+  \item \textbf{accelerate} == 1.9.0
+  \item \textbf{bitsandbytes} == 0.46.1
+  \item \textbf{sentencepiece} == 0.2.0
+  \item \textbf{tiktoken} == 0.11.0
+  \item \textbf{einops} == 0.8.1
+  \item \textbf{datasets} == 4.0.0
+  \item \textbf{huggingface-hub} == 0.34.2
+  \item \textbf{safetensors} == 0.5.3
+  \item \textbf{ray} == 2.49.1
+  \item \textbf{scikit-learn} == 1.7.1
+  % \item \textbf{seaborn} == 0.13.2
+  \item \textbf{fastapi} == 0.116.2
+  \item \textbf{uvicorn} == 0.35.0
+\end{itemize}
+
+
+
+
+\section{Mathematical Concepts}\label{sec:app_math}
+
+Here we provide a more comprehensive view of the
+relevant concepts that can be helpful to understand the idea of stratification as discussed in the main
+body of the paper.
+
+\begin{definition}[Preimage]
+Let $f : X \mapsto Y$ be a function from a set $X$ (\emph{domain}) to a set $Y$ (\emph{codomain}). For any subset $N \subseteq Y$, the \emph{preimage} of $N$ under $f$, denoted $f^{-1}(N)$, is defined as:
+\[
+f^{-1}(N) = \{ x \in X \mid f(x) \in N \}.
+\]
+\end{definition}
+In other words, $f^{-1}(N)$ consists of all elements in the domain $X$ that are mapped into the subset $N$ of the codomain $Y$.
+
+\begin{definition}[Metric Space]
+A set \( X \), whose elements are called points, is said to be a \emph{metric space} if for any two points \( p, q \in X \), there is an associated real number \( d(p, q) \), called the \emph{distance} from \( p \) to \( q \), such that:
+\begin{enumerate}
+    \item \( d(p, q) \geq 0 \), and \( d(p, q) = 0 \iff p = q \);
+    \item \( d(p, q) = d(q, p) \) (symmetry);
+    \item \( d(p, q) \leq d(p, r) + d(r, q) \) for any \( r \in X \) (triangle inequality).
+\end{enumerate}
+Any function satisfying these properties is called a \emph{distance function}, or a \emph{metric}.
+\end{definition}
+
+\begin{definition}[Neighborhood]
+Let \( X \) be a metric space. A set \( N_r(p) \subset X \) is called a \emph{neighborhood} of a point \( p \in X \) if it consists of all points \( q \in X \) such that \( d(p, q) < r \) for some radius \( r > 0 \). The number \( r \) is called the \emph{radius} of the neighborhood.
+\end{definition}
+
+
+\begin{definition}[Continuous]
+Let $X$ and $Y$ be two topological spaces. A function $f : X \mapsto Y$ is \emph{continuous} if for each point $x \in X$ and each neighborhood $N$ of $f(x)$ in $Y$, the set $f^{-1}(N)$ is a neighborhood of $x \in X$.
+\end{definition}
+
+\begin{definition}[Topological Equivalence or Homeomorphism]
+A function $h : X \mapsto Y$ is called a \emph{homeomorphism} if it is one-to-one, continuous, and has a continuous inverse function. When such a function exists, $X$ and $Y$ are called \emph{homeomorphic} (or \emph{topologically equivalent}) spaces.
+\end{definition}
+
+\begin{definition}[Open Set]
+A subset \( U \subseteq X \) is called an \emph{open set} if for every point \( p \in U \), there exists a neighborhood \( N_r(p) \subseteq U \). That is, each point in \( U \) has some "wiggle room" around it that still lies entirely within \( U \).
+\end{definition}
+
+\begin{definition}[Countable Base (Second Countability)]
+Let \( X \) be a topological space. A collection \( \mathcal{B} \) of open subsets of \( X \) is called a \emph{base} (or \emph{basis}) for the topology on \( X \) if for every open set \( U \subseteq X \) and every point \( x \in U \), there exists a set \( B \in \mathcal{B} \) such that
+\[
+x \in B \subseteq U.
+\]
+
+If there exists a base \( \mathcal{B} \) that is \emph{countable}, then the space \( X \) is said to be \emph{second countable} or to have a \emph{countable base}.
+\end{definition}
+
+\begin{definition}[Hausdorff Space]
+A topological space with the property that two distinct points can always be surrounded by disjoint open sets is called a \emph{Hausdorff space}.
+\end{definition}
+
+Essentially, Hausdorff spaces are the spaces where any two points being ``far off'' is defined.
+
+\begin{definition}[Manifold]
+A \emph{manifold} of dimension \( n \) is a second-countable Hausdorff topological space in which each point has a neighborhood homeomorphic to Euclidean space \( \mathbb{R}^n \).
+\end{definition}
+
+\begin{definition}[Smooth Manifold]
+A \emph{smooth manifold} is a manifold \( \mathcal{M} \) equipped with a collection of coordinate charts (i.e., homeomorphisms \( \varphi: U \to \mathbb{R}^n \) for open sets \( U \subseteq \mathcal{M} \)) such that all \emph{transition maps} between overlapping charts,
+\[
+\varphi_j \circ \varphi_i^{-1} : \varphi_i(U_i \cap U_j) \rightarrow \varphi_j(U_i \cap U_j),
+\]
+are infinitely differentiable (i.e., \( C^\infty \)). This structure is known as a \emph{smooth atlas}, and it allows calculus to be performed on the manifold.
+\end{definition}
+
+\section{Theoretical Results and Proofs}\label{sec:app_proof}
+
+% \subsection{Preliminaries and Notation}
+% Scalars (e.g., $n,\lambda,k,\tau$) are lowercase; vectors (e.g., $\boldsymbol{e},\boldsymbol{u}$) are bold lowercase; 
+% matrices (e.g., $\mathbf{E},\mathbf{C},\mathbf{H}_T$) are bold uppercase; sets (e.g., $\mathcal{V},\mathcal{Q}$) are calligraphic.
+% At turn $t$, the shared text is $S_t=\mathcal{D}_{t-1}\oplus q_t$. 
+% The original’s output is $a_t^{F}$; its tokens in $G$’s space are $\boldsymbol{y}_t^{F}=\mathrm{tok}_G(a_t^{F})=(y_{t,1}^{F},\ldots,y_{t,T_F(t)}^{F})$. 
+% Aligned-prefix (``teacher-forced'') next-token distributions of $G$ are $\{\Pi_{t,i}(\mathbf{P})\}_{i=1}^{T_F(t)}$.
+% The token-level neighborhood loss is Eq.~\eqref{eq:sem-with-aF}, and the expectation-weighted loss is Eq.~\eqref{eq:semexp-with-aF}.
+% For switching we use a bounded discrepancy $\mathsf{Gap}(S_t)\in[0,1]$ (e.g., $1-\cos(\phi(a_t^{G}),\phi(a_t^{F}))$ with a fixed encoder $\phi$).
+
+We first model weak dependence in the dialogue stream via an 
+\emph{Effective Sample Size}. 
+For a bounded, stationary sequence $\{Z_t\}$ with lag-$\ell$ autocorrelation $\rho(\ell)$, define
+\[
+N_{\mathrm{eff}}
+\;:=\;
+\frac{N}{\,1 + 2\sum_{\ell=1}^{N-1}\Big(1-\frac{\ell}{N}\Big)\rho(\ell)\,} \;\;\in(0,N]\,.
+\]
+when $\rho(\ell)\equiv 0$, $N_{\mathrm{eff}}=N$; positive correlation reduces $N_{\mathrm{eff}}$.
+
+\bigskip
+\textbf{Directional Recovery for the Expectation-weighted Loss}
+
+\paragraph{Statement: Theorem~\ref{thm:dir_recovery}.}
+Under local smoothness, bounded expectation weights in Eq.~\eqref{eq:semexp-with-aF}, and a rank–$r$ discrepancy for the discrepancy Fisher 
+$\mathbf{C}=\mathbb{E}[\mathbf{J}(\mathbf{P})^{\!\top}\mathbf{J}(\mathbf{P})]$, any minimizer $\widehat{\mathbf{P}}$ of Eq.~\eqref{eq:semexp-with-aF}
+has row span that captures at least a $(1-\varepsilon)$ fraction of the top-$r$ eigenmass of $\mathbf{C}$, with $\varepsilon\!\to\!0$ as the window size growing and neighborhood size $k$ increasing within the local region.
+
+\paragraph{Proof of Theorem~\ref{thm:dir_recovery}.}
+\textbf{Step 1: Per-Event Loss and Local Expansion.}
+Index events by $\boldsymbol{z}=(t,i)$ (turn and position). Let the per-event loss be
+\[
+\ell(\mathbf{P};\boldsymbol{z})
+=
+w(\boldsymbol{z})
+\sum_{v\in \mathcal{S}(\boldsymbol{z})}
+s_{\tau}(v\mid \boldsymbol{z})\,
+\Big[-\log\!\big(1-\pi_G(v\mid \boldsymbol{z};\mathbf{P})\big)\Big],
+\quad
+\mathcal{S}(\boldsymbol{z})=\{y_{t,i}^{F}\}\cup \mathcal{N}_k(y_{t,i}^{F}).
+\]
+Write $p_v(\mathbf{P};\boldsymbol{z})=\pi_G(v\mid \boldsymbol{z};\mathbf{P})$ and expand around $\mathbf{P}=\boldsymbol{0}$.
+Using the chain rule for the softmax parameterization,
+\[
+\log(1-p_v)
+=
+\log(1-p_v|_{\mathbf{0}}) - \frac{1}{1-p_v|_{\mathbf{0}}}\,\big(\nabla p_v\big)^{\!\top}\mathrm{vec}(\mathbf{P})
+-\frac{1}{2}\frac{p_v|_{\mathbf{0}}}{(1-p_v|_{\mathbf{0}})^2}\big(\mathrm{vec}(\mathbf{P})^{\!\top}\nabla \log p_v\big)^2 + o(\|\mathbf{P}\|^2),
+\]
+where $\nabla$ denotes the gradient w.r.t.\ $\mathrm{vec}(\mathbf{P})$ and we used the softmax identity 
+$\nabla p_v = p_v \nabla \log p_v$.
+Summing over $v\in\mathcal{S}(\boldsymbol{z})$ with bounded weights $w(\boldsymbol{z})s_{\tau}(\cdot\mid \boldsymbol{z})$ cancels the \emph{linear} term due to local stationarity under aligned-prefix conditioning (the gradient at $\mathbf{0}$ integrates to zero across the semantic neighborhood; this is the standard property behind Gauss–Newton/Fisher approximations). 
+Thus the second-order term dominates:
+\[
+\ell(\mathbf{P};\boldsymbol{z})
+\;=\;
+\frac{1}{2}\,
+\big\|\mathbf{J}_{\boldsymbol{z}}\,\mathrm{vec}(\mathbf{P})\big\|_2^2
+\,+\,o(\|\mathbf{P}\|^2),
+\]
+where $\mathbf{J}_{\boldsymbol{z}}$ stacks rows $\sqrt{w(\boldsymbol{z})s_{\tau}(v\mid\boldsymbol{z})}\,\nabla \log p_v(\mathbf{0};\boldsymbol{z})^{\!\top}$ for $v\in\mathcal{S}(\boldsymbol{z})$.
+
+\textbf{Step 2: Summation over the Window and Fisher Form.}
+Sum over $\boldsymbol{z}$ in the initial window and take expectation (over the empirical distribution of aligned-prefix contexts). We obtain the Gauss–Newton surrogate
+\[
+\mathcal{L}(\mathbf{P})
+\;=\;
+\frac{1}{2}\,\mathrm{vec}(\mathbf{P})^{\!\top}\mathbf{C}\,\mathrm{vec}(\mathbf{P})
+\,+\,o(\|\mathbf{P}\|^2),
+\qquad
+\mathbf{C}
+=
+\mathbb{E}\big[\mathbf{J}(\mathbf{0})^{\!\top}\mathbf{J}(\mathbf{0})\big],
+\]
+which is a discrepancy Fisher matrix with importance weights folded into $\mathbf{J}$.
+
+\textbf{Step 3: Row-Span Parametrization and KY Fan.}
+Let $\mathbf{P}\in\mathbb{R}^{L\times d}$. Any $\mathbf{P}$ factorizes as $\mathbf{P}=\mathbf{A}\mathbf{U}^{\!\top}$ with $\mathbf{U}\in\mathbb{R}^{d\times L}$ having orthonormal columns spanning the row space and $\mathbf{A}\in\mathbb{R}^{L\times L}$. Then 
+\[
+\mathrm{vec}(\mathbf{P})=(\mathbf{U}\otimes \mathbf{I}_L)\,\mathrm{vec}(\mathbf{A}),
+\quad
+\mathcal{L}(\mathbf{P})
+=
+\frac{1}{2}\,\mathrm{vec}(\mathbf{A})^{\!\top}\big(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U}\otimes \mathbf{I}_L\big)\mathrm{vec}(\mathbf{A})
+\,+\,o(\|\mathbf{A}\|^2).
+\]
+Including the ridge $\lambda\|\mathbf{P}\|_F^2=\lambda\|\mathbf{A}\|_F^2$ from the main loss, the minimum over $\mathbf{A}$ for fixed $\mathbf{U}$ is proportional to $\mathrm{Tr}(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U})$. Maximizing $\mathrm{Tr}(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U})$ over $\mathbf{U}^{\!\top}\mathbf{U}=\mathbf{I}_L$ is solved by the top-$L$ eigenvectors of $\mathbf{C}$ (Ky Fan’s variational principle). Hence the \emph{optimal row span} equals the top-$L$ eigenspace of $\mathbf{C}$.
+
+\textbf{Step 4: Empirical Approximation and Eigenspace Stability.}
+We work with an empirical Fisher $\widehat{\mathbf{C}}$ formed from finitely many events and finite $k$. Under bounded weights and local smoothness, $\|\widehat{\mathbf{C}}-\mathbf{C}\|_{\mathrm{op}}\to 0$ as the window size grows; increasing $k$ within the local isotropy region reduces variance and retains locality. Davis–Kahan perturbation then gives that the top-$r$ eigenspaces of $\widehat{\mathbf{C}}$ and $\mathbf{C}$ are close, with principal angles bounded by $O(\|\widehat{\mathbf{C}}-\mathbf{C}\|_{\mathrm{op}}/\mathrm{gap})$, where $\mathrm{gap}$ is the spectral gap below $\lambda_r(\mathbf{C})$. Consequently, the row span of any empirical minimizer $\widehat{\mathbf{P}}$ captures at least a $(1-\varepsilon)$ fraction of the top-$r$ eigenmass of $\mathbf{C}$ with $\varepsilon\to 0$ as the window grows and $k$ increases up to the local isotropy scale.
+\hfill$\square$
+
+
+\bigskip
+\textbf{When to Switch: Warm–Start Generalization and Batch Detection}.
+
+\paragraph{Statement: Lemma~\ref{lem:warmstart}.}
+With probability at least $1-\delta$,
+\[
+\Big|\widehat{F}_W - F^\star\Big|
+\;\le\;
+\sqrt{\frac{2\log(2/\delta)}{W_{\mathrm{eff}}}},
+\qquad
+\widehat{F}_W=\frac{1}{W}\sum_{t=1}^{W}\mathsf{Gap}(S_t),\quad
+F^\star=\mathbb{E}_{S\sim\mathcal{Q}}[\mathsf{Gap}(S)].
+\]
+
+\paragraph{Proof of Lemma~\ref{lem:warmstart}.}
+\textbf{Step 1 (Centering and boundedness).}
+Let $Z_t=\mathsf{Gap}(S_t)-F^\star\in[-1,1]$ with $\mathbb{E}[Z_t]=0$. Then
+$\widehat{F}_W-F^\star = \frac{1}{W}\sum_{t=1}^{W} Z_t$.
+
+\textbf{Step 2: Variance Proxy under Dependence.}
+For stationary $\{Z_t\}$ with autocovariance $\gamma(\ell)=\mathrm{Cov}(Z_t,Z_{t+\ell})$, we have
+\[
+\mathrm{Var}\!\Big(\frac{1}{W}\sum_{t=1}^{W} Z_t\Big)
+=
+\frac{1}{W^2}\sum_{t,s=1}^{W}\gamma(|t-s|)
+=
+\frac{1}{W}\Big(\gamma(0)+2\sum_{\ell=1}^{W-1}\Big(1-\frac{\ell}{W}\Big)\gamma(\ell)\Big).
+\]
+Let $\sigma^2:=\gamma(0)\le 1/4$ (since $Z_t\in[-1,1]$) and $\rho(\ell):=\gamma(\ell)/\gamma(0)$ when $\gamma(0)>0$.
+Then
+\[
+\mathrm{Var}\!\Big(\frac{1}{W}\sum_{t=1}^{W} Z_t\Big)
+\;\le\;
+\frac{\sigma^2}{W}\Big(1+2\sum_{\ell=1}^{W-1}\Big(1-\frac{\ell}{W}\Big)\rho(\ell)\Big).
+\]
+Define the effective size $W_{\mathrm{eff}}$ as in the preliminaries. Then
+$\mathrm{Var}\big(\frac{1}{W}\sum_{t=1}^{W} Z_t\big)\le \sigma^2/W_{\mathrm{eff}}$.
+
+\textbf{Step 3: Concentration with Effective Size.}
+A Hoeffding/Rio inequality for bounded, weakly dependent sequences yields
+\[
+\Pr\!\Big(\big|\widehat{F}_W-F^\star\big|\ge u\Big)
+\;\le\;
+2\exp\!\Big(-\frac{2 u^2 W_{\mathrm{eff}}}{(b-a)^2}\Big),
+\quad a=-1,\ b=1.
+\]
+Thus $\Pr(|\widehat{F}_W-F^\star|\ge u)\le 2\exp(-2u^2 W_{\mathrm{eff}})$.
+Set the right-hand side to $\delta$ and solve for $u$ to obtain
+$u=\sqrt{(2\log(2/\delta))/W_{\mathrm{eff}}}$.
+\hfill$\square$
+
+\bigskip
+\paragraph{Statement: Theorem~\ref{thm:detection}.}
+Let $\Delta=\widehat{F}_B^{\mathrm{old}}-\widehat{F}_B^{\mathrm{new}}$ on a batch $B$ of effective size $|B|_{\mathrm{eff}}$. 
+Assume $\Delta-\mathbb{E}[\Delta]$ is sub–exponential with proxy $(\nu,b)$:
+$\mathbb{E}[\exp(\lambda(\Delta-\mathbb{E}\Delta))]\le \exp(\tfrac{\lambda^2 \nu^2}{2})$ for $|\lambda|\le 1/b$.
+Then for any $\varepsilon>0$ and $\delta\in(0,1)$,
+\[
+|B|_{\mathrm{eff}}
+\;\ge\;
+\frac{2\nu^2}{\varepsilon^2}\log\!\frac{1}{\delta}
++\frac{2b}{3\,\varepsilon}\log\!\frac{1}{\delta}
+\quad\Longrightarrow\quad
+\Pr(\Delta\ge \varepsilon)\ge 1-\delta.
+\]
+
+\paragraph{Proof of Theorem~\ref{thm:detection}.}
+\textbf{Step 1 (Bernstein tail bound).}
+For sub–exponential $X:=\Delta-\mathbb{E}[\Delta]$ with proxy $(\nu,b)$,
+\[
+\Pr(X\le -t)\;\le\;\exp\!\Big(-\frac{t^2}{2\nu^2 + 2 b t/3}\Big),\qquad t>0.
+\]
+This is the standard one-sided Bernstein inequality derived from the MGF condition.
+
+\textbf{Step 2: From Mean Gain to High-Probability Gain.}
+We seek $\Pr(\Delta\ge \varepsilon)\ge 1-\delta$. Write
+\[
+\Pr(\Delta<\varepsilon)
+=
+\Pr\big(\Delta-\mathbb{E}[\Delta] < \varepsilon-\mathbb{E}[\Delta]\big)
+=
+\Pr\big(X < -t\big),\quad t:=\mathbb{E}[\Delta]-\varepsilon.
+\]
+If the \emph{expected} gain satisfies $\mathbb{E}[\Delta]\ge \varepsilon$ then $t\ge 0$ and
+\[
+\Pr(\Delta<\varepsilon)\le \exp\!\Big(-\frac{t^2}{2\nu^2 + 2 b t/3}\Big)
+\;\le\;
+\exp\!\Big(-\frac{\varepsilon^2}{2\nu^2 + 2 b \varepsilon/3}\Big),
+\]
+using monotonicity of $t\mapsto t^2/(2\nu^2+2bt/3)$ on $t\ge 0$. To make this $\le \delta$ it suffices that
+\[
+\frac{\varepsilon^2}{2\nu^2 + 2 b \varepsilon/3}\;\ge\;\log(1/\delta)
+\quad\Longleftrightarrow\quad
+2\nu^2\log(1/\delta) + \frac{2b}{3}\varepsilon \log(1/\delta) \;\le\; \varepsilon^2.
+\]
+Rearranging gives the stated sufficient condition on $|B|_{\mathrm{eff}}$ once we note that the proxies $\nu^2,b$ scale as $1/|B|_{\mathrm{eff}}$ for averages. Equivalently, write $\nu^2=\tilde{\nu}^2/|B|_{\mathrm{eff}}$ and $b=\tilde{b}/|B|_{\mathrm{eff}}$ for single-sample proxies $(\tilde{\nu}^2,\tilde{b})$, then solve for $|B|_{\mathrm{eff}}$:
+\[
+|B|_{\mathrm{eff}}
+\;\ge\;
+\frac{2\tilde{\nu}^2}{\varepsilon^2}\log\!\frac{1}{\delta}
++\frac{2\tilde{b}}{3\,\varepsilon}\log\!\frac{1}{\delta}.
+\]
+We re-denote $(\tilde{\nu}^2,\tilde{b})$ as $(\nu^2,b)$ in the theorem statement.
+\hfill$\square$
+
+\bigskip
+
+\begin{corollary}[Choosing $W$ and $|B|$]\label{cor:WB} 
+Pick $W$ so that the warm–start generalization error is at most $\eta$: $W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$. Then choose $|B|$ via Theorem~\ref{thm:detection} for target improvement $\varepsilon$ and confidence $1-\delta$. The total decision error (from warm–start approximation and batch detection) is bounded by $\eta+\varepsilon$ at confidence $1-2\delta$. 
+\end{corollary}
+
+\paragraph{Proof of Corollary~\ref{cor:WB}.}
+Lemma~\ref{lem:warmstart} ensures $|\widehat{F}_W-F^\star|\le \eta$ with prob.\ $\ge 1-\delta$ when 
+$W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$.
+Theorem~\ref{thm:detection} ensures $\Pr(\Delta\ge \varepsilon)\ge 1-\delta$ when the batch bound holds.
+By a union bound, the probability that both events hold is at least $1-2\delta$.
+If both hold, the total decision error (warm–start approximation plus detection slack) is at most $\eta+\varepsilon$.
+\hfill$\square$
+
+\bigskip
+\textbf{Coverage and Suboptimality to Determine the Number of Soft–Prompt Candidates.}
+
+\paragraph{Statement: Theorem~\ref{thm:coverage}.}
+Let the active local subspace be $r_{\mathrm{act}}$–dimensional with unit sphere $\mathbb{S}^{r_{\mathrm{act}}-1}$.
+Fix $\boldsymbol{v}_1$ and draw i.i.d.\ $\boldsymbol{u}_1,\ldots,\boldsymbol{u}_M\sim \mathrm{Unif}(\mathbb{S}^{r_{\mathrm{act}}-1})$.
+Then for any $\theta\in(0,\pi/2]$,
+\[
+\Pr\!\Big(\min_{m\le M}\angle(\boldsymbol{u}_m,\boldsymbol{v}_1)\le \theta\Big)
+\;\ge\;
+1-\Big(1-(\sin\theta)^{\,r_{\mathrm{act}}-1}\Big)^M.
+\]
+
+\paragraph{Proof of Theorem~\ref{thm:coverage}.}
+\textbf{Step 1: Exact cap probability.}
+WLOG set $\boldsymbol{v}_1$ as the north pole. For $\boldsymbol{U}\sim\mathrm{Unif}(\mathbb{S}^{r_{\mathrm{act}}-1})$, 
+the random variable $T=\langle \boldsymbol{U},\boldsymbol{v}_1\rangle$ has density 
+$f_T(t)\propto (1-t^2)^{(r_{\mathrm{act}}-3)/2}$ on $t\in[-1,1]$. 
+Hence $\Pr(\angle(\boldsymbol{U},\boldsymbol{v}_1)\le \theta)=\Pr(T\ge \cos\theta)=I_{\sin^2\theta}(\frac{r_{\mathrm{act}}-1}{2},\frac{1}{2})$.
+
+\textbf{Step 2: Lower Bound}
+For $\theta\in(0,\pi/2]$, $\sin\theta\in(0,1]$ and we have the elementary bound
+\[
+I_{\sin^2\theta}\!\Big(\tfrac{r_{\mathrm{act}}-1}{2},\tfrac{1}{2}\Big)
+\;\ge\;
+(\sin\theta)^{\,r_{\mathrm{act}}-1}.
+\]
+(Proof: $I_x(a,b)=\frac{1}{\mathrm{B}(a,b)}\int_0^{x} t^{a-1}(1-t)^{b-1}\mathrm{d}t
+\ge \frac{1}{\mathrm{B}(a,b)}\int_0^{x} t^{a-1}\mathrm{d}t
+= \frac{x^{a}}{a\,\mathrm{B}(a,b)} \ge x^{a}$ since $a\,\mathrm{B}(a,b)\le 1$ for $a\ge 1/2,b\ge 1/2$; let $x=\sin^2\theta$ and $a=(r_{\mathrm{act}}-1)/2$.)
+
+\textbf{Step 3: Independence across $M$ Samples.}
+Thus, for one sample,
+$p_\theta:=\Pr(\angle(\boldsymbol{U},\boldsymbol{v}_1)\le \theta)\ge (\sin\theta)^{r_{\mathrm{act}}-1}$.
+The probability \emph{none} among $M$ falls in the cap is $(1-p_\theta)^M\le (1-(\sin\theta)^{r_{\mathrm{act}}-1})^M$.
+Therefore
+\[
+\Pr\!\Big(\min_{m\le M}\angle(\boldsymbol{u}_m,\boldsymbol{v}_1)\le \theta\Big)
+=
+1-(1-p_\theta)^M
+\;\ge\;
+1-\Big(1-(\sin\theta)^{r_{\mathrm{act}}-1}\Big)^M.
+\]
+\hfill$\square$
+
+\bigskip
+\paragraph{Statement: Lemma~\ref{lem:subopt}.}
+If $\angle(\boldsymbol{\hat u},\boldsymbol{v}_1)\le \theta$ and $\mathbf{H}_T\succeq \mathbf{0}$ with top eigenpair $(\lambda_1,\boldsymbol{v}_1)$,
+then
+\[
+\boldsymbol{\hat u}^{\!\top}\mathbf{H}_T\boldsymbol{\hat u} \;\ge\; \lambda_1 \cos^2\!\theta
+\quad\Rightarrow\quad
+\lambda_1 - \boldsymbol{\hat u}^{\!\top}\mathbf{H}_T\boldsymbol{\hat u} \;\le\; \lambda_1 \sin^2\!\theta.
+\]
+
+\paragraph{Proof of Lemma~\ref{lem:subopt}.}
+Decompose $\boldsymbol{\hat u}=\cos\theta\,\boldsymbol{v}_1+\sin\theta\,\boldsymbol{w}$ with $\|\boldsymbol{w}\|_2=1$ and $\boldsymbol{w}\perp\boldsymbol{v}_1$.
+Then
+\[
+\boldsymbol{\hat u}^{\!\top}\mathbf{H}_T\boldsymbol{\hat u}
+=
+\lambda_1\cos^2\!\theta
++
+\sum_{j\ge 2}\lambda_j \langle \boldsymbol{v}_j,\boldsymbol{w}\rangle^2 \sin^2\!\theta
+\;\ge\;
+\lambda_1\cos^2\!\theta,
+\]
+since $\lambda_j\ge 0$. Subtract from $\lambda_1$ to obtain the residual bound.
+\hfill$\square$
+
+\bigskip
+\paragraph{Proof of Corollary~\ref{col:M}.}
+We require $1-(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\ge 1-\delta$. 
+Equivalently $(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\le \delta$, giving
+\[
+M\;\ge\;\frac{\log(1/\delta)}{\log\big((1-(\sin\theta)^{r_{\mathrm{act}}-1})^{-1}\big)}.
+\]
+\hfill$\square$
+
+
+\section{Additional Experimental Results}
+\label{sec:app_exp}
+
+This appendix provides supporting results that complement the main experiments. We organize them around four additional checks: whether SOMA generalizes to another model family, whether its efficiency gains hold across datasets, which components drive the gains, and how warm-start length affects switching and stability.
+
+\subsection{Full Qwen Response Similarity Results}
+\label{sec:app_res}
+
+The main text reports the full response-similarity results for the LLaMA family. Table~\ref{tab:qwen-pct} reports the same evaluation on the Qwen family, where the original model is Qwen-3-8B and the surrogate is Qwen-3-0.6B. SOMA achieves the highest similarity on every dataset, showing that the method is not tied to one backbone family. Compared with LLaMA, the absolute similarities are lower because the capacity gap between Qwen-3-8B and Qwen-3-0.6B is larger, making local imitation harder. Nevertheless, SOMA remains consistently better than the baselines, which suggests that local adaptation is especially useful when the small--large model gap is wide.
+
+\begin{table}[t]
+\footnotesize
+\setlength\tabcolsep{2pt}
+\centering
+\caption{Response similarity to the original model across six datasets for the Qwen family. Higher is better.}
+\label{tab:qwen-pct}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lccccccc}
+\toprule
+ & \textbf{ShareGPT} & \textbf{ReMeDi} & \textbf{Craigslist} & \textbf{Multi-Char} & \textbf{MATH} & \textbf{MT-Bench} & \textbf{Avg.} \\
+\midrule
+Surrogate       & 50.9 $\pm$ 1.21 & 63.5 $\pm$ 2.87 & 48.2 $\pm$ 3.40 & 44.7 $\pm$ 3.54 & 42.6 $\pm$ 1.70 & 40.4 $\pm$ 0.81 & 48.4 $\pm$ 8.31 \\
+History-Prefix  & 70.5 $\pm$ 1.15 & 75.7 $\pm$ 2.01 & 63.0 $\pm$ 2.23 & 65.5 $\pm$ 0.91 & 51.3 $\pm$ 2.45 & 53.6 $\pm$ 2.32 & 63.3 $\pm$ 9.47 \\
+History-FT      & 76.4 $\pm$ 1.68 & 79.2 $\pm$ 2.61 & 74.5 $\pm$ 3.56 & 63.2 $\pm$ 1.74 & 65.9 $\pm$ 1.70 & 62.7 $\pm$ 0.72 & 70.3 $\pm$ 7.23 \\
+LLMLingua-2     & 68.9 $\pm$ 1.32 & 74.1 $\pm$ 2.14 & 61.2 $\pm$ 2.67 & 63.4 $\pm$ 1.18 & 49.8 $\pm$ 2.03 & 51.7 $\pm$ 1.45 & 61.5 $\pm$ 7.92 \\
+RouteLLM        & 79.6 $\pm$ 1.04 & 81.9 $\pm$ 1.36 & 75.1 $\pm$ 2.91 & 72.8 $\pm$ 1.62 & 67.3 $\pm$ 1.21 & 68.0 $\pm$ 0.96 & 74.1 $\pm$ 5.43 \\
+\midrule
+\textbf{SOMA}   & \textbf{81.0 $\pm$ 0.93} & \textbf{83.2 $\pm$ 1.21} & \textbf{76.4 $\pm$ 3.85} & \textbf{74.2 $\pm$ 2.53} & \textbf{68.7 $\pm$ 1.28} & \textbf{69.2 $\pm$ 1.08} & \textbf{75.5 $\pm$ 5.97} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Additional Efficiency Results}
+\label{sec:app_eff}
+
+The main text reports the amortized break-even analysis. Here we provide the dataset-level token and throughput results. Figure~\ref{fig:app_token_costs} shows that SOMA consistently uses fewer tokens per dialogue across both model families. The reason is that after switching, SOMA serves later turns with the adapted surrogate and a compressed context rather than repeatedly sending the full growing history. This avoids the large token cost of Original and History-Prefix while retaining stronger response similarity than directly using the surrogate.
+
+Figure~\ref{fig:app_throughput} reports throughput. SOMA matches or exceeds the speed of Surrogate and History-FT, and clearly improves over Original and History-Prefix. The runtime gain comes from the same two design choices: post-switch inference uses the small model, and the input context is shorter. Together, these results show that SOMA provides surrogate-level efficiency while preserving responses closer to the original model.
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/llama_token_costs.pdf}
+    \vspace{-2mm}
+    \centerline{\small (a) LLaMA family}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/qwen_token_costs.pdf}
+    \vspace{-2mm}
+    \centerline{\small (b) Qwen family}
+  \end{minipage}
+  \vspace{-1mm}
+  \caption{Average tokens per dialogue across six datasets. SOMA reduces token usage by avoiding repeated full-history serving after switching.}
+  \label{fig:app_token_costs}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/llama_through.pdf}
+    \vspace{-2mm}
+    \centerline{\small (a) LLaMA family}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/qwen_through.pdf}
+    \vspace{-2mm}
+    \centerline{\small (b) Qwen family}
+  \end{minipage}
+  \vspace{-1mm}
+  \caption{Throughput across six datasets. SOMA keeps the serving path close to the surrogate while maintaining higher similarity to the original model.}
+  \label{fig:app_throughput}
+\end{figure}
+
+\subsection{Component and Capability Diagnostics}
+\label{sec:app_abl}
+
+\paragraph{Qwen ablation.}
+Figure~\ref{fig:app_component_capability}(a) repeats the component ablation on the Qwen family. The full SOMA variant performs best. Removing the anti-degeneration loss reduces performance because prompt mining becomes less stable and can collapse toward low-diversity outputs. Removing both the expectation-weighted term and anti-degeneration loss causes a larger drop, especially on harder datasets. This confirms that both components are needed to mine useful local disagreement rather than superficial token mismatch.
+
+\paragraph{Ability-level behavior.}
+Figure~\ref{fig:app_component_capability}(b) evaluates SOMA on MT-Bench-101 ability dimensions using the LLaMA family. SOMA improves most on harder skills such as reasoning and questioning, where the original model has the largest advantage over the surrogate. It also improves memory, understanding, rephrasing, and interference handling. This indicates that local adaptation does not only help one narrow skill; it produces a more balanced response profile across dialogue abilities.
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=0.86\linewidth]{figure/ablation_qwen.pdf}
+    \vspace{-2mm}
+    \centerline{\small (a) Qwen ablation}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=0.68\linewidth]{figure/mt_radar.pdf}
+    \vspace{-2mm}
+    \centerline{\small (b) Ability profile on MT-Bench-101}
+  \end{minipage}
+  \vspace{-1mm}
+  \caption{Component and capability diagnostics. The Qwen ablation confirms the importance of SOMA's mining objective, while the ability analysis shows broad gains across dialogue skills.}
+  \label{fig:app_component_capability}
+\end{figure}
+
+\subsection{Warm-Start Length and Switching Behavior}
+\label{sec:app_switch}
+
+SOMA should switch only after the warm-start window provides enough evidence to adapt the surrogate. To study this, we sweep the warm-start window \(W\in[1,15]\) and measure the final response similarity after switching. Figure~\ref{fig:app_switching}(a) shows that simpler, goal-anchored dialogues such as ShareGPT, ReMeDi, and Craigslist reach high similarity after only a few turns. In contrast, reasoning-heavy or multi-party datasets such as MATH and Multi-Char require longer warm starts before plateauing. This supports the design choice that the switch should be data-dependent rather than fixed.
+
+Figure~\ref{fig:app_switching}(b) plots the best switching point against final similarity and shows a negative association. Datasets that require later switching tend to have lower final similarity, suggesting that they are intrinsically harder for the surrogate to locally imitate. Practically, this means short warm starts are sufficient for general or goal-anchored chats, while compositional reasoning and multi-agent dialogues need more evidence before switching. Once the curve flattens, adding more warm-start turns brings little quality gain but delays the efficiency benefit.
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/truncation_trend.pdf}
+    \vspace{-2mm}
+    \centerline{\small (a) Similarity under different switch points}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/truncation_vs_similarity.pdf}
+    \vspace{-2mm}
+    \centerline{\small (b) Switch point vs. final similarity}
+  \end{minipage}
+  \vspace{-1mm}
+  \caption{Warm-start and switching behavior. Easier local-dialogue settings switch earlier, while reasoning-heavy or multi-party settings need longer warm starts and achieve lower final similarity.}
+  \label{fig:app_switching}
+\end{figure}
+
+\subsection{Empirical Variance Concentration}
+\label{sec:app_variance}
+
+Finally, we examine how the variance of surrogate--teacher similarity changes with the warm-start window \(W\). For each dataset, we compute the empirical standard deviation across dialogues at each truncation point. Figure~\ref{fig:variance} shows that variance decreases as \(W\) grows: early turns are highly variable, while larger warm-start windows enter a more stable regime. This trend is consistent with the concentration behavior used in Lemma~\ref{lem:warmstart} and the switching bound in Theorem~\ref{thm:detection}. In other words, early turns provide the largest information gain, while later warm-start turns mainly reduce uncertainty until the switching decision becomes stable.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.78\textwidth]{figure/variance_vs_W.pdf}
+  \caption{Variance of response similarity versus warm-start window \(W\). Larger warm-start windows reduce variance and support more stable switching decisions.}
+  \label{fig:variance}
+\end{figure}
+
+
+\section{LLM Usage}
+\label{app:llm_usage}
+
+Large language models were used only for writing assistance, including grammar checking, wording refinement, formatting suggestions, and readability editing. They were not used to generate the core methodology, design experiments, produce experimental results, create evaluation labels, or make routing decisions. All technical claims, mathematical formulations, experimental settings, and reported results were checked and finalized by the authors.
+
+
+\section{Broader Impact}
+\label{sec:broader_impact}
+
+SOMA aims to reduce the cost and latency of multi-turn LLM serving by replacing repeated large-model inference with session-local surrogate serving. This can make interactive LLM systems more efficient, accessible, and environmentally sustainable. At the same time, using a smaller surrogate may introduce quality degradation if the dialogue leaves the learned local state, especially in high-stakes settings such as medical, legal, or financial assistance. SOMA mitigates this risk through semantic acceptance and drift-aware rollback, but deployment should still include monitoring, conservative thresholds, and human oversight where errors may cause harm. Since SOMA uses dialogue history for local adaptation, practical deployments should also apply data minimization, retention limits, and privacy-preserving processing.
+
+
+
+\section{Limitations and Future Work}
+\label{sec:limitations}
+
+SOMA has several limitations. First, the surrogate's capacity limits how closely it can match the original model. When the small--large model gap is very large, some behaviors cannot be recovered by session-local adaptation alone. Second, soft-prompt mining requires access to the surrogate tokenizer and embedding space, which makes SOMA harder to deploy in strict black-box API settings. Third, SOMA is designed for locally coherent dialogues. Abrupt topic changes, noisy warm-start windows, or strong paraphrase shifts can weaken the learned local directions, although the drift gate is designed to reduce persistent degradation. Finally, SOMA introduces a one-time warm-start cost, so it is most suitable for medium-to-long sessions where post-switch savings can amortize the initial adaptation overhead.
+
+Future work can improve SOMA along several directions. Better drift detectors could make rollback more reliable under topic shifts. Approximate mining methods could reduce the need for internal surrogate access. Multi-region adaptation could support conversations with multiple topics, and privacy-preserving mining could make the method safer for sensitive dialogue settings. Another promising direction is to amortize soft-prompt search across related sessions and extend SOMA to multimodal serving.
