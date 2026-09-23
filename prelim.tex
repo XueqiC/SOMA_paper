@@ -28,21 +28,21 @@ More details are given in Appendix~\ref{sec:notation}.
 \subsection{Exploring Token--Turn Patterns in Multi-Turn LLM Dialogues}
 \label{sec:long_tail}
 
-\begin{wrapfigure}[15]{r}{0.44\textwidth}
+
+Efficient multi-turn serving depends on how the dialogue state evolves over time. In standard LLM serving, each new request is processed together with the full previous history, so the computational cost grows with the length of the conversation. However, the amount of new information introduced at each turn may follow a different pattern. We therefore first study token usage across turns.
+
+\begin{wrapfigure}[14]{r}{0.42\textwidth}
   \vspace{-11pt}
   \centering
-  \includegraphics[width=0.439\textwidth]{figure/long_tail.pdf}
+  \includegraphics[width=0.419\textwidth]{figure/long_tail.pdf}
   \vspace{-18pt}
   \caption{Relative average token count per turn, normalized by Turn 1. Across four dialogue datasets, token usage drops after the early turns and then forms a long tail.}
   \vspace{-11pt}
   \label{fig:longtail-token-decay}
 \end{wrapfigure}
-
-Efficient multi-turn serving depends on how the dialogue state evolves over time. In standard LLM serving, each new request is processed together with the full previous history, so the computational cost grows with the length of the conversation. However, the amount of new information introduced at each turn may follow a different pattern. We therefore first study how token usage changes across dialogue turns.
-
 We consider four representative multi-turn settings: \textit{ShareGPT}~\citep{chen2024sharegpt4v} for open-ended human--LLM chat, \textit{ReMeDi}~\citep{yan2022remedi} for doctor--patient consultation, \textit{Craigslist Bargain}~\citep{he2018decoupling} for negotiation, and \textit{Multi-Character}~\citep{agentlans_multi-character_dialogue_2024} for multi-party role-play. These datasets cover different speaker roles, task goals, and interaction structures. For each dataset, we compute the average token count at turn \(t\) and normalize it by the average token count of Turn 1.
 
-Figure~\ref{fig:longtail-token-decay} shows a consistent long-tail pattern. Early turns are token-heavy because they usually introduce the task, topic, constraints, and speaker intent. Later turns are much shorter and stabilize at a lower level. This does not make later turns independent; rather, it suggests that many later turns are interpreted as local updates under an already established dialogue state. As a result, the marginal new input becomes smaller while standard serving still repeatedly processes the full prefix. This mismatch motivates an adaptive serving strategy: use the original large model to establish the early dialogue state, and then use a cheaper surrogate when subsequent turns remain within that local state.
+Figure~\ref{fig:longtail-token-decay} shows a consistent long-tail pattern. Early turns are token-heavy because they usually introduce the task, topic, constraints, and speaker intent. Later turns are much shorter and stabilize at a lower level. This does not make later turns independent; rather, it suggests that many later turns are interpreted as local updates under an already established dialogue state. As a result, the marginal new input becomes smaller while standard serving still repeatedly processes the full prefix. This mismatch motivates an adaptive serving strategy: use the original large model to establish the early dialogue state, and then use a cheaper surrogate while subsequent turns remain within that local state instead of recomputing the full history.
 
 \subsection{Local Manifold Approximation for Multi-Turn Dialogues}
 
@@ -52,7 +52,7 @@ We describe this challenge through a local manifold view. Let \(F\) denote the o
 \[
 \mathcal{D}_{k}=\{(q_1,a_1),\ldots,(q_k,a_k)\},
 \]
-the prefix induces a local region in the model's contextual representation space. This region captures the current topic, constraints, style, and task state of the conversation. It adapts \(G\) to match the local behavior of \(F\) around the current dialogue prefix.
+the prefix induces a local region in the model's contextual representation space. This region captures the current topic, constraints, style, and task state of the conversation.
 
 \begin{problem}[Local Manifold Approximation for Multi-Turn Interactions]
 Given a dialogue prefix \(\mathcal{D}_{k}\) and an original model \(F\), learn a surrogate model \(G\in\mathcal{G}\) whose local representation region matches that of \(F\) under the same prefix:

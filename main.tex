@@ -36,6 +36,10 @@
 \theoremstyle{problem}
 \newtheorem{problem}[theorem]{Problem}
 
+% Revision marker for changes made in the ICLR 2027 revision (review-driven).
+% Set to \newcommand{\rev}[1]{#1} before submission to remove the red color.
+\newcommand{\rev}[1]{{\color{red}#1}}
+
 \title{SOMA: Efficient Multi-turn LLM Serving via Small Language Model}
 
 % Authors must not appear in the submitted version. The ICLR style replaces
@@ -51,7 +55,7 @@
 
 % ============================================================
 \begin{abstract}
-Large Language Models (LLMs) are increasingly deployed in multi-turn dialogue settings where preserving conversational context across turns is essential. A standard serving practice concatenates the full dialogue history at every turn, which reliably maintains coherence but incurs substantial cost in latency, memory, and API expenditure, especially when queries are routed to large proprietary models. Existing approaches often struggle to balance the trade-off between response quality and efficiency. We propose a framework that exploits the early turns of a session to estimate a local response manifold and then adapt a smaller surrogate model to this local region for the remainder of the conversation. Concretely, we learn soft prompts that maximize semantic divergence between the large and surrogate small language models' responses to surface least-aligned local directions, stabilize training with anti-degeneration control, and distill the mined cases into localized LoRA fine-tuning so the surrogate runs without prompts at inference. A simple gate enables a one-time switch with rollback on drift. We further provide a theoretical analysis for key components in SOMA. Extensive experiments show the effectiveness of SOMA. The source code is provided at:
+Large Language Models (LLMs) are increasingly deployed in multi-turn dialogue settings where preserving conversational context across turns is essential. A standard serving practice concatenates the full dialogue history at every turn, which reliably maintains coherence but incurs substantial cost in latency, memory, and API expenditure, especially when queries are routed to large proprietary models. Existing approaches often struggle to balance the trade-off between response quality and efficiency. We propose a framework that exploits the early turns of a session to estimate a local response manifold and then adapt a smaller surrogate model to this local region for the remainder of the conversation. Concretely, we learn soft prompts that maximize semantic divergence between the large and surrogate small language models' responses to surface least-aligned local directions, stabilize training with anti-degeneration control, and distill the mined cases into localized LoRA fine-tuning so the surrogate runs without prompts at inference. A simple gate enables a one-time switch with rollback on drift. We further provide a theoretical analysis for key components in SOMA. \rev{Extensive experiments on six multi-turn benchmarks show that SOMA preserves the original model's responses and reduces serving cost for medium-to-long, locally coherent sessions.} The source code is provided at:
 \url{https://anonymous.4open.science/r/SOMA-4175}.
 \end{abstract}
 

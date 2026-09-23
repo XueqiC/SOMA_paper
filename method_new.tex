@@ -20,7 +20,7 @@ a_t^{F}=F\!\left(V(\mathbf P)\oplus\mathcal D_{t-1}\oplus q_t\right),
  a_t^{G}=G\!\left(\mathbf P\oplus_{\mathrm{emb}}
 \mathbf E(\mathrm{tok}_G(\mathcal D_{t-1}\oplus q_t))\right).
 \]
-Here $\mathrm{tok}_G(\cdot)$ is the tokenizer of $G$, $\mathbf E(\cdot)$ maps text tokens to embeddings, and $\oplus_{\mathrm{emb}}$ concatenates along the sequence dimension. This construction lets $F$ and $G$ be compared under the same dialogue state while allowing gradients to flow only through $\mathbf P$ on $G$.
+Here $\mathrm{tok}_G(\cdot)$ is the tokenizer of $G$, $\mathbf E(\cdot)$ maps text tokens to embeddings, and $\oplus_{\mathrm{emb}}$ concatenates along the sequence dimension. This construction lets $F$ and $G$ be compared under the same dialogue state while allowing gradients to flow only through $\mathbf P$ on $G$\rev{; the original-model responses used as mining targets are generated once in the warm-start window and kept fixed during optimization, so $F$ is never re-queried while $\mathbf P$ changes (Appendix~\ref{sec:app_rationale})}.
 
 \subsection{Soft Prompt Tuning for Mining Weak Alignment Directions}
 
@@ -102,7 +102,7 @@ We minimize Eq.~\ref{eq:prompt-final} with AdamW while freezing all weights of $
 \subsection{Localized Fine-Tuning, Switching, and Rollback}
 
 The learned soft prompts are session-local mining tools. After mining, SOMA converts them into ordinary local supervision for LoRA adaptation. For each warm-start turn, we score its hardness by the largest mined divergence $r_t=\max_{\mathbf P\in\mathcal P_{\mathrm{cand}}}
-\mathcal L_{\mathrm{sem\_exp}}(\mathbf P;\mathcal D_{t-1},q_t)$ and form a local training set $\mathcal H$ from the highest-scoring turns and their original-model responses. This makes the data-mining role of soft prompts explicit: Random-FT trains on randomly selected local turns, whereas SOMA trains on turns selected because prompt mining exposes weak alignment directions.
+\mathcal L_{\mathrm{sem\_exp}}(\mathbf P;\mathcal D_{t-1},q_t)$ and form a local training set $\mathcal H$ from the highest-scoring turns and their original-model responses. \rev{This makes the data-mining role of soft prompts explicit: instead of training on all or randomly chosen warm-start turns, SOMA trains on the turns that prompt mining exposes as least aligned.}
 
 We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention and MLP projections, and optimize
 \begin{equation}
@@ -115,4 +115,4 @@ We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention a
 \end{equation}
 The continuous soft prompts are discarded after this stage. Thus, once SOMA switches, the online serving path uses only the LoRA-adapted surrogate and a compressed text context.
 
-Before switching, SOMA verifies that the adapted surrogate \(G\) is both output-aligned and context-local: it requires high response similarity to the original model \(F\) on a small acceptance batch and checks that the current query remains close to the warm-start dialogue centroid. Once accepted, SOMA serves later turns using a compressed input \(\widetilde S_t\), which keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, avoiding repeated full-history processing. During surrogate serving, SOMA continuously monitors semantic drift; if recent queries move away from the learned local state, it rolls back to \(F\), refreshes the local summary and centroid, and switches back to \(G\) only after the acceptance gate passes again.
+Before switching, SOMA verifies that the adapted surrogate \(G\) is both output-aligned and context-local: it requires high response similarity to the original model \(F\) on a small acceptance batch and checks that the current query remains close to the warm-start dialogue centroid. Once accepted, SOMA serves later turns using a compressed input \(\widetilde S_t\), which keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, avoiding repeated full-history processing. During surrogate serving, SOMA continuously monitors semantic drift; if recent queries move away from the learned local state, it rolls back to \(F\), refreshes the local summary and centroid, and switches back to \(G\) only after the acceptance gate passes again. \rev{Because the drift statistic is a continuous distance to the warm-start centroid, gradual drift lowers it monotonically and triggers rollback once the margin is exhausted, rather than only on abrupt shifts.}

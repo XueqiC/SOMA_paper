@@ -1,14 +1,10 @@
 \section{Theoretical Analysis}\label{sec:theory}
 
-This section analyzes three design questions in SOMA: when to accept the session-local surrogate, when warm-start overhead is amortized, and how many soft-prompt candidates are needed. We use the local manifold view only as a first-order approximation around a fixed dialogue state, where small embedding perturbations smoothly change the surrogate's output behavior. SOMA is effective when later turns remain tied to this warm-start state, not because they are intrinsically easy.
+This section analyzes three design questions in SOMA: when to accept the session-local surrogate, when warm-start overhead is amortized, and how many soft-prompt candidates are needed. We use the local manifold view only as a first-order approximation around a fixed dialogue state, where small embedding perturbations smoothly change the surrogate's output behavior. \rev{SOMA is effective because later turns remain tied to this warm-start state, not because later turns are intrinsically easier than early ones. These results characterize SOMA's operating conditions (when to switch, when the overhead is amortized, and how many prompt candidates are needed); they do not claim an advantage over alternative mining strategies, which we assess empirically in Section~\ref{sec:exp}.}
 
 \subsection{Warm-Start Reliability and Switching}\label{sec:warm-start}
 
-At turn $t$, let $S_t=\mathcal D_{t-1}\oplus q_t$ be the shared text context and let $a_t^F,a_t^G$ be the outputs of the original model and the LoRA-adapted surrogate. Here we define a bounded discrepancy score
-\[
-\mathsf{Gap}_{\Theta}(S_t)=1-\cos\big(\phi(a_t^G),\phi(a_t^F)\big)\in[0,1],
-\]
-where $\Theta$ denotes the current surrogate adapter. A lower value means that the surrogate better preserves the original model's local behavior.
+At turn $t$, let $S_t=\mathcal D_{t-1}\oplus q_t$ be the shared text context and let $a_t^F,a_t^G$ be the outputs of the original model and the LoRA-adapted surrogate. Here we define a bounded discrepancy score $\mathsf{Gap}_{\Theta}(S_t)=1-\cos\big(\phi(a_t^G),\phi(a_t^F)\big)\in[0,1]$, where $\Theta$ denotes the current surrogate adapter. A lower value means that the surrogate better preserves the original model's local behavior.
 
 \begin{lemma}[Warm-Start Generalization]\label{lem:warmstart}
 Let $h(S)\in[0,1]$ be any bounded local statistic, such as $\mathsf{Gap}_{\Theta}(S)$ or a query-centroid similarity score. Suppose the warm-start stream has effective sample size $W_{\mathrm{eff}}$, accounting for temporal dependence. Then with probability at least $1-\delta$,
@@ -32,7 +28,7 @@ Assume $X_j\in[-1,1]$ and the acceptance batch has effective size $|B|_{\mathrm{
 Choose $W$ so that the warm-start uncertainty in Lemma~\ref{lem:warmstart} is at most $\eta$, and choose $|B|_{\mathrm{eff}}$ so that $\gamma_B(\delta)\le \gamma$. Switching is justified when the adapted surrogate passes both the output-fidelity gate and the locality gate with margins larger than $\eta+\gamma$. The combined decision error is controlled at confidence at least $1-2\delta$ by a union bound.
 \end{corollary}
 
-This result formalizes the intended operating regime. If later turns are short but highly context-dependent, the locality gate can still pass because the turns remain close to the established dialogue state. If the user abruptly changes topic, the locality statistic shifts, the gate fails, and SOMA rolls back to the original model.
+This result formalizes the intended operating regime: short but context-dependent later turns still pass the locality gate because they remain close to the established dialogue state, whereas an abrupt topic change shifts the locality statistic, fails the gate, and triggers rollback to the original model.
 
 \subsection{When Does SOMA Give Net Efficiency Gains?}\label{sec:theory-cost}
 
@@ -58,7 +54,7 @@ The net gain is
 -C_{\mathrm{probe}}(W)-C_{\mathrm{LoRA}}(W)-C_{\mathrm{rb}}(T;W).
 \end{aligned}
 \end{equation}
-Therefore SOMA is beneficial only when the accumulated post-switch savings exceed the one-time warm-start and adaptation overhead. This explains why very short sessions may not benefit, while medium-to-long locally coherent sessions can amortize the initialization cost.
+Therefore SOMA is beneficial only when the accumulated post-switch savings exceed the one-time warm-start and adaptation overhead. \rev{This explains the operating range measured in Table~\ref{tab:break-even}: sessions of 1--4 turns do not benefit, whereas locally coherent sessions of 5 or more turns amortize the initialization cost, with the gain growing in session length.}
 
 \subsection{How Many Soft-Prompt Candidates per Iteration?}
 
