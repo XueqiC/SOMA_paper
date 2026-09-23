@@ -1,4 +1,4 @@
-\section*{Technical Appendices and Supplementary Material}
+\section*{Appendix}
 
 
 \section{Notations}\label{sec:notation}
@@ -114,8 +114,7 @@ Local manifold approximation techniques aim to exploit the manifold hypothesis b
 \section{Reproducibility}
 In this section, we introduce the details of the experiments in this
 paper for reproducibility. At the same time, we have uploaded all necessary code to our GitHub repository to reproduce the results presented in this paper: 
-% \url{https://anonymous.4open.science/r/SOMA-4175}
-\url{https://github.com/LabRAI/SOMA}
+\url{https://anonymous.4open.science/r/SOMA-4175}
 . All major experiments are encapsulated as shell scripts, which can be conveniently executed. We introduce the details for reproducibility in the subsections below.
 
 \subsection{Real-World Datasets}\label{sec:app_dataset}
@@ -144,7 +143,7 @@ We implement SOMA based on PyTorch with HuggingFace Transformers, serve inferenc
 
 \textbf{RouteLLM}~\citep{ong2024routellmlearningroutellms}: We adopt the released router to choose between the Original and the surrogate per turn (complex vs.\ simple queries), following the original settings from the paper.
 
-\subsection{Data Filtering}
+\subsection{Data Filtering}\label{sec:app_filter}
 
 To ensure that SOMA is evaluated on context-dependent dialogues, we prompt multiple strong LLMs, including GPT-OSS, DeepSeek-V3, and Gemma-2-27B, with the classification prompt shown in Figure~\ref{fig:context_filter}, and retain only conversations that all three models recognize as context-dependent. This avoids model-specific biases and yields a high-quality subset of dialogues where later turns meaningfully depend on earlier turns, matching the use cases in this paper.
 
@@ -166,7 +165,7 @@ The prompt for the LLM judge to evaluate the response similarity score is shown 
     \label{fig:LLM_judge}
 \end{figure}
 
-\subsection{Packages Required for Implementation}
+\subsection{Packages Required for Implementation}\label{sec:app_packages}
 We perform all experiments on a server equipped with Nvidia A6000 GPUs. Below we list the key packages and their versions used in our implementation:
 
 \begin{itemize}
@@ -705,12 +704,6 @@ Finally, we examine how the variance of surrogate--teacher similarity changes wi
   \caption{Variance of response similarity versus warm-start window \(W\). Larger warm-start windows reduce variance and support more stable switching decisions.}
   \label{fig:variance}
 \end{figure}
-
-
-\section{LLM Usage}
-\label{app:llm_usage}
-
-Large language models were used only for writing assistance, including grammar checking, wording refinement, formatting suggestions, and readability editing. They were not used to generate the core methodology, design experiments, produce experimental results, create evaluation labels, or make routing decisions. All technical claims, mathematical formulations, experimental settings, and reported results were checked and finalized by the authors.
 
 
 \section{Broader Impact}

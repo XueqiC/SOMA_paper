@@ -1,0 +1,77 @@
+\documentclass{article} % For LaTeX2e
+% ICLR 2027 conference style (double-blind submission). Do NOT uncomment
+% \iclrfinalcopy before acceptance; the style prints "Anonymous authors"
+% in the author block as long as it stays commented out.
+\usepackage{iclr2027_conference,times}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{subcaption}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEOREMS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\theoremstyle{problem}
+\newtheorem{problem}[theorem]{Problem}
+
+\title{SOMA: Efficient Multi-turn LLM Serving via Small Language Model}
+
+% Authors must not appear in the submitted version. The ICLR style replaces
+% the author block with "Anonymous authors / Paper under double-blind review"
+% while \iclrfinalcopy is commented out. Fill in the real author list only
+% for the camera-ready version.
+\author{Anonymous authors}
+
+%\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
+
+\begin{document}
+\maketitle
+
+% ============================================================
+\begin{abstract}
+Large Language Models (LLMs) are increasingly deployed in multi-turn dialogue settings where preserving conversational context across turns is essential. A standard serving practice concatenates the full dialogue history at every turn, which reliably maintains coherence but incurs substantial cost in latency, memory, and API expenditure, especially when queries are routed to large proprietary models. Existing approaches often struggle to balance the trade-off between response quality and efficiency. We propose a framework that exploits the early turns of a session to estimate a local response manifold and then adapt a smaller surrogate model to this local region for the remainder of the conversation. Concretely, we learn soft prompts that maximize semantic divergence between the large and surrogate small language models' responses to surface least-aligned local directions, stabilize training with anti-degeneration control, and distill the mined cases into localized LoRA fine-tuning so the surrogate runs without prompts at inference. A simple gate enables a one-time switch with rollback on drift. We further provide a theoretical analysis for key components in SOMA. Extensive experiments show the effectiveness of SOMA. The source code is provided at:
+\url{https://anonymous.4open.science/r/SOMA-4175}.
+\end{abstract}
+
+\input{introduction}
+\input{prelim}
+\input{method_new}
+\input{theory_new}
+\input{experiment_new}
+\input{conclusion}
+
+% ICLR 2027: AI use statement (required), Ethics statement and Reproducibility
+% statement go at the end of the main text, before the references, and do not
+% count toward the 9-page limit.
+\input{statements}
+
+\bibliography{ref}
+\bibliographystyle{iclr2027_conference}
+
+\appendix
+\newpage
+\input{appendix}
+
+\end{document}
