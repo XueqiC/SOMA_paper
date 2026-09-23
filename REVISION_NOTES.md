@@ -5,8 +5,8 @@ Set `\newcommand{\rev}[1]{#1}` in `main.tex` before submission to remove the col
 Deletions cannot be shown in red; they are listed below.
 
 Layout as of this revision: main text is exactly 9 pages (ends at the bottom of page 9,
-zero slack); Section 5 (experiments) starts at the top of page 7 (a `\newpage` precedes
-it in `main.tex`). Any further edit needs a recompile and a page check.
+zero slack); Section 5 (experiments) begins on page 7 (no forced page break; the user later
+asked not to force it). Any further edit needs a recompile and a page check.
 
 ## Round 2 — restructuring (2026-09-23, evening)
 
@@ -36,8 +36,8 @@ it in `main.tex`). Any further edit needs a recompile and a page check.
   (checked with a `pdftotext -bbox-layout` script).
 - Follow-up (user feedback): all §5 floats are `[!t]` (tables/figures at page tops; Table 1
   therefore sits above the Section 5 heading on page 7), and the gap below §4.3 left by the
-  page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; page 6
-  now ends within ~1 line of the text block.
+  page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
+  forced `\newpage` before Section 5 was then removed at the user's request.
 
 ## Round 1 — review-driven wording (main text)
 
