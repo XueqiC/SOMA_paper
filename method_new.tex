@@ -4,7 +4,7 @@
   \centering
   \includegraphics[width=\textwidth]{figure/overview.pdf}
   \vspace{-2mm}
-  \caption{Overview of SOMA. \textbf{(1) Warm-start:} the large model $F$ answers the first $W$ turns, and each turn yields a context--reply pair. \textbf{(2) Soft-prompt mining:} a soft prompt $\mathbf P$ is trained on the frozen surrogate $G$ to push $G$ away from $F$'s tokens and their embedding neighbors, using neighborhood unlikelihood with expectation weighting and an entropy regularizer; how far $G$ can be pushed gives the hardness of each warm-start turn. \textbf{(3) Localized LoRA:} a low-rank update of $G$ is fitted to $F$'s replies with hardness-weighted turns, and the prompt is discarded. \textbf{(4) Gated serving:} $G$ takes over only if its replies match $F$'s (fidelity) and the query stays near the warm-start centroid (locality), and it then serves from a summary plus the last $K$ turns. Bottom: the session timeline, in which adaptation runs once and a drift monitor rolls the session back to $F$.}
+  \caption{Overview of SOMA. \textbf{(1) Warm-start:} $F$ answers the first $W$ turns, yielding context--reply pairs. \textbf{(2) Soft-prompt mining:} a soft prompt $\mathbf P$ on the frozen surrogate $G$ pushes $G$ away from $F$'s tokens and their embedding neighbors (neighborhood unlikelihood, expectation weighting, entropy regularizer); how far $G$ can be pushed gives each turn's hardness. \textbf{(3) Localized LoRA:} a low-rank update fits $G$ to $F$'s replies on hardness-weighted turns. \textbf{(4) Gated serving:} $G$ takes over if its replies match $F$'s (fidelity) and the query stays near the warm-start centroid (locality), and then serves from a summary plus the last $K$ turns. Bottom: the session timeline; adaptation runs once, and a drift monitor rolls the session back to $F$ when the topic changes.}
   \label{fig:overview}
 \vspace{-3mm}
 \end{figure}
@@ -105,7 +105,7 @@ The complete prompt-mining objective for a minibatch of warm-start turns $\mathc
 \right]
 +\lambda_P\|\mathbf P\|_F^2 .
 \end{equation}
-We minimize Eq.~\ref{eq:prompt-final} with AdamW while all weights of $G$ stay frozen, and we clip gradients to stabilize the prompt scale. Two choices keep mining cheap: semantic neighbors are retrieved from an ANN index over normalized token embeddings, and $\bar{\boldsymbol e}_{t,i}$ uses a top-$m$ truncation of $\Pi_{t,i}(\mathbf P)$ instead of a dense sum over the vocabulary. The per-step overhead is therefore linear in the number of teacher-prefix positions and scales with $k+m$ rather than $|\mathcal V|$.
+We minimize Eq.~\ref{eq:prompt-final} with AdamW and gradient clipping while all weights of $G$ stay frozen. Neighbors come from an ANN index over normalized token embeddings, and $\bar{\boldsymbol e}_{t,i}$ uses a top-$m$ truncation of $\Pi_{t,i}(\mathbf P)$, so the per-step overhead is linear in the number of teacher-prefix positions and scales with $k+m$ rather than with the vocabulary size $|\mathcal V|$.
 
 \subsection{Localized Fine-Tuning, Switching, and Rollback}\label{sec:ft-switch}
 
@@ -121,6 +121,6 @@ We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention a
 \qquad
 \omega_t\propto r_t .
 \end{equation}
-The continuous soft prompts are discarded after this stage; once SOMA switches, the online serving path uses only the LoRA-adapted surrogate and a compressed text context.
+The soft prompts are then discarded, so the online serving path uses only the LoRA-adapted surrogate together with a compressed context.
 
 Before switching, SOMA verifies two conditions: the adapted surrogate must reproduce the original model's responses on a small acceptance batch, and the current query must remain close to the warm-start dialogue centroid. Once accepted, \(G\) serves later turns from a compressed input \(\widetilde S_t\) that keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, so the full history is never re-processed. During surrogate serving, SOMA keeps monitoring semantic drift. If recent queries move away from the learned local state, it rolls back to \(F\), refreshes the summary and the centroid, and returns to \(G\) only after the acceptance gate passes again. \rev{Because the drift statistic is a continuous distance to the warm-start centroid, gradual drift lowers it monotonically and triggers rollback once the margin is exhausted, rather than only on abrupt shifts.}

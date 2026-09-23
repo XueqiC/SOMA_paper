@@ -41,4 +41,3 @@ Given a dialogue prefix \(\mathcal{D}_{k}\) and an original model \(F\), learn a
 where \(\mathcal{M}^{F}_{k}(\mathcal{D}_{k})\) and \(\mathcal{M}^{G}_{k}(\mathcal{D}_{k})\) denote the local representation regions induced by the prefix, and \(\mathrm{dist}(\cdot,\cdot)\) measures their discrepancy.
 \end{problem}
 
-This formulation leads directly to SOMA: the early turns expose where the surrogate disagrees with the original model within the current dialogue state, these examples adapt the surrogate, and the adapted surrogate serves later turns only while the dialogue remains close to the learned region.

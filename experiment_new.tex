@@ -67,7 +67,7 @@ Response similarity is the primary metric for replacing the original model, but 
 \centering
 \caption{MATH exact-match accuracy. SOMA improves task-grounded quality over baselines.}
 \label{tab:math-em}
-\resizebox{0.72\textwidth}{!}{
+\resizebox{\textwidth}{!}{
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Family} & \textbf{Orig.} & \textbf{Surr.} & \textbf{Hist.-P} & \textbf{Hist.-FT} & \textbf{Route} & \textbf{SOMA} \\
@@ -81,28 +81,7 @@ Qwen  & 36.48 $\pm$ 0.41 & 11.73 $\pm$ 0.64 & 16.21 $\pm$ 0.79 & 22.57 $\pm$ 0.8
 
 
 \paragraph{\textbf{RQ3: End-to-end efficiency.}}
-\begin{wraptable}[9]{r}{0.36\textwidth}
-\vspace{-2em}
-\centering
-\caption{ShareGPT break-even after all overhead.}
-\label{tab:break-even}
-\vspace{3pt}
-% \scriptsize
-\setlength{\tabcolsep}{1pt}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Turns} & \textbf{Latency} & \textbf{Tokens} \\
-\midrule
-1--4  & $-4.1\%$  & $-1.2\%$ \\
-5--8  & $+4.7\%$  & $+8.5\%$ \\
-9--12 & $+16.3\%$ & $+23.8\%$ \\
-13+   & $+29.1\%$ & $+37.2\%$ \\
-\bottomrule
-\end{tabular}
-\vspace{-10pt}
-\end{wraptable}
-
-SOMA reduces post-switch cost by serving the adapted surrogate with compressed context, but it also introduces one-time costs from soft-prompt probing and LoRA adaptation. Thus, the key question is whether the total session cost decreases after this overhead is included. SOMA reduces average token usage by avoiding repeated full-history serving after switching (Appendix~\ref{sec:app_eff}). Table~\ref{tab:break-even} further shows the amortized operating range: \rev{SOMA is slightly unfavorable for sessions of 1--4 turns ($-4.1\%$ latency), breaks even at 5--8 turns ($+4.7\%$), and is clearly beneficial from 9 turns on ($+16.3\%$ to $+29.1\%$ latency, $+23.8\%$ to $+37.2\%$ tokens).} This matches SOMA's intended use case as an amortized serving strategy for conversations where enough later turns remain local to the warm-start state. \rev{Figure~\ref{fig:app_throughput} reports throughput on all six datasets for both families: SOMA matches or exceeds the speed of Surrogate and History-FT and clearly improves over Original and History-Prefix (dataset-level token costs for every method are reported in Appendix~\ref{sec:app_eff}).}
+SOMA reduces post-switch cost by serving the adapted surrogate with compressed context, but it also introduces one-time costs from soft-prompt probing and LoRA adaptation. Thus, the key question is whether the total session cost decreases after this overhead is included. SOMA reduces average token usage by avoiding repeated full-history serving after switching (Appendix~\ref{sec:app_eff}). Figure~\ref{fig:operating}(a) further shows the amortized operating range: \rev{SOMA is slightly unfavorable for sessions of 1--4 turns ($-4.1\%$ latency), breaks even at 5--8 turns ($+4.7\%$), and is clearly beneficial from 9 turns on ($+16.3\%$ to $+29.1\%$ latency, $+23.8\%$ to $+37.2\%$ tokens).} This matches SOMA's intended use case as an amortized serving strategy for conversations where enough later turns remain local to the warm-start state. \rev{Figure~\ref{fig:app_throughput} reports throughput on all six datasets for both families: SOMA matches or exceeds the speed of Surrogate and History-FT and clearly improves over Original and History-Prefix (dataset-level token costs for every method are reported in Appendix~\ref{sec:app_eff}).}
 
 \begin{figure}[!t]
   \centering
@@ -149,6 +128,15 @@ SOMA reduces post-switch cost by serving the adapted surrogate with compressed c
 \vspace{-3mm}
 \end{figure}
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{figure/operating.pdf}
+\vspace{-5mm}
+\caption{Operating range and reliability. (a) End-to-end saving of SOMA over Original on ShareGPT after all warm-start and adaptation overhead, by session length. (b) MATH exact match with and without the dialogue history: later turns remain context-dependent. (c) Response similarity under an abrupt topic shift without rollback, with SOMA's drift-aware rollback, and without a shift; the right column lists SOMA's shift-detection and false-rollback (RB) rates in \%.}
+\label{fig:operating}
+\vspace{-3mm}
+\end{figure}
+
 \paragraph{\textbf{RQ4: Which components of SOMA are most important?}}
 We first ablate SOMA on the LLaMA family to identify which components drive the gains. Figure~\ref{fig:llama_ablation} shows that full SOMA performs best across all datasets. Removing the anti-degeneration loss consistently reduces performance, showing that entropy regularization keeps prompt mining stable and prevents collapsed, low-diversity soft prompts. Removing both the expectation-weighted term and the anti-degeneration loss leads to a larger drop, especially on harder datasets. This result shows that SOMA benefits from both stable prompt search and disagreement-aware mining. \rev{Figure~\ref{fig:qwen_ablation} repeats the ablation on the Qwen family with the same ordering, so the conclusion does not depend on the backbone. Figure~\ref{fig:mt_radar} breaks MT-Bench-101 down by ability for the LLaMA family: SOMA improves most on reasoning and questioning, where the original model has the largest advantage over the surrogate, and also improves memory, understanding, rephrasing, and interference handling.}
 
@@ -162,16 +150,16 @@ We first ablate SOMA on the LLaMA family to identify which components drive the 
 % \end{figure}
 
 \paragraph{\textbf{RQ5: When is session-local serving reliable, and when should SOMA fall back?}}
-We next test when SOMA's locality assumption holds and how rollback helps when it fails. Table~\ref{tab:context-dependency} shows that full-history MATH performance stays stable across turn buckets, while no-history performance drops sharply in later turns. This means later turns are not simply easier; they remain strongly dependent on the earlier dialogue context. Table~\ref{tab:topic-shift} then evaluates abrupt topic shifts. Without rollback, similarity drops substantially. With SOMA's drift-aware rollback, \rev{similarity returns to within 2.1--2.6 points of the clean setting (e.g., $88.5\to94.1$ vs.\ $96.4$ on ShareGPT), with 88.9--90.8\% of shifts detected and only 3.8--4.3\% false rollbacks.} These results show that SOMA should be viewed as a local serving strategy with automatic fallback. \rev{Figure~\ref{fig:app_switching} shows the warm-start side: goal-anchored dialogues (ShareGPT, ReMeDi, Craigslist) reach high similarity after a few turns, whereas reasoning-heavy or multi-party ones (MATH, Multi-Char) need longer warm starts and plateau lower, so the switch point must be data-dependent, which is exactly what the acceptance gate implements.}
+We next test when SOMA's locality assumption holds and how rollback helps when it fails. Figure~\ref{fig:operating}(b) shows that full-history MATH performance stays stable across turn buckets, while no-history performance drops sharply in later turns. This means later turns are not simply easier; they remain strongly dependent on the earlier dialogue context. Figure~\ref{fig:operating}(c) then evaluates abrupt topic shifts. Without rollback, similarity drops substantially. With SOMA's drift-aware rollback, \rev{similarity returns to within 2.1--2.6 points of the clean setting (e.g., $88.5\to94.1$ vs.\ $96.4$ on ShareGPT), with 88.9--90.8\% of shifts detected and only 3.8--4.3\% false rollbacks.} These results show that SOMA should be viewed as a local serving strategy with automatic fallback. \rev{Figure~\ref{fig:app_switching} shows the warm-start side: goal-anchored dialogues (ShareGPT, ReMeDi, Craigslist) reach high similarity after a few turns, whereas reasoning-heavy or multi-party ones (MATH, Multi-Char) need longer warm starts and plateau lower, so the switch point must be data-dependent, which is exactly what the acceptance gate implements.}
 
 \begin{figure}[!t]
   \centering
-  \begin{subfigure}[t]{0.42\textwidth}
+  \begin{subfigure}[t]{0.40\textwidth}
     \centering
     \includegraphics[width=\linewidth]{figure/truncation_trend.pdf}
     \caption{Similarity under different switch points.}
   \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.42\textwidth}
+  \begin{subfigure}[t]{0.40\textwidth}
     \centering
     \includegraphics[width=\linewidth]{figure/truncation_vs_similarity.pdf}
     \caption{Switch point vs.\ final similarity.}
@@ -182,41 +170,3 @@ We next test when SOMA's locality assumption holds and how rollback helps when i
 \vspace{-3mm}
 \end{figure}
 
-\begin{table}[!t]
-\centering
-\caption{Reliability of session-local serving: later turns stay context-dependent (a), and drift-aware rollback recovers most of the loss under abrupt topic shifts (b).}
-\begin{subtable}[t]{0.39\textwidth}
-\centering
-\caption{MATH context dependency.}
-\label{tab:context-dependency}
-\resizebox{\linewidth}{!}{
-\begin{tabular}{lccc}
-\toprule
-\textbf{Setting} & \textbf{1--3} & \textbf{4--6} & \textbf{7+} \\
-\midrule
-Full history & 46.92 $\pm$ 0.58 & 47.18 $\pm$ 0.51 & 46.75 $\pm$ 0.49 \\
-No history   & 43.78 $\pm$ 0.66 & 34.92 $\pm$ 0.76 & 24.88 $\pm$ 0.86 \\
-Drop         & 3.14 & 12.26 & 21.87 \\
-\bottomrule
-\end{tabular}}
-\end{subtable}
-\hfill
-\begin{subtable}[t]{0.50\textwidth}
-\centering
-\caption{Topic-shift stress test.}
-\label{tab:topic-shift}
-\resizebox{\linewidth}{!}{
-\begin{tabular}{lccccc}
-\toprule
-\textbf{Data} & \textbf{Clean} & \textbf{No RB} & \textbf{SOMA} & \textbf{Detect} & \textbf{False RB} \\
-\midrule
-ShareGPT   & 96.4 $\pm$ 1.91 & 88.5 $\pm$ 2.03 & \textbf{94.1 $\pm$ 1.47} & 90.8\% & 4.3\% \\
-ReMeDi     & 93.2 $\pm$ 0.98 & 85.7 $\pm$ 1.92 & \textbf{91.1 $\pm$ 1.34} & 89.6\% & 3.9\% \\
-Craigslist & 91.9 $\pm$ 2.49 & 83.1 $\pm$ 2.11 & \textbf{89.3 $\pm$ 1.68} & 88.9\% & 3.8\% \\
-\bottomrule
-\end{tabular}}
-\end{subtable}
-\vspace{-2mm}
-\label{tab:reliability}
-\vspace{-3mm}
-\end{table}
