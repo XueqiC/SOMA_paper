@@ -1,82 +1,29 @@
 \section{Theoretical Analysis}\label{sec:theory}
 
-This section analyzes three design questions in SOMA: when to accept the session-local surrogate, when warm-start overhead is amortized, and how many soft-prompt candidates are needed. We use the local manifold view only as a first-order approximation around a fixed dialogue state, where small embedding perturbations smoothly change the surrogate's output behavior. \rev{SOMA is effective because later turns remain tied to this warm-start state, not because later turns are intrinsically easier than early ones. These results characterize SOMA's operating conditions (when to switch, when the overhead is amortized, and how many prompt candidates are needed); they do not claim an advantage over alternative mining strategies, which we assess empirically in Section~\ref{sec:exp}.}
+This section answers three design questions: when SOMA may accept the session-local surrogate, when its warm-start overhead is amortized, and how many soft-prompt candidates are needed. \rev{SOMA is effective because later turns remain tied to this warm-start state, not because later turns are intrinsically easier than early ones. The results characterize operating conditions; they do not claim an advantage over alternative mining strategies, which we assess empirically in Section~\ref{sec:exp}. Full statements and proofs are given in Appendix~\ref{sec:app_proof}.}
 
-\subsection{Warm-Start Reliability and Switching}\label{sec:warm-start}
+\subsection{When to Switch}\label{sec:warm-start}
 
-At turn $t$, let $S_t=\mathcal D_{t-1}\oplus q_t$ be the shared text context and let $a_t^F,a_t^G$ be the outputs of the original model and the LoRA-adapted surrogate. Here we define a bounded discrepancy score $\mathsf{Gap}_{\Theta}(S_t)=1-\cos\big(\phi(a_t^G),\phi(a_t^F)\big)\in[0,1]$, where $\Theta$ denotes the current surrogate adapter. A lower value means that the surrogate better preserves the original model's local behavior.
+At turn $t$, let $S_t=\mathcal D_{t-1}\oplus q_t$ be the shared context, and let $a_t^F$ and $a_t^G$ be the responses of the original model and of the adapted surrogate. We measure their discrepancy with the bounded score $\mathsf{Gap}_{\Theta}(S_t)=1-\cos\big(\phi(a_t^G),\phi(a_t^F)\big)\in[0,1]$, where $\phi$ is a fixed sentence encoder and $\Theta$ is the current adapter. Because consecutive turns are dependent, all bounds use effective sample sizes, $W_{\mathrm{eff}}$ for the warm-start window and $|B|_{\mathrm{eff}}$ for an acceptance batch, which shrink when the early turns are noisy or topic-mixed. Lemma~\ref{lem:warmstart} shows that any bounded warm-start statistic concentrates around its mean at rate $\sqrt{2\log(2/\delta)/W_{\mathrm{eff}}}$, which is why SOMA demands a longer warm start when the early turns do not define a coherent local state.
 
-\begin{lemma}[Warm-Start Generalization]\label{lem:warmstart}
-Let $h(S)\in[0,1]$ be any bounded local statistic, such as $\mathsf{Gap}_{\Theta}(S)$ or a query-centroid similarity score. Suppose the warm-start stream has effective sample size $W_{\mathrm{eff}}$, accounting for temporal dependence. Then with probability at least $1-\delta$,
-\[
-\left|\frac{1}{W}\sum_{t=1}^{W}h(S_t)-\mathbb E_{S\sim\mathcal Q}[h(S)]\right|
-\le
-\sqrt{\frac{2\log(2/\delta)}{W_{\mathrm{eff}}}} .
-\]
-\end{lemma}
-
-The effective size $W_{\mathrm{eff}}$ decreases when the warm-start window is noisy, heterogeneous, or topic-mixed. Thus the bound predicts the desired behavior: SOMA should require a longer warm start or a more conservative gate when early turns do not define a coherent local state.
-
-Let $\Theta_{\mathrm{old}}$ and $\Theta_{\mathrm{new}}$ denote the surrogate before and after localized adaptation. On an acceptance batch $B$, we define $X_j=\mathsf{Gap}_{\Theta_{\mathrm{old}}}(S_j)-\mathsf{Gap}_{\Theta_{\mathrm{new}}}(S_j)$, then $
-\widehat\Delta_B=\frac{1}{|B|}\sum_{S_j\in B}X_j$, where positive $\widehat\Delta_B$ means that adaptation reduces the teacher-surrogate gap.
+The switching decision compares the surrogate before and after adaptation. On an acceptance batch $B$, let $X_j=\mathsf{Gap}_{\Theta_{\mathrm{old}}}(S_j)-\mathsf{Gap}_{\Theta_{\mathrm{new}}}(S_j)$ and $\widehat\Delta_B=\frac{1}{|B|}\sum_{S_j\in B}X_j$, so that a positive $\widehat\Delta_B$ means that adaptation reduced the gap on the batch.
 
 \begin{theorem}[Acceptance Bound for Switching]\label{thm:detection}
-Assume $X_j\in[-1,1]$ and the acceptance batch has effective size $|B|_{\mathrm{eff}}$. Let $\gamma_B(\delta)=\sqrt{\frac{2\log(1/\delta)}{|B|_{\mathrm{eff}}}}$. Then, with probability at least $1-\delta$, $\mathbb E[X]\ge \widehat\Delta_B-\gamma_B(\delta)$. Consequently, if $\widehat\Delta_B\ge \varepsilon+\gamma_B(\delta)$, then the true expected improvement is at least $\varepsilon$ with confidence $1-\delta$.
+Assume $X_j\in[-1,1]$ and let $\gamma_B(\delta)=\sqrt{2\log(1/\delta)/|B|_{\mathrm{eff}}}$. With probability at least $1-\delta$, $\mathbb E[X]\ge \widehat\Delta_B-\gamma_B(\delta)$. Hence, if $\widehat\Delta_B\ge \varepsilon+\gamma_B(\delta)$, the true expected improvement is at least $\varepsilon$ with confidence $1-\delta$.
 \end{theorem}
 
-\begin{corollary}[Switching Rule]\label{cor:switch}
-Choose $W$ so that the warm-start uncertainty in Lemma~\ref{lem:warmstart} is at most $\eta$, and choose $|B|_{\mathrm{eff}}$ so that $\gamma_B(\delta)\le \gamma$. Switching is justified when the adapted surrogate passes both the output-fidelity gate and the locality gate with margins larger than $\eta+\gamma$. The combined decision error is controlled at confidence at least $1-2\delta$ by a union bound.
-\end{corollary}
-
-This result formalizes the intended operating regime: short but context-dependent later turns still pass the locality gate because they remain close to the established dialogue state, whereas an abrupt topic change shifts the locality statistic, fails the gate, and triggers rollback to the original model.
+Combining both bounds yields SOMA's switching rule (Corollary~\ref{cor:switch}): choose $W$ so that the warm-start uncertainty is at most $\eta$ and $|B|$ so that $\gamma_B(\delta)\le\gamma$, and switch only when both the output-fidelity gate and the locality gate pass with margins larger than $\eta+\gamma$, which controls the decision error at confidence $1-2\delta$. An abrupt topic change shifts the locality statistic, fails the gate, and triggers an immediate rollback to the original model.
 
 \subsection{When Does SOMA Give Net Efficiency Gains?}\label{sec:theory-cost}
 
-SOMA introduces one-time warm-start overhead, so its efficiency should be evaluated at the session level rather than per turn. Let $T$ be the total number of turns and $W$ the switch point. If all turns are served by the original model, the total cost is $C_F(T)=\sum_{t=1}^{T}c_F(\mathcal D_{t-1}\oplus q_t)$, where $c_F(\cdot)$ can denote latency, tokens, or monetary cost. Under SOMA,
-\begin{equation}
-\label{eq:cost-soma}
-\begin{aligned}
-C_{\mathrm{SOMA}}(T;W)=
-&\sum_{t=1}^{W}c_F(\mathcal D_{t-1}\oplus q_t)
-+C_{\mathrm{probe}}(W)+C_{\mathrm{LoRA}}(W) \\
-&+\sum_{t=W+1}^{T}c_G(\widetilde S_t)
-+C_{\mathrm{rb}}(T;W),
-\end{aligned}
-\end{equation}
-where $C_{\mathrm{probe}}$ is the cost of soft-prompt mining, $C_{\mathrm{LoRA}}$ is the localized adaptation cost, $\widetilde S_t$ is the compressed post-switch input, and $C_{\mathrm{rb}}$ covers drift checks and occasional rollback.
-
-The net gain is
+SOMA pays a one-time warm-start overhead, so its efficiency must be judged per session. Let $T$ be the number of turns, $W$ the switch point, and $c_F(\cdot)$ and $c_G(\cdot)$ the per-turn costs (latency, tokens, or price) of the original model and of the surrogate on its compressed input $\widetilde S_t$. Relative to serving every turn with $F$, the net gain of SOMA is
 \begin{equation}
 \label{eq:net-gain}
-\begin{aligned}
-\Delta C(T;W)&=C_F(T)-C_{\mathrm{SOMA}}(T;W)\\
-&=\sum_{t=W+1}^{T}\left[c_F(\mathcal D_{t-1}\oplus q_t)-c_G(\widetilde S_t)\right]
--C_{\mathrm{probe}}(W)-C_{\mathrm{LoRA}}(W)-C_{\mathrm{rb}}(T;W).
-\end{aligned}
+\Delta C(T;W)=\sum_{t=W+1}^{T}\Big[c_F(\mathcal D_{t-1}\oplus q_t)-c_G(\widetilde S_t)\Big]
+-C_{\mathrm{probe}}(W)-C_{\mathrm{LoRA}}(W)-C_{\mathrm{rb}}(T;W),
 \end{equation}
-Therefore SOMA is beneficial only when the accumulated post-switch savings exceed the one-time warm-start and adaptation overhead. \rev{This explains the operating range measured in Table~\ref{tab:break-even}: sessions of 1--4 turns do not benefit, whereas locally coherent sessions of 5 or more turns amortize the initialization cost, with the gain growing in session length.}
+where $C_{\mathrm{probe}}$ and $C_{\mathrm{LoRA}}$ are the costs of soft-prompt mining and localized adaptation, and $C_{\mathrm{rb}}$ covers drift checks and occasional rollback. SOMA is therefore beneficial only when the accumulated post-switch savings exceed the one-time overhead. \rev{This explains the operating range measured in Table~\ref{tab:break-even}: sessions of 1--4 turns do not benefit, whereas locally coherent sessions of 5 or more turns amortize the initialization cost, with the gain growing in session length.}
 
-\subsection{How Many Soft-Prompt Candidates per Iteration?}
+\subsection{How Many Soft-Prompt Candidates?}
 
-Assume that, near a reference prompt $\mathbf P_0$, the prompt-mining objective admits a local quadratic approximation with positive semidefinite curvature $\mathbf H_T$. Let most of its energy lie in an $r_{\mathrm{act}}$-dimensional active subspace, and let $\mathbf u_1$ be the dominant unit direction in that subspace. SOMA samples $M$ prompt candidates and keeps the one with largest mining loss.
-
-\begin{theorem}[Coverage of the Best Local Direction]\label{thm:coverage}
-For $r_{\mathrm{act}}\ge 2$, draw $M$ i.i.d. unit vectors $\{\mathbf u_m^{(c)}\}_{m=1}^{M}$ uniformly on $\mathbb S^{r_{\mathrm{act}}-1}$. Let $p_{r_{\mathrm{act}}}(\theta)=\frac{1}{2}I_{\sin^2\theta}\!\left(\frac{r_{\mathrm{act}}-1}{2},\frac{1}{2}\right)$ be the spherical-cap probability of falling within angle $\theta\in(0,\pi/2]$ of a fixed direction, where $I_x(\cdot,\cdot)$ is the regularized incomplete beta function. Then $\Pr\!\left(\min_{1\le m\le M}\angle(\mathbf u_m^{(c)},\mathbf u_1)\le \theta\right)
-=1-\left(1-p_{r_{\mathrm{act}}}(\theta)\right)^M$. Therefore, for $r_{\mathrm{act}}=1$, one candidate suffices.
-\end{theorem}
-
-\begin{lemma}[Directional Suboptimality]\label{lem:subopt}
-Let $\mathbf H_T\succeq 0$ have largest eigenvalue $\lambda_1$ and top eigenvector $\mathbf u_1$. For any unit $\widehat{\mathbf u}$ with $\angle(\widehat{\mathbf u},\mathbf u_1)\le\theta$,
-\[
-\widehat{\mathbf u}^{\top}\mathbf H_T\widehat{\mathbf u}\ge \lambda_1\cos^2\theta,
-\qquad
-\lambda_1-\widehat{\mathbf u}^{\top}\mathbf H_T\widehat{\mathbf u}\le \lambda_1\sin^2\theta .
-\]
-\end{lemma}
-
-\begin{corollary}[Candidate Budget]\label{col:M}
-For $r_{\mathrm{act}}\ge 2$, to obtain coverage probability at least $1-\delta$ within angle $\theta$, it suffices to choose $M\ge
-\left\lceil
-\frac{\log \delta}{\log\left(1-p_{r_{\mathrm{act}}}(\theta)\right)}
-\right\rceil$. Together with Lemma~\ref{lem:subopt}, this gives an explicit tradeoff between candidate count and local directional quality.
-\end{corollary}
+Near a reference prompt, assume that the mining objective is locally quadratic with curvature $\mathbf H_T\succeq 0$ whose energy concentrates in an $r_{\mathrm{act}}$-dimensional active subspace with dominant unit direction $\mathbf u_1$. SOMA draws $M$ random candidates and keeps the one with the largest mining loss. If $p_{r_{\mathrm{act}}}(\theta)$ denotes the probability that one uniform random direction lies within angle $\theta$ of $\mathbf u_1$, then the best of $M$ candidates does so with probability $1-(1-p_{r_{\mathrm{act}}}(\theta))^M$ (Theorem~\ref{thm:coverage}), so coverage $1-\delta$ is guaranteed once $M\ge\lceil \log\delta/\log(1-p_{r_{\mathrm{act}}}(\theta))\rceil$ (Corollary~\ref{col:M}); for $r_{\mathrm{act}}=1$ one candidate suffices. A candidate within angle $\theta$ of $\mathbf u_1$ retains at least a $\cos^2\theta$ fraction of the top curvature (Lemma~\ref{lem:subopt}), which turns the candidate count into an explicit quality trade-off. We set $W$, $|B|$, and $M$ from these bounds in all experiments (Appendix~\ref{sec:app_implementation}).

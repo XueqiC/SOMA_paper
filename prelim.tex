@@ -1,58 +1,33 @@
 \section{Preliminaries}\label{sec:prelim}
 
-
-% \yd{ 2.1 notation - 2.2 long-tail analysis to convince that this is indeed longtail - 2.3 direct baseline (directly feed everything into a surrogate model) performance analysis: it somehow works in the first round but deviates from the original model's nice answer away when query more (i.e., more turns of interactions) - so it is not good and therefore we need the surrogate model to understand the local landscape in the output space/hidden space as well - this is a local estimation/approximation (choose the most appropriate word to use) problem and we formulate the problem below. - problem formulation}
-
-
 \subsection{Notations}
 
-% In this paper, we use lowercase letters (e.g., \( n \), \( \lambda \)) to denote scalars, and bold lowercase letters (e.g., \( \boldsymbol{\theta} \)) to denote vectors.  
-% Bold uppercase letters (e.g., \( \mathbf{X} \), \( \mathbf{W} \)) are reserved for matrices.  
-% Calligraphic letters (e.g., \( \mathcal{P} \), \( \mathcal{Q} \)) denote sets. 
-% Let \( \mathcal{D}_n = \{(q_1, a_1), (q_2, a_2), \dots, (q_n, a_n)\} \) denote a multi-turn dialogue prefix, where \( q_t \) is the user query at turn \( t \), and \( a_t \) is the corresponding model response. The input at turn \( k \) consists of the full dialogue history up to that point, denoted by \( \mathcal{D}_{k} = \{(q_1, a_1), \dots, (q_k, a_k)\} \), and the model’s output is given by \( \mathcal{M}(q_{\leq t}) = a_t \).  
-% Let \( h_t = f_{\mathcal{M}}(q_{\leq t}) \in \mathbb{R}^d \) denote the hidden representation at turn \( t \), where \( f_{\mathcal{M}} \) is the feature mapping from the input sequence to the model’s internal representation space. We define \( \mathcal{H}_k = \{h_1, h_2, \ldots, h_k\} \) as the set of hidden states from the first \( k \) turns, which induces a local region \( \mathcal{M}_k \subset \mathbb{R}^d \) on the representation manifold. 
-In this paper, a multi-turn dialogue prefix of length $k$ is $\mathcal{D}_k=\{(q_1,a_1),\ldots,(q_k,a_k)\}$ where \( q_t \) is the user query at turn \( t \), and \( a_t \) is the corresponding model response. $F$ represents the original proprietary black-box LLM, which is a common setting in machine-learning-as-a-service (MLaaS), and $G$ is the surrogate small language model. The textual response at turn $t$ is $a_t^M$ for $M\in\{F,G\}$. Let $f_M(\cdot)$ be a feature map to the hidden space, and $\mathbf{h}_t=f_M(q_{\le t})\in\mathbb{R}^d$ the hidden state at turn $t$. The first $k$ hidden states form $\mathcal{H}_k=\{\mathbf{h}_1,\ldots,\mathbf{h}_k\}$ and induce a local manifold $\mathcal{M}_k^M\subset\mathbb{R}^d$. 
-% Let $\mathcal{V}$ be $G$’s vocabulary, $E\in\mathbb{R}^{d\times|\mathcal{V}|}$ its (column-wise) embedding matrix, and $\pi_G(\cdot\mid q_{\le t})\equiv\Pi_{t} \in \Delta^{|\mathcal{V}|-1}$ the next-token distribution at turn $t$ (analogously for $F$ when aligned by $G$’s tokenizer). For a token index $v\in\mathcal{V}$, we denote the probability by $\Pi_t[v]$ and the embedding by $\mathbf{e}_v$. 
-A length-$L$ soft prompt is $\mathbf{P}\in\mathbb{R}^{L\times d}$. 
-% For calling the black-box $F$, we verbalize $P$ by nearest-neighbor projection in $E$:
-% $\
-% v_\ell=\arg\max_{v\in\mathcal{V}}\frac{\langle \mathbf{p}_\ell,\mathbf{e}_v\rangle}{\|\mathbf{p}_\ell\|_2\|\mathbf{e}_v\|_2},
-% \quad
-% \mathsf{V}(P)=(\mathrm{tok}(v_1),\ldots,\mathrm{tok}(v_L)).
-% $. $F$ is queried with $\mathsf{V}(P)\oplus \mathcal{D}_{t-1}\oplus q_t$; $G$ is fed $P$ at the embedding layer together with the same textual context. 
-More details are given in Appendix~\ref{sec:notation}.
-% We summarize all notations in Table~\ref{tab:notations} in Appendix~\ref{sec:notation}.
+A multi-turn dialogue prefix of length $k$ is $\mathcal{D}_k=\{(q_1,a_1),\ldots,(q_k,a_k)\}$, where $q_t$ is the user query at turn $t$ and $a_t$ is the model response. We write $F$ for the original model, a proprietary black-box LLM as is common in machine-learning-as-a-service (MLaaS), and $G$ for the small surrogate. The textual response of model $M\in\{F,G\}$ at turn $t$ is $a_t^M$. Let $f_M(\cdot)$ map an input sequence to the hidden space, so that $\mathbf{h}_t=f_M(q_{\le t})\in\mathbb{R}^d$ is the hidden state at turn $t$; the first $k$ hidden states $\mathcal{H}_k=\{\mathbf{h}_1,\ldots,\mathbf{h}_k\}$ induce a local region $\mathcal{M}_k^M\subset\mathbb{R}^d$. A soft prompt of length $L$ is a matrix $\mathbf{P}\in\mathbb{R}^{L\times d}$. Appendix~\ref{sec:notation} lists all symbols.
 
-
-  % \vspace{5em}
 \subsection{Exploring Token--Turn Patterns in Multi-Turn LLM Dialogues}
 \label{sec:long_tail}
 
+Standard serving processes each new request together with the entire history, so the cost of a turn grows with the length of the conversation. The amount of \emph{new} information in a turn, however, need not grow at all. We therefore first study token usage across turns.
 
-Efficient multi-turn serving depends on how the dialogue state evolves over time. In standard LLM serving, each new request is processed together with the full previous history, so the computational cost grows with the length of the conversation. However, the amount of new information introduced at each turn may follow a different pattern. We therefore first study token usage across turns.
 
-\begin{wrapfigure}[14]{r}{0.42\textwidth}
+We consider four representative settings: \textit{ShareGPT}~\citep{chen2024sharegpt4v} for open-ended human--LLM chat, \textit{ReMeDi}~\citep{yan2022remedi} for doctor--patient consultation, \textit{Craigslist Bargain}~\citep{he2018decoupling} for negotiation, and \textit{Multi-Character}~\citep{agentlans_multi-character_dialogue_2024} for multi-party role-play. Together they cover different speaker roles, task goals, and interaction structures. For each dataset, we compute the average token count at turn \(t\) and normalize it by the average of Turn~1.
+
+\begin{wrapfigure}[13]{r}{0.42\textwidth}
   \vspace{-11pt}
   \centering
   \includegraphics[width=0.419\textwidth]{figure/long_tail.pdf}
   \vspace{-18pt}
-  \caption{Relative average token count per turn, normalized by Turn 1. Across four dialogue datasets, token usage drops after the early turns and then forms a long tail.}
+  \caption{Average token count per turn, normalized by Turn~1, on four dialogue datasets: usage drops after the early turns and forms a long tail.}
   \vspace{-11pt}
   \label{fig:longtail-token-decay}
 \end{wrapfigure}
-We consider four representative multi-turn settings: \textit{ShareGPT}~\citep{chen2024sharegpt4v} for open-ended human--LLM chat, \textit{ReMeDi}~\citep{yan2022remedi} for doctor--patient consultation, \textit{Craigslist Bargain}~\citep{he2018decoupling} for negotiation, and \textit{Multi-Character}~\citep{agentlans_multi-character_dialogue_2024} for multi-party role-play. These datasets cover different speaker roles, task goals, and interaction structures. For each dataset, we compute the average token count at turn \(t\) and normalize it by the average token count of Turn 1.
-
-Figure~\ref{fig:longtail-token-decay} shows a consistent long-tail pattern. Early turns are token-heavy because they usually introduce the task, topic, constraints, and speaker intent. Later turns are much shorter and stabilize at a lower level. This does not make later turns independent; rather, it suggests that many later turns are interpreted as local updates under an already established dialogue state. As a result, the marginal new input becomes smaller while standard serving still repeatedly processes the full prefix. This mismatch motivates an adaptive serving strategy: use the original large model to establish the early dialogue state, and then use a cheaper surrogate while subsequent turns remain within that local state instead of recomputing the full history.
+Figure~\ref{fig:longtail-token-decay} shows a consistent long-tail pattern. Early turns are token-heavy: they introduce the task, the topic, the constraints, and the speaker's intent. Later turns are much shorter and settle at a low, stable level. Shorter does not mean independent. Many later turns read as local updates to a dialogue state that has already been established, so the marginal new input shrinks while standard serving keeps re-processing the full prefix. This mismatch motivates an adaptive strategy: let the original model establish the early dialogue state, and hand subsequent turns to a cheaper surrogate for as long as they stay within that state, instead of recomputing the full history.
 
 \subsection{Local Manifold Approximation for Multi-Turn Dialogues}
 
-The long-tail pattern suggests an opportunity for surrogate serving, but directly replacing the original model with a smaller model is unreliable. A later turn is often short because much of its meaning is supplied by the previous dialogue. If the surrogate is not aligned with the original model under this prefix, it may produce fluent responses that still drift from the intended context.
+The long-tail pattern creates an opportunity for surrogate serving, but a naive substitution is unreliable. A later turn is short precisely because much of its meaning is supplied by the preceding dialogue, so a surrogate that is not aligned with the original model under that prefix produces fluent responses that quietly drift from the intended context.
 
-We describe this challenge through a local manifold view. Let \(F\) denote the original large model and \(G\) denote the small surrogate. Given a dialogue prefix
-\[
-\mathcal{D}_{k}=\{(q_1,a_1),\ldots,(q_k,a_k)\},
-\]
-the prefix induces a local region in the model's contextual representation space. This region captures the current topic, constraints, style, and task state of the conversation.
+We describe this challenge through a local manifold view. Given a prefix \(\mathcal{D}_{k}\), the original model \(F\) and the surrogate \(G\) each induce a local region in their contextual representation space, and this region captures the current topic, constraints, style, and task state. The goal is to make the surrogate's region match that of the original model under the same prefix.
 
 \begin{problem}[Local Manifold Approximation for Multi-Turn Interactions]
 Given a dialogue prefix \(\mathcal{D}_{k}\) and an original model \(F\), learn a surrogate model \(G\in\mathcal{G}\) whose local representation region matches that of \(F\) under the same prefix:
@@ -66,5 +41,4 @@ Given a dialogue prefix \(\mathcal{D}_{k}\) and an original model \(F\), learn a
 where \(\mathcal{M}^{F}_{k}(\mathcal{D}_{k})\) and \(\mathcal{M}^{G}_{k}(\mathcal{D}_{k})\) denote the local representation regions induced by the prefix, and \(\mathrm{dist}(\cdot,\cdot)\) measures their discrepancy.
 \end{problem}
 
-This formulation leads to the design of SOMA. The early turns are used to expose where the surrogate disagrees with the original model within the current dialogue state. These locally informative examples are then used to adapt the surrogate. After adaptation, the surrogate serves later turns only while the dialogue remains close to the learned local region; when the conversation drifts, the system returns to the original model and refreshes the local state.
-
+This formulation leads directly to SOMA. The early turns are used to expose where the surrogate disagrees with the original model within the current dialogue state, and these locally informative examples are then used to adapt the surrogate. After adaptation, the surrogate serves later turns only while the dialogue remains close to the learned region; when the conversation drifts, the system returns to the original model and refreshes the local state.

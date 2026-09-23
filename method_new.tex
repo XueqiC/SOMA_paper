@@ -1,10 +1,10 @@
 \section{SOMA: Local Manifold Approximation via Soft Prompts}\label{sec:method}
 
-SOMA combines three components to enable efficient local serving. First, the original model \(F\) handles early turns to establish the dialogue state. Second, soft-prompt mining identifies where the surrogate \(G\) is least aligned with \(F\), and these hard local cases are distilled into a lightweight LoRA adapter. Third, a semantic gate switches to \(G\) only when local alignment is sufficient, while a drift detector rolls back to \(F\) when the dialogue moves away from the learned local state.
+SOMA has three stages. The original model \(F\) serves the early turns and thereby establishes the dialogue state. Soft-prompt mining then finds where the surrogate \(G\) is least aligned with \(F\) within that state, and the hard cases it exposes are distilled into a lightweight LoRA adapter. Finally, a semantic gate hands the session to \(G\) once local alignment is sufficient, and a drift detector returns it to \(F\) when the dialogue leaves the learned region.
 
 \subsection{Initialization}
 
-We initialize a soft prompt matrix $\mathbf{P}\in\mathbb{R}^{L_p\times d}$ on the surrogate $G$. Each row is sampled i.i.d. from $\boldsymbol{p}_{\ell}\sim\mathcal{N}(\boldsymbol{0},\sigma^2\mathbf{I}_d)$, where $\sigma>0$ is the initialization scale. Let $\mathbf{E}=[\boldsymbol e_v]_{v\in\mathcal V}\in\mathbb{R}^{d\times |\mathcal V|}$ be the surrogate embedding matrix and let $\mathrm{tok}(v)$ denote the token string associated with index $v$.
+We initialize a soft prompt $\mathbf{P}\in\mathbb{R}^{L_p\times d}$ on the surrogate $G$ by sampling each row i.i.d.\ from $\boldsymbol{p}_{\ell}\sim\mathcal{N}(\boldsymbol{0},\sigma^2\mathbf{I}_d)$, where $\sigma>0$ sets the initialization scale. Let $\mathbf{E}=[\boldsymbol e_v]_{v\in\mathcal V}\in\mathbb{R}^{d\times |\mathcal V|}$ be the surrogate embedding matrix and let $\mathrm{tok}(v)$ denote the token string associated with index $v$.
 
 Because the original model $F$ cannot accept continuous embedding vectors, the soft prompt is used in two aligned forms. The surrogate receives $\mathbf{P}$ directly at the embedding layer, while the original model receives a nearest-neighbor verbalization of the same prompt:
 \[
@@ -24,7 +24,7 @@ Here $\mathrm{tok}_G(\cdot)$ is the tokenizer of $G$, $\mathbf E(\cdot)$ maps te
 
 \subsection{Soft Prompt Tuning for Mining Weak Alignment Directions}
 
-We learn $\mathbf P$ by minimizing a differentiable objective that makes $G$ move away from $F$ on the local dialogue context. The objective has three components: a token-level semantic divergence loss, an expectation-weighted distribution-level divergence term, and an anti-degeneration regularizer.
+We learn $\mathbf P$ by minimizing a differentiable objective that pushes $G$ away from $F$ on the local dialogue context. The objective has three parts: a token-level semantic divergence loss, an expectation-weighted distribution-level term, and an anti-degeneration regularizer.
 
 \textbf{Semantic divergence loss.}
 We use an unlikelihood-style loss~\citep{welleck2019neural} to discourage $G$ from assigning high probability to the tokens produced by $F$. A purely exact-token penalty is too narrow, since the surrogate could avoid the teacher token while still assigning high probability to close paraphrases. We therefore define a semantic neighborhood in the surrogate embedding space.
@@ -58,10 +58,10 @@ Minimizing Eq.~\ref{eq:sem-with-aF} searches for prompts that expose local disag
 
 \textbf{Expectation-weighted semantic divergence.}
 The token-neighborhood loss may still miss distribution-level alignment: $G$ can reduce probability on a teacher token and its nearest neighbors while spreading mass over many other tokens with similar meaning. To detect this case, we compare the expected embedding of the surrogate's next-token distribution with the embedding of the teacher token. Since $\mathbf E\in\mathbb R^{d\times |\mathcal V|}$ stores token embeddings as columns, the expected embedding at position $i$ is $\bar{\boldsymbol e}_{t,i}=\mathbf E\Pi_{t,i}(\mathbf P)
-=\sum_{v\in\mathcal V}\Pi_{t,i}(\mathbf P)[v] \boldsymbol e_v $. We upweight the neighborhood penalty when this expected embedding still points toward the teacher token $w_{t,i}(\mathbf P)=1+\lambda_{\mathrm{exp}}\,
+=\sum_{v\in\mathcal V}\Pi_{t,i}(\mathbf P)[v] \boldsymbol e_v $. We therefore upweight the neighborhood penalty whenever the expected embedding still points toward the teacher token, using the weight $w_{t,i}(\mathbf P)=1+\lambda_{\mathrm{exp}}\,
 \mathrm{clip}\!\left(
 \cos(\bar{\boldsymbol e}_{t,i},\boldsymbol e_{y_{t,i}^{F}}),0,1
-\right)$, where $\lambda_{\mathrm{exp}}\ge 0 $. The final semantic mining loss is then:
+\right)$ with $\lambda_{\mathrm{exp}}\ge 0$. The final semantic mining loss is
 \begin{equation}
 \label{eq:semexp-with-aF}
 \mathcal L_{\mathrm{sem\_exp}}(\mathbf P;\mathcal D_{t-1},q_t)=
@@ -97,12 +97,12 @@ The complete prompt-mining objective for a minibatch of warm-start turns $\mathc
 \right]
 +\lambda_P\|\mathbf P\|_F^2 .
 \end{equation}
-We minimize Eq.~\ref{eq:prompt-final} with AdamW while freezing all weights of $G$. Gradient clipping stabilizes the prompt scale. For efficiency, semantic neighbors are retrieved using an ANN index over normalized token embeddings, and $\bar{\boldsymbol e}_{t,i}$ is computed with a top-$m$ truncation of $\Pi_{t,i}(\mathbf P)$ rather than a dense sum over the full vocabulary. The per-step overhead is therefore linear in the number of teacher-prefix positions and scales with $k+m$ rather than $|\mathcal V|$.
+We minimize Eq.~\ref{eq:prompt-final} with AdamW while all weights of $G$ stay frozen, and we clip gradients to stabilize the prompt scale. Two choices keep mining cheap: semantic neighbors are retrieved from an ANN index over normalized token embeddings, and $\bar{\boldsymbol e}_{t,i}$ uses a top-$m$ truncation of $\Pi_{t,i}(\mathbf P)$ instead of a dense sum over the vocabulary. The per-step overhead is therefore linear in the number of teacher-prefix positions and scales with $k+m$ rather than $|\mathcal V|$.
 
 \subsection{Localized Fine-Tuning, Switching, and Rollback}
 
-The learned soft prompts are session-local mining tools. After mining, SOMA converts them into ordinary local supervision for LoRA adaptation. For each warm-start turn, we score its hardness by the largest mined divergence $r_t=\max_{\mathbf P\in\mathcal P_{\mathrm{cand}}}
-\mathcal L_{\mathrm{sem\_exp}}(\mathbf P;\mathcal D_{t-1},q_t)$ and form a local training set $\mathcal H$ from the highest-scoring turns and their original-model responses. \rev{This makes the data-mining role of soft prompts explicit: instead of training on all or randomly chosen warm-start turns, SOMA trains on the turns that prompt mining exposes as least aligned.}
+The learned soft prompts are session-local mining tools, not inference-time inputs. After mining, SOMA converts them into ordinary local supervision. Each warm-start turn receives a hardness score equal to its largest mined divergence, $r_t=\max_{\mathbf P\in\mathcal P_{\mathrm{cand}}}
+\mathcal L_{\mathrm{sem\_exp}}(\mathbf P;\mathcal D_{t-1},q_t)$, and the highest-scoring turns together with their original-model responses form a local training set $\mathcal H$. \rev{This makes the data-mining role of soft prompts explicit: instead of training on all or randomly chosen warm-start turns, SOMA trains on the turns that prompt mining exposes as least aligned.}
 
 We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention and MLP projections, and optimize
 \begin{equation}
@@ -113,6 +113,6 @@ We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention a
 \qquad
 \omega_t\propto r_t .
 \end{equation}
-The continuous soft prompts are discarded after this stage. Thus, once SOMA switches, the online serving path uses only the LoRA-adapted surrogate and a compressed text context.
+The continuous soft prompts are discarded after this stage; once SOMA switches, the online serving path uses only the LoRA-adapted surrogate and a compressed text context.
 
-Before switching, SOMA verifies that the adapted surrogate \(G\) is both output-aligned and context-local: it requires high response similarity to the original model \(F\) on a small acceptance batch and checks that the current query remains close to the warm-start dialogue centroid. Once accepted, SOMA serves later turns using a compressed input \(\widetilde S_t\), which keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, avoiding repeated full-history processing. During surrogate serving, SOMA continuously monitors semantic drift; if recent queries move away from the learned local state, it rolls back to \(F\), refreshes the local summary and centroid, and switches back to \(G\) only after the acceptance gate passes again. \rev{Because the drift statistic is a continuous distance to the warm-start centroid, gradual drift lowers it monotonically and triggers rollback once the margin is exhausted, rather than only on abrupt shifts.}
+Before switching, SOMA verifies two conditions: the adapted surrogate must reproduce the original model's responses on a small acceptance batch, and the current query must remain close to the warm-start dialogue centroid. Once accepted, \(G\) serves later turns from a compressed input \(\widetilde S_t\) that keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, so the full history is never re-processed. During surrogate serving, SOMA keeps monitoring semantic drift. If recent queries move away from the learned local state, it rolls back to \(F\), refreshes the summary and the centroid, and returns to \(G\) only after the acceptance gate passes again. \rev{Because the drift statistic is a continuous distance to the warm-start centroid, gradual drift lowers it monotonically and triggers rollback once the margin is exhausted, rather than only on abrupt shifts.}

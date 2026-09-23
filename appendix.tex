@@ -368,16 +368,15 @@ We work with an empirical Fisher $\widehat{\mathbf{C}}$ formed from finitely man
 \bigskip
 \textbf{When to Switch: Warm–Start Generalization and Batch Detection}.
 
-\paragraph{Statement: Lemma~\ref{lem:warmstart}.}
-With probability at least $1-\delta$,
+\begin{lemma}[Warm-Start Generalization]\label{lem:warmstart}
+Let $h(S)\in[0,1]$ be any bounded local statistic, such as $\mathsf{Gap}_{\Theta}(S)$ or a query-centroid similarity score. Suppose the warm-start stream has effective sample size $W_{\mathrm{eff}}$, accounting for temporal dependence. Then with probability at least $1-\delta$,
 \[
-\Big|\widehat{F}_W - F^\star\Big|
-\;\le\;
-\sqrt{\frac{2\log(2/\delta)}{W_{\mathrm{eff}}}},
-\qquad
-\widehat{F}_W=\frac{1}{W}\sum_{t=1}^{W}\mathsf{Gap}(S_t),\quad
-F^\star=\mathbb{E}_{S\sim\mathcal{Q}}[\mathsf{Gap}(S)].
+\left|\frac{1}{W}\sum_{t=1}^{W}h(S_t)-\mathbb E_{S\sim\mathcal Q}[h(S)]\right|
+\le
+\sqrt{\frac{2\log(2/\delta)}{W_{\mathrm{eff}}}} .
 \]
+\end{lemma}
+Below we write $\widehat{F}_W=\frac{1}{W}\sum_{t=1}^{W}\mathsf{Gap}(S_t)$ and $F^\star=\mathbb{E}_{S\sim\mathcal{Q}}[\mathsf{Gap}(S)]$ for the case $h=\mathsf{Gap}$.
 
 \paragraph{Proof of Lemma~\ref{lem:warmstart}.}
 \textbf{Step 1 (Centering and boundedness).}
@@ -472,11 +471,11 @@ We re-denote $(\tilde{\nu}^2,\tilde{b})$ as $(\nu^2,b)$ in the theorem statement
 
 \bigskip
 
-\begin{corollary}[Choosing $W$ and $|B|$]\label{cor:WB} 
-Pick $W$ so that the warm–start generalization error is at most $\eta$: $W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$. Then choose $|B|$ via Theorem~\ref{thm:detection} for target improvement $\varepsilon$ and confidence $1-\delta$. The total decision error (from warm–start approximation and batch detection) is bounded by $\eta+\varepsilon$ at confidence $1-2\delta$. 
+\begin{corollary}[Switching Rule]\label{cor:switch}
+Choose $W$ so that the warm-start uncertainty in Lemma~\ref{lem:warmstart} is at most $\eta$ (i.e., $W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$), and choose $|B|_{\mathrm{eff}}$ so that $\gamma_B(\delta)\le \gamma$ in Theorem~\ref{thm:detection}. Switching is justified when the adapted surrogate passes both the output-fidelity gate and the locality gate with margins larger than $\eta+\gamma$. The combined decision error is controlled at confidence at least $1-2\delta$ by a union bound.
 \end{corollary}
 
-\paragraph{Proof of Corollary~\ref{cor:WB}.}
+\paragraph{Proof of Corollary~\ref{cor:switch}.}
 Lemma~\ref{lem:warmstart} ensures $|\widehat{F}_W-F^\star|\le \eta$ with prob.\ $\ge 1-\delta$ when 
 $W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$.
 Theorem~\ref{thm:detection} ensures $\Pr(\Delta\ge \varepsilon)\ge 1-\delta$ when the batch bound holds.
@@ -487,15 +486,16 @@ If both hold, the total decision error (warm–start approximation plus detectio
 \bigskip
 \textbf{Coverage and Suboptimality to Determine the Number of Soft–Prompt Candidates.}
 
-\paragraph{Statement: Theorem~\ref{thm:coverage}.}
-Let the active local subspace be $r_{\mathrm{act}}$–dimensional with unit sphere $\mathbb{S}^{r_{\mathrm{act}}-1}$.
-Fix $\boldsymbol{v}_1$ and draw i.i.d.\ $\boldsymbol{u}_1,\ldots,\boldsymbol{u}_M\sim \mathrm{Unif}(\mathbb{S}^{r_{\mathrm{act}}-1})$.
-Then for any $\theta\in(0,\pi/2]$,
+\begin{theorem}[Coverage of the Best Local Direction]\label{thm:coverage}
+Let the active local subspace be $r_{\mathrm{act}}$-dimensional with $r_{\mathrm{act}}\ge 2$, and draw $M$ i.i.d.\ unit vectors $\boldsymbol{u}_1,\ldots,\boldsymbol{u}_M\sim\mathrm{Unif}(\mathbb{S}^{r_{\mathrm{act}}-1})$. Let $p_{r_{\mathrm{act}}}(\theta)=\frac{1}{2}I_{\sin^2\theta}\!\left(\frac{r_{\mathrm{act}}-1}{2},\frac{1}{2}\right)$ be the spherical-cap probability of falling within angle $\theta\in(0,\pi/2]$ of the dominant direction $\boldsymbol v_1$, where $I_x(\cdot,\cdot)$ is the regularized incomplete beta function. Then
 \[
 \Pr\!\Big(\min_{m\le M}\angle(\boldsymbol{u}_m,\boldsymbol{v}_1)\le \theta\Big)
+=1-\big(1-p_{r_{\mathrm{act}}}(\theta)\big)^M
 \;\ge\;
-1-\Big(1-(\sin\theta)^{\,r_{\mathrm{act}}-1}\Big)^M.
+1-\Big(1-(\sin\theta)^{\,r_{\mathrm{act}}-1}\Big)^M .
 \]
+For $r_{\mathrm{act}}=1$, one candidate suffices.
+\end{theorem}
 
 \paragraph{Proof of Theorem~\ref{thm:coverage}.}
 \textbf{Step 1: Exact cap probability.}
@@ -530,14 +530,14 @@ Therefore
 \hfill$\square$
 
 \bigskip
-\paragraph{Statement: Lemma~\ref{lem:subopt}.}
-If $\angle(\boldsymbol{\hat u},\boldsymbol{v}_1)\le \theta$ and $\mathbf{H}_T\succeq \mathbf{0}$ with top eigenpair $(\lambda_1,\boldsymbol{v}_1)$,
-then
+\begin{lemma}[Directional Suboptimality]\label{lem:subopt}
+Let $\mathbf H_T\succeq 0$ have largest eigenvalue $\lambda_1$ and top eigenvector $\boldsymbol v_1$. For any unit $\boldsymbol{\hat u}$ with $\angle(\boldsymbol{\hat u},\boldsymbol v_1)\le\theta$,
 \[
-\boldsymbol{\hat u}^{\!\top}\mathbf{H}_T\boldsymbol{\hat u} \;\ge\; \lambda_1 \cos^2\!\theta
-\quad\Rightarrow\quad
+\boldsymbol{\hat u}^{\!\top}\mathbf{H}_T\boldsymbol{\hat u} \;\ge\; \lambda_1 \cos^2\!\theta,
+\qquad
 \lambda_1 - \boldsymbol{\hat u}^{\!\top}\mathbf{H}_T\boldsymbol{\hat u} \;\le\; \lambda_1 \sin^2\!\theta.
 \]
+\end{lemma}
 
 \paragraph{Proof of Lemma~\ref{lem:subopt}.}
 Decompose $\boldsymbol{\hat u}=\cos\theta\,\boldsymbol{v}_1+\sin\theta\,\boldsymbol{w}$ with $\|\boldsymbol{w}\|_2=1$ and $\boldsymbol{w}\perp\boldsymbol{v}_1$.
@@ -555,6 +555,10 @@ since $\lambda_j\ge 0$. Subtract from $\lambda_1$ to obtain the residual bound.
 \hfill$\square$
 
 \bigskip
+\begin{corollary}[Candidate Budget]\label{col:M}
+For $r_{\mathrm{act}}\ge 2$, to obtain coverage probability at least $1-\delta$ within angle $\theta$ in Theorem~\ref{thm:coverage}, it suffices to choose $M\ge\left\lceil \log \delta/\log\left(1-p_{r_{\mathrm{act}}}(\theta)\right)\right\rceil$, where $p_{r_{\mathrm{act}}}(\theta)=\frac{1}{2}I_{\sin^2\theta}\!\left(\frac{r_{\mathrm{act}}-1}{2},\frac{1}{2}\right)$ and $I_x(\cdot,\cdot)$ is the regularized incomplete beta function. Together with Lemma~\ref{lem:subopt}, this gives an explicit tradeoff between candidate count and local directional quality.
+\end{corollary}
+
 \paragraph{Proof of Corollary~\ref{col:M}.}
 We require $1-(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\ge 1-\delta$. 
 Equivalently $(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\le \delta$, giving
@@ -567,41 +571,19 @@ M\;\ge\;\frac{\log(1/\delta)}{\log\big((1-(\sin\theta)^{r_{\mathrm{act}}-1})^{-1
 \section{Additional Experimental Results}
 \label{sec:app_exp}
 
-This appendix provides supporting results that complement the main experiments. We organize them around four additional checks: whether SOMA generalizes to another model family, whether its efficiency gains hold across datasets, which components drive the gains, and how warm-start length affects switching and stability.
-
-\subsection{Full Qwen Response Similarity Results}
-\label{sec:app_res}
-
-The main text reports the full response-similarity results for the LLaMA family. Table~\ref{tab:qwen-pct} reports the same evaluation on the Qwen family, where the original model is Qwen-3-8B and the surrogate is Qwen-3-0.6B. SOMA achieves the highest similarity on every dataset, showing that the method is not tied to one backbone family. Compared with LLaMA, the absolute similarities are lower because the capacity gap between Qwen-3-8B and Qwen-3-0.6B is larger, making local imitation harder. Nevertheless, SOMA remains consistently better than the baselines, which suggests that local adaptation is especially useful when the small--large model gap is wide.
-
-\begin{table}[t]
-\footnotesize
-\setlength\tabcolsep{2pt}
-\centering
-\caption{Response similarity to the original model across six datasets for the Qwen family. Higher is better.}
-\label{tab:qwen-pct}
-\resizebox{\textwidth}{!}{
-\begin{tabular}{lccccccc}
-\toprule
- & \textbf{ShareGPT} & \textbf{ReMeDi} & \textbf{Craigslist} & \textbf{Multi-Char} & \textbf{MATH} & \textbf{MT-Bench} & \textbf{Avg.} \\
-\midrule
-Surrogate       & 50.9 $\pm$ 1.21 & 63.5 $\pm$ 2.87 & 48.2 $\pm$ 3.40 & 44.7 $\pm$ 3.54 & 42.6 $\pm$ 1.70 & 40.4 $\pm$ 0.81 & 48.4 $\pm$ 8.31 \\
-History-Prefix  & 70.5 $\pm$ 1.15 & 75.7 $\pm$ 2.01 & 63.0 $\pm$ 2.23 & 65.5 $\pm$ 0.91 & 51.3 $\pm$ 2.45 & 53.6 $\pm$ 2.32 & 63.3 $\pm$ 9.47 \\
-History-FT      & 76.4 $\pm$ 1.68 & 79.2 $\pm$ 2.61 & 74.5 $\pm$ 3.56 & 63.2 $\pm$ 1.74 & 65.9 $\pm$ 1.70 & 62.7 $\pm$ 0.72 & 70.3 $\pm$ 7.23 \\
-LLMLingua-2     & 68.9 $\pm$ 1.32 & 74.1 $\pm$ 2.14 & 61.2 $\pm$ 2.67 & 63.4 $\pm$ 1.18 & 49.8 $\pm$ 2.03 & 51.7 $\pm$ 1.45 & 61.5 $\pm$ 7.92 \\
-RouteLLM        & 79.6 $\pm$ 1.04 & 81.9 $\pm$ 1.36 & 75.1 $\pm$ 2.91 & 72.8 $\pm$ 1.62 & 67.3 $\pm$ 1.21 & 68.0 $\pm$ 0.96 & 74.1 $\pm$ 5.43 \\
-\midrule
-\textbf{SOMA}   & \textbf{81.0 $\pm$ 0.93} & \textbf{83.2 $\pm$ 1.21} & \textbf{76.4 $\pm$ 3.85} & \textbf{74.2 $\pm$ 2.53} & \textbf{68.7 $\pm$ 1.28} & \textbf{69.2 $\pm$ 1.08} & \textbf{75.5 $\pm$ 5.97} \\
-\bottomrule
-\end{tabular}}
-\end{table}
+This appendix provides supporting results that complement the main experiments: dataset-level token costs, the effect of warm-start length on switching, and the empirical variance concentration behind the switching bound.
 
 \subsection{Additional Efficiency Results}
 \label{sec:app_eff}
 
-The main text reports the amortized break-even analysis. Here we provide the dataset-level token and throughput results. Figure~\ref{fig:app_token_costs} shows that SOMA consistently uses fewer tokens per dialogue across both model families. The reason is that after switching, SOMA serves later turns with the adapted surrogate and a compressed context rather than repeatedly sending the full growing history. This avoids the large token cost of Original and History-Prefix while retaining stronger response similarity than directly using the surrogate.
+The main text reports the amortized break-even analysis and throughput. Here we provide the dataset-level token results. Figure~\ref{fig:token_usage} shows SOMA's average tokens per dialogue, and Figure~\ref{fig:app_token_costs} shows that SOMA consistently uses fewer tokens per dialogue across both model families. The reason is that after switching, SOMA serves later turns with the adapted surrogate and a compressed context rather than repeatedly sending the full growing history. This avoids the large token cost of Original and History-Prefix while retaining stronger response similarity than directly using the surrogate.
 
-Figure~\ref{fig:app_throughput} reports throughput. SOMA matches or exceeds the speed of Surrogate and History-FT, and clearly improves over Original and History-Prefix. The runtime gain comes from the same two design choices: post-switch inference uses the small model, and the input context is shorter. Together, these results show that SOMA provides surrogate-level efficiency while preserving responses closer to the original model.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.5\textwidth]{figure/overall_avg_token.pdf}
+  \caption{Average tokens per dialogue for SOMA on both model families across the six datasets.}
+  \label{fig:token_usage}
+\end{figure}
 
 \begin{figure}[t]
   \centering
@@ -622,78 +604,10 @@ Figure~\ref{fig:app_throughput} reports throughput. SOMA matches or exceeds the 
   \label{fig:app_token_costs}
 \end{figure}
 
-\begin{figure}[t]
-  \centering
-  \begin{minipage}[t]{0.49\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figure/llama_through.pdf}
-    \vspace{-2mm}
-    \centerline{\small (a) LLaMA family}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.49\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figure/qwen_through.pdf}
-    \vspace{-2mm}
-    \centerline{\small (b) Qwen family}
-  \end{minipage}
-  \vspace{-1mm}
-  \caption{Throughput across six datasets. SOMA keeps the serving path close to the surrogate while maintaining higher similarity to the original model.}
-  \label{fig:app_throughput}
-\end{figure}
-
-\subsection{Component and Capability Diagnostics}
-\label{sec:app_abl}
-
-\paragraph{Qwen ablation.}
-Figure~\ref{fig:app_component_capability}(a) repeats the component ablation on the Qwen family. The full SOMA variant performs best. Removing the anti-degeneration loss reduces performance because prompt mining becomes less stable and can collapse toward low-diversity outputs. Removing both the expectation-weighted term and anti-degeneration loss causes a larger drop, especially on harder datasets. This confirms that both components are needed to mine useful local disagreement rather than superficial token mismatch.
-
-\paragraph{Ability-level behavior.}
-Figure~\ref{fig:app_component_capability}(b) evaluates SOMA on MT-Bench-101 ability dimensions using the LLaMA family. SOMA improves most on harder skills such as reasoning and questioning, where the original model has the largest advantage over the surrogate. It also improves memory, understanding, rephrasing, and interference handling. This indicates that local adaptation does not only help one narrow skill; it produces a more balanced response profile across dialogue abilities.
-
-\begin{figure}[t]
-  \centering
-  \begin{minipage}[t]{0.49\textwidth}
-    \centering
-    \includegraphics[width=0.86\linewidth]{figure/ablation_qwen.pdf}
-    \vspace{-2mm}
-    \centerline{\small (a) Qwen ablation}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.49\textwidth}
-    \centering
-    \includegraphics[width=0.68\linewidth]{figure/mt_radar.pdf}
-    \vspace{-2mm}
-    \centerline{\small (b) Ability profile on MT-Bench-101}
-  \end{minipage}
-  \vspace{-1mm}
-  \caption{Component and capability diagnostics. The Qwen ablation confirms the importance of SOMA's mining objective, while the ability analysis shows broad gains across dialogue skills.}
-  \label{fig:app_component_capability}
-\end{figure}
-
 \subsection{Warm-Start Length and Switching Behavior}
 \label{sec:app_switch}
 
-SOMA should switch only after the warm-start window provides enough evidence to adapt the surrogate. To study this, we sweep the warm-start window \(W\in[1,15]\) and measure the final response similarity after switching. Figure~\ref{fig:app_switching}(a) shows that simpler, goal-anchored dialogues such as ShareGPT, ReMeDi, and Craigslist reach high similarity after only a few turns. In contrast, reasoning-heavy or multi-party datasets such as MATH and Multi-Char require longer warm starts before plateauing. This supports the design choice that the switch should be data-dependent rather than fixed.
-
-Figure~\ref{fig:app_switching}(b) plots the best switching point against final similarity and shows a negative association. Datasets that require later switching tend to have lower final similarity, suggesting that they are intrinsically harder for the surrogate to locally imitate. Practically, this means short warm starts are sufficient for general or goal-anchored chats, while compositional reasoning and multi-agent dialogues need more evidence before switching. Once the curve flattens, adding more warm-start turns brings little quality gain but delays the efficiency benefit.
-
-\begin{figure}[t]
-  \centering
-  \begin{minipage}[t]{0.49\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figure/truncation_trend.pdf}
-    \vspace{-2mm}
-    \centerline{\small (a) Similarity under different switch points}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.49\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figure/truncation_vs_similarity.pdf}
-    \vspace{-2mm}
-    \centerline{\small (b) Switch point vs. final similarity}
-  \end{minipage}
-  \vspace{-1mm}
-  \caption{Warm-start and switching behavior. Easier local-dialogue settings switch earlier, while reasoning-heavy or multi-party settings need longer warm starts and achieve lower final similarity.}
-  \label{fig:app_switching}
-\end{figure}
+The main text (Figure~\ref{fig:app_switching}) reports how final similarity depends on the switch point. The sweep uses warm-start windows \(W\in[1,15]\) and measures the final response similarity after switching. Once the curve flattens, adding more warm-start turns brings little quality gain but delays the efficiency benefit, so short warm starts suffice for general or goal-anchored chats, while compositional reasoning and multi-party dialogues need more evidence before switching.
 
 \subsection{Empirical Variance Concentration}
 \label{sec:app_variance}
