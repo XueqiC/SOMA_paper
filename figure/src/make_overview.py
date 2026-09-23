@@ -1,357 +1,283 @@
 #!/usr/bin/env python3
 """Generate the SOMA method-overview figure (SVG -> figure/overview.pdf + preview PNG).
 
-Layout (viewBox 800x372, printed at \\textwidth, so 12px ~ 6pt):
-  top row : an example session as a timeline (block width = length of the user turn),
-            coloured by who serves it: F (blue), G (orange), drift (red)
-  panel 2 : soft-prompt mining on the frozen surrogate, drawn as mechanisms
-  panel 3 : localized LoRA on frozen base weights, weighted by hardness
-  panel 4 : acceptance gate (agreement + locality), compact serving, drift monitor
+One left-to-right storyline, mirrored by a session timeline underneath:
+  (1) Warm-start          F answers turns 1..W                      -> context-reply pairs
+  (2) Soft-prompt mining  prompt P on frozen G, three-term objective -> hardness of each turn
+  (3) Localized LoRA      frozen weights + low-rank update, hardness-weighted -> adapted G
+  (4) Gated serving       fidelity + locality gate, compressed context, drift monitor
+  bottom: turns 1-3 by F | one-time adaptation | turns 4-7 by G | drift at turn 8 -> back to (1)
+
+Palette (checked with the dataviz validator, all pairs, light mode): navy F, ochre G,
+teal = trained parameters, muted red = drift; everything else is grayscale.
+viewBox 800 wide, printed at \\textwidth, so 12px ~ 6pt.
 """
 import math, os
 import cairosvg
 
-# ---- palette: dataviz reference palette slots 1-3, status critical, neutrals ----
-BLUE, BLUE_T = "#2a78d6", "#cde2fb"      # original model F
-ORANGE, ORANGE_T = "#eb6834", "#fde3d7"  # surrogate G
-AQUA, AQUA_T = "#1baf7a", "#d3f3e6"      # soft prompt, weak spots, adapter
-RED, RED_T = "#d03b3b", "#f8dede"        # drift / rollback / rejected
-INK, INK2, MUTED = "#0b0b0b", "#52514e", "#8a8985"
-GRAY, GRAY_S = "#f0efec", "#c3c2b7"
+NAVY, NAVY_T = "#3A62A0", "#E3EAF4"     # original model F
+OCHRE, OCHRE_T = "#D08A45", "#F8ECDF"   # surrogate G
+TEAL, TEAL_T = "#2A9D8F", "#DDF0ED"     # trained parameters (soft prompt, LoRA)
+RED, RED_T = "#B5454A", "#F5E1E2"       # drift / rollback
+INK, INK2, MUTED = "#222222", "#555555", "#8C8C8C"
+RULE, SOFT, FROZEN = "#C9C9C9", "#F4F4F4", "#E9E9E9"
 FONT = "Helvetica, Arial, 'Liberation Sans', sans-serif"
 
 out = []
 def add(s): out.append(s)
 
-def text(x, y, s, size=12, weight="normal", fill=INK, anchor="start", italic=False):
+def text(x, y, s, size=12, weight="normal", fill=INK, anchor="start"):
     s = s.replace("&", "&amp;").replace("<", "&lt;")
-    st = ' font-style="italic"' if italic else ""
     add(f'<text x="{x:.1f}" y="{y:.1f}" font-family="{FONT}" font-size="{size}" font-weight="{weight}" '
-        f'fill="{fill}" text-anchor="{anchor}"{st}>{s}</text>')
+        f'fill="{fill}" text-anchor="{anchor}">{s}</text>')
 
-def rrect(x, y, w, h, r=6, fill="none", stroke=INK2, sw=1.2, dash=None):
+def rect(x, y, w, h, r=3, fill="none", stroke=INK2, sw=1.1, dash=None):
     d = f' stroke-dasharray="{dash}"' if dash else ""
     add(f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{r}" ry="{r}" fill="{fill}" '
         f'stroke="{stroke}" stroke-width="{sw}"{d}/>')
 
-def line(x1, y1, x2, y2, stroke=INK2, sw=1.2, dash=None, marker=None):
+def line(x1, y1, x2, y2, stroke=INK2, sw=1.1, dash=None, marker=None):
     d = f' stroke-dasharray="{dash}"' if dash else ""
     m = f' marker-end="url(#{marker})"' if marker else ""
     add(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{stroke}" '
         f'stroke-width="{sw}" stroke-linecap="round"{d}{m}/>')
 
-def path(d, stroke=INK2, sw=1.4, fill="none", marker=None, dash=None):
+def path(d, stroke=INK2, sw=1.2, fill="none", marker=None, dash=None):
     m = f' marker-end="url(#{marker})"' if marker else ""
     dd = f' stroke-dasharray="{dash}"' if dash else ""
     add(f'<path d="{d}" stroke="{stroke}" stroke-width="{sw}" fill="{fill}" stroke-linejoin="round" '
         f'stroke-linecap="round"{m}{dd}/>')
 
-def circle(cx, cy, r, fill="none", stroke="none", sw=1.2, dash=None):
+def circle(cx, cy, r, fill="none", stroke="none", sw=1.1, dash=None):
     d = f' stroke-dasharray="{dash}"' if dash else ""
     add(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"{d}/>')
 
-# ---------------- icons ----------------
-def robot(cx, cy, size, color, tint):
-    """Friendly robot head (size = head width) with a small body; returns the bottom y."""
-    hw, hh = size, size * 0.78
-    x, y = cx - hw / 2, cy - hh / 2
-    line(cx, y - size * 0.2, cx, y, stroke=color, sw=1.5)
-    circle(cx, y - size * 0.24, size * 0.07, fill=color)
-    rrect(x, y, hw, hh, r=size * 0.18, fill=tint, stroke=color, sw=1.6)
-    ex, ey, er = size * 0.22, cy - hh * 0.08, size * 0.075
-    circle(cx - ex, ey, er, fill=color); circle(cx + ex, ey, er, fill=color)
-    path(f'M{cx-ex*0.8},{cy+hh*0.2} Q{cx},{cy+hh*0.36} {cx+ex*0.8},{cy+hh*0.2}', stroke=color, sw=1.4)
-    bw, bh = hw * 0.62, hh * 0.3
-    rrect(cx - bw / 2, y + hh + 2, bw, bh, r=3, fill=tint, stroke=color, sw=1.4)
-    return y + hh + 2 + bh
+# ---------------- glyphs ----------------
+def lock(cx, cy, s=1.0, color=INK2):
+    rect(cx - 4.5 * s, cy - 1 * s, 9 * s, 7 * s, r=1.2, fill=color, stroke=color, sw=0.8)
+    path(f'M{cx-3*s},{cy-1*s} v{-2.5*s} a{3*s},{3*s} 0 0 1 {6*s},0 v{2.5*s}', stroke=color, sw=1.3)
 
-def snowflake(cx, cy, r=6, color=BLUE):
-    for a in (0, 60, 120):
-        t = math.radians(a)
-        dx, dy = r * math.cos(t), r * math.sin(t)
-        line(cx - dx, cy - dy, cx + dx, cy + dy, stroke=color, sw=1.4)
-        for s in (1, -1):
-            ex, ey = cx + s * dx * 0.68, cy + s * dy * 0.68
-            base = t if s > 0 else t + math.pi
-            for b in (140, -140):
-                tb = base + math.radians(b)
-                line(ex, ey, ex + r * 0.38 * math.cos(tb), ey + r * 0.38 * math.sin(tb), stroke=color, sw=1.1)
+def model(x, y, w, h, letter, color, tint, frozen=False, adapter=False, size=15):
+    """A model drawn as a small stack of layers with its letter; lock = frozen, teal strip = LoRA."""
+    for k in (2, 1):
+        rect(x + 3 * k, y - 3 * k, w, h, r=3, fill="#ffffff", stroke=color, sw=0.9)
+    rect(x, y, w, h, r=3, fill=tint, stroke=color, sw=1.3)
+    text(x + w / 2 - (2 if adapter else 0), y + h / 2 + size * 0.36, letter, size=size, weight="bold",
+         fill=color, anchor="middle")
+    if adapter:
+        rect(x + w - 6, y + 3, 4, h - 6, r=1, fill=TEAL, stroke=TEAL, sw=0.6)
+    if frozen:
+        lock(x + w + 10, y + h - 4, s=0.9)
 
-def flame(cx, cy, s=1.0):
-    path(f'M{cx},{cy-9*s} C{cx+7*s},{cy-2*s} {cx+6*s},{cy+6*s} {cx},{cy+7*s} '
-         f'C{cx-6*s},{cy+6*s} {cx-7*s},{cy-1*s} {cx-2*s},{cy-5*s} C{cx-2*s},{cy-1*s} {cx},{cy} {cx},{cy-9*s} z',
-         stroke="#e0621f", sw=1, fill="#f79a3e")
-    path(f'M{cx},{cy-1*s} C{cx+3*s},{cy+2*s} {cx+3*s},{cy+5*s} {cx},{cy+6*s} '
-         f'C{cx-3*s},{cy+5*s} {cx-2*s},{cy+2*s} {cx},{cy-1*s} z', stroke="none", sw=0, fill="#fde3a0")
-
-def star(cx, cy, r=8, fill=BLUE):
+def star(cx, cy, r=7, fill=NAVY):
     pts = []
     for k in range(10):
         rr = r if k % 2 == 0 else r * 0.45
         a = math.radians(-90 + 36 * k)
         pts.append(f"{cx + rr*math.cos(a):.1f},{cy + rr*math.sin(a):.1f}")
-    add(f'<polygon points="{" ".join(pts)}" fill="{fill}" stroke="#ffffff" stroke-width="0.8"/>')
+    add(f'<polygon points="{" ".join(pts)}" fill="{fill}" stroke="#ffffff" stroke-width="0.7"/>')
 
-def diamond(cx, cy, r=5, fill=ORANGE):
+def diamond(cx, cy, r=4.2, fill=OCHRE):
     add(f'<polygon points="{cx},{cy-r} {cx+r},{cy} {cx},{cy+r} {cx-r},{cy}" fill="{fill}" '
-        'stroke="#ffffff" stroke-width="0.8"/>')
+        'stroke="#ffffff" stroke-width="0.7"/>')
 
-def check(x, y, color=AQUA, s=10, sw=2.4):
+def check(x, y, color=TEAL, s=9, sw=2.0):
     path(f'M{x},{y} l{s*0.35},{s*0.35} l{s*0.7},-{s*0.8}', stroke=color, sw=sw)
 
-def cross(cx, cy, r=5, color=RED, sw=2.2):
-    line(cx - r, cy - r, cx + r, cy + r, stroke=color, sw=sw)
-    line(cx - r, cy + r, cx + r, cy - r, stroke=color, sw=sw)
+def bars(x, base, heights, color, w=5, gap=2):
+    for i, h in enumerate(heights):
+        add(f'<rect x="{x + i*(w+gap):.1f}" y="{base - h:.1f}" width="{w}" height="{h}" rx="1" fill="{color}"/>')
 
-def trash(x, y, w=16, h=18, color=MUTED):
-    rrect(x, y + 4, w, h, r=2, fill="#fff", stroke=color, sw=1.2)
-    line(x - 2, y + 4, x + w + 2, y + 4, stroke=color, sw=1.4)
-    rrect(x + w / 2 - 4, y, 8, 4, r=1, fill="#fff", stroke=color, sw=1.2)
-    for dx in (4, 8, 12):
-        line(x + dx, y + 8, x + dx, y + h, stroke=color, sw=1)
-
-def prompt_row(x, y, n=4, s=12, gap=3, color=AQUA, tint=AQUA_T, sw=1.3):
-    for i in range(n):
-        rrect(x + i * (s + gap), y, s, s, r=2, fill=tint, stroke=color, sw=sw)
-    return x + n * (s + gap) - gap
-
-def doc_card(x, y, w, h, color=MUTED, fill="#fff", nlines=2):
-    rrect(x, y, w, h, r=3, fill=fill, stroke=color, sw=1.2)
+def doc(x, y, w, h, nlines=2, stroke=MUTED):
+    rect(x, y, w, h, r=2, fill="#ffffff", stroke=stroke, sw=1)
     for i in range(nlines):
         yy = y + (i + 1) * h / (nlines + 1)
-        line(x + 5, yy, x + w - 5 - 6 * i, yy, stroke=GRAY_S, sw=1.6)
+        line(x + 4, yy, x + w - 4 - 5 * i, yy, stroke=RULE, sw=1.4)
 
-def badge(cx, cy, n, color, r=8.5):
-    circle(cx, cy, r, fill=color)
-    text(cx, cy + 4.2, str(n), size=12, weight="bold", fill="#fff", anchor="middle")
+def panel(x, y, w, h, n, title, sub):
+    rect(x, y, w, h, r=6, fill="#ffffff", stroke=RULE, sw=1)
+    circle(x + 15, y + 16, 9, fill="#3D3D3D")
+    text(x + 15, y + 20.2, str(n), size=12, weight="bold", fill="#ffffff", anchor="middle")
+    text(x + 30, y + 21, title, size=14, weight="bold", fill=INK)
+    text(x + 10, y + 39, sub, size=12, fill=INK2)
 
-def panel(x, y, w, h, n, title, color):
-    rrect(x, y, w, h, r=9, fill="#ffffff", stroke=GRAY_S, sw=1)
-    add(f'<path d="M{x},{y+24} v-15 a9,9 0 0 1 9,-9 h{w-18} a9,9 0 0 1 9,9 v15 z" fill="{color}"/>')
-    circle(x + 15, y + 12, 8.5, fill="#fff")
-    text(x + 15, y + 16.2, str(n), size=12, weight="bold", fill=color, anchor="middle")
-    text(x + 30, y + 17, title, size=14.5, weight="bold", fill="#fff")
+def chip(x, y, w, label, h=24):
+    rect(x, y, w, h, r=4, fill=SOFT, stroke=RULE, sw=1)
+    text(x + 8, y + 16, label, size=12, weight="bold", fill=INK)
 
 # =====================================================================
-W, H = 800, 372
+W, H = 800, 330
 add(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" '
-    'aria-label="SOMA overview: F answers the early turns; a soft prompt on the frozen surrogate G finds the '
-    'turns where G is easiest to push away from F; a low-rank adapter is fitted on those turns; a gate hands '
-    'the session to G, which serves from a compact context until a drift monitor rolls back to F.">')
-add('<defs>'
-    + "".join(f'<marker id="{mid}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" '
-              f'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{col}"/></marker>'
-              for mid, col in (("arr", INK2), ("arrA", AQUA), ("arrR", RED), ("arrO", ORANGE), ("arrB", BLUE)))
-    + '</defs>')
+    'aria-label="SOMA overview. Warm-start: F answers the first turns. Soft-prompt mining on the frozen G scores '
+    'how hard each warm-start turn is. Localized LoRA fits G to F on the hard turns. Gated serving: G takes over '
+    'after a fidelity and locality check and serves from a compressed context; a drift monitor rolls back to F.">')
+add('<defs>' + "".join(
+    f'<marker id="{mid}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" '
+    f'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{col}"/></marker>'
+    for mid, col in (("arr", INK2), ("arrT", TEAL), ("arrR", RED), ("arrN", NAVY), ("arrO", OCHRE))) + '</defs>')
 add(f'<rect x="0" y="0" width="{W}" height="{H}" fill="#ffffff"/>')
 
-# ---------------- top row: example session timeline ----------------
-text(10, 17, "An example session", size=14, weight="bold")
-text(146, 17, "(block width = length of the user turn)", size=12, fill=INK2)
-TY, TH = 26, 28
-turns = [  # (width, label, kind); None marks the switch point
-    (180, "“5-day veggie Kyoto trip, $2k”", "F"), (108, "“lighter day 3”", "F"), (90, "“tofu place?”", "F"),
-    None,
-    (62, "t4", "G"), (56, "t5", "G"), (62, "t6", "G"), (56, "t7", "G"),
-    (84, "“my taxes?”", "R")]
-x = 8; spans = {}
-for t in turns:
-    if t is None:
-        spans["switch"] = (x, x + 28); x += 28; continue
-    w, lab, kind = t
-    fill, stroke = {"F": (BLUE_T, BLUE), "G": (ORANGE_T, ORANGE), "R": (RED_T, RED)}[kind]
-    rrect(x, TY, w - 4, TH, r=5, fill=fill, stroke=stroke, sw=1.3)
-    col = INK2 if kind == "G" else INK
-    text(x + (w - 4) / 2, TY + 18.5, lab, size=12, fill=col, anchor="middle")
-    spans.setdefault(kind, [x, x + w - 4]); spans[kind][1] = x + w - 4
-    x += w
-s0, s1 = spans["switch"]; sc = (s0 + s1) / 2 - 2
-line(sc, TY - 2, sc, TY + TH + 2, stroke=ORANGE, sw=1.4, dash="3 3")
-circle(sc, TY + TH / 2, 8, fill="#fff", stroke=ORANGE, sw=1.4)
-check(sc - 4.2, TY + TH / 2 + 0.5, color=ORANGE, s=8, sw=2)
-text(sc, TY - 5, "gate", size=12, weight="bold", fill=ORANGE, anchor="middle")
-def bracket(x0, x1, color, y=TY + TH + 5):
-    path(f'M{x0},{y} v5 H{x1} v-5', stroke=color, sw=1.3)
-fx0, fx1 = spans["F"]; gx0, gx1 = spans["G"]; rx0, rx1 = spans["R"]
-bracket(fx0, fx1, BLUE); bracket(gx0, gx1, ORANGE); bracket(rx0, rx1, RED)
-by = TY + TH + 25
-badge(fx0 + 30, by - 4, 1, BLUE)
-text(fx0 + 42, by, "warm-start: F answers, and its replies are kept as targets", size=12)
-badge(gx0 + 12, by - 4, 4, ORANGE)
-text(gx0 + 24, by, "G serves from a compact context", size=12)
-text((rx0 + rx1) / 2, by, "drift: back to F", size=12, weight="bold", fill=RED, anchor="middle")
+PY_, PH = 6, 244
+P = {1: (8, 168), 2: (190, 214), 3: (418, 168), 4: (600, 192)}
+panel(P[1][0], PY_, P[1][1], PH, 1, "Warm-start", "F answers turns 1–W")
+panel(P[2][0], PY_, P[2][1], PH, 2, "Soft-prompt mining", "probe frozen G on turns 1–W")
+panel(P[3][0], PY_, P[3][1], PH, 3, "Localized LoRA", "fit G to F's replies")
+panel(P[4][0], PY_, P[4][1], PH, 4, "Gated serving", "switch if both checks pass")
+for a, b in ((1, 2), (2, 3), (3, 4)):
+    xa = P[a][0] + P[a][1]; xb = P[b][0]
+    line(xa + 1, PY_ + PH / 2, xb - 1, PY_ + PH / 2, stroke=INK2, sw=1.8, marker="arr")
+CHIP_Y = 216
 
-# ---------------- panels ----------------
-PY, PH = 96, 270
-P2x, P2w = 8, 312
-P3x, P3w = 334, 190
-P4x, P4w = 538, 254
-panel(P2x, PY, P2w, PH, 2, "Mine weak spots with a soft prompt", AQUA)
-panel(P3x, PY, P3w, PH, 3, "Patch G locally", AQUA)
-panel(P4x, PY, P4w, PH, 4, "Gate, serve, roll back", ORANGE)
-for xa, xb in ((P2x + P2w, P3x), (P3x + P3w, P4x)):
-    line(xa + 1, PY + PH / 2, xb - 1, PY + PH / 2, stroke=INK2, sw=1.8, marker="arr")
+# ===== (1) warm-start =====
+x0 = P[1][0]
+for i, w in enumerate((82, 58, 38)):           # user turns, long -> short
+    rect(x0 + 12, 56 + i * 15, w, 11, r=2, fill=FROZEN, stroke=MUTED, sw=0.9)
+text(x0 + 100, 76, "user turns", size=12, fill=INK2)
+line(x0 + 40, 102, x0 + 40, 116, stroke=INK2, sw=1.3, marker="arr")
+model(x0 + 22, 126, 38, 32, "F", NAVY, NAVY_T)
+text(x0 + 100, 146, "large LLM", size=12, fill=INK2)
+line(x0 + 40, 162, x0 + 40, 174, stroke=INK2, sw=1.3, marker="arr")
+for i, w in enumerate((78, 60, 48)):           # F's replies
+    rect(x0 + 12, 178 + i * 11, w, 8, r=2, fill=NAVY_T, stroke=NAVY, sw=0.9)
+text(x0 + 100, 196, "replies", size=12, fill=INK2)
+chip(x0 + 8, CHIP_Y, P[1][1] - 16, "context–reply pairs")
 
-# ===== panel 2: soft-prompt mining =====
-x0 = P2x
-cy = 156
-text(x0 + 42, cy - 23, "soft prompt", size=12, fill=AQUA, anchor="middle")
-px1 = prompt_row(x0 + 12, cy - 7, n=4, s=13, gap=3)
-flame(px1 + 9, cy - 1, s=0.8)
-text(px1 + 24, cy + 5, "+", size=15, weight="bold", fill=INK2, anchor="middle")
-doc_card(px1 + 34, cy - 11, 44, 22, nlines=2)
-text(px1 + 56, cy - 23, "turns 1–3", size=12, fill=INK2, anchor="middle")
-line(px1 + 82, cy, px1 + 98, cy, stroke=INK2, sw=1.4, marker="arr")
-gx = px1 + 116
-robot(gx, cy - 2, 26, ORANGE, ORANGE_T)
-snowflake(gx + 21, cy + 6, r=5.5, color=BLUE)
-text(gx + 4, cy - 24, "G (frozen)", size=12, fill=ORANGE, anchor="middle")
-line(gx + 28, cy, gx + 42, cy, stroke=INK2, sw=1.4, marker="arr")
-hx = gx + 48
-for i, h in enumerate((8, 22, 13, 6, 17, 4)):
-    add(f'<rect x="{hx + i*8:.1f}" y="{cy + 10 - h:.1f}" width="6" height="{h}" rx="1.5" fill="{MUTED}"/>')
-line(hx - 2, cy + 10, hx + 48, cy + 10, stroke=GRAY_S, sw=1)
-text(hx + 23, cy - 23, "next word", size=12, fill=INK2, anchor="middle")
-path(f'M{gx-10},{cy+19} C{gx-50},{cy+34} {x0+70},{cy+34} {x0+42},{cy+11}', stroke=AQUA, sw=1.4,
-     dash="4 3", marker="arrA")
-text((gx + x0 + 42) / 2 + 6, cy + 42, "gradients update P only", size=12, fill=AQUA, anchor="middle")
-
-# (b) G's embedding space: push G's mass off F's word and its neighbours
-ex0, ey0, ew, eh = x0 + 8, 206, 198, 94
-rrect(ex0, ey0, ew, eh, r=6, fill="#f8f8f6", stroke=GRAY_S, sw=1)
-text(ex0 + 7, ey0 + 15, "G's word-embedding space", size=12, fill=INK2)
-sx, sy, R = ex0 + 44, ey0 + 56, 21
-circle(sx, sy, R, fill="#eef6fd", stroke=BLUE, sw=1.1, dash="3 3")
+# ===== (2) soft-prompt mining =====
+x0 = P[2][0]
+cy = 74
+for i in range(4):                             # trainable soft prompt
+    rect(x0 + 10 + i * 13, cy - 6, 10, 12, r=2, fill=TEAL_T, stroke=TEAL, sw=1.1)
+text(x0 + 66, cy + 5, "+", size=14, weight="bold", fill=INK2, anchor="middle")
+doc(x0 + 74, cy - 10, 30, 20)
+line(x0 + 108, cy, x0 + 122, cy, stroke=INK2, sw=1.3, marker="arr")
+model(x0 + 126, cy - 12, 26, 26, "G", OCHRE, OCHRE_T, frozen=True, size=13)
+line(x0 + 168, cy, x0 + 178, cy, stroke=INK2, sw=1.3, marker="arr")
+bars(x0 + 180, cy + 10, (6, 18, 11, 4), MUTED)
+text(x0 + 35, cy + 26, "prompt P", size=12, fill=INK2, anchor="middle")
+text(x0 + 89, cy + 26, "context", size=12, fill=INK2, anchor="middle")
+text(x0 + 184, cy + 26, "next token", size=12, fill=INK2, anchor="middle")
+line(x0 + 10, 112, x0 + P[2][1] - 10, 112, stroke=RULE, sw=1)
+ex, ey = x0 + 46, 152                          # objective in G's embedding space
+circle(ex, ey, 22, fill=NAVY_T, stroke=NAVY, sw=1, dash="3 2.5")
 for dx, dy in ((-12, -9), (11, 10), (12, -9)):
-    circle(sx + dx, sy + dy, 3, fill=MUTED)
-star(sx, sy, r=8)
-diamond(sx + 6, sy + 5, r=4.2)
-for ang in (35, 145, -145):
+    circle(ex + dx, ey + dy, 2.8, fill=MUTED)
+star(ex, ey)
+diamond(ex + 7, ey + 6)
+for ang in (40, 140, -140, -40):
     t = math.radians(ang)
-    line(sx + (R + 2) * math.cos(t), sy - (R + 2) * math.sin(t),
-         sx + (R + 15) * math.cos(t), sy - (R + 15) * math.sin(t), stroke=AQUA, sw=1.8, marker="arrA")
-lx, ly = ex0 + 86, ey0 + 31
-star(lx, ly - 4, r=6); text(lx + 10, ly, "F's word “temple”", size=12, fill=BLUE, weight="bold")
-circle(lx, ly + 11, 3, fill=MUTED); text(lx + 10, ly + 15, "its neighbours", size=12, fill=INK2)
-diamond(lx, ly + 26, r=4.2); text(lx + 10, ly + 30, "G's mean guess", size=12, fill=ORANGE)
-text(lx + 10, ly + 44, "(near: weigh more)", size=12, fill=INK2)
-line(lx - 5, ly + 55, lx + 5, ly + 55, stroke=AQUA, sw=1.8, marker="arrA")
-text(lx + 10, ly + 59, "push G away", size=12, weight="bold", fill=AQUA)
+    line(ex + 24 * math.cos(t), ey - 24 * math.sin(t), ex + 36 * math.cos(t), ey - 36 * math.sin(t),
+         stroke=TEAL, sw=1.6, marker="arrT")
+text(ex, ey + 46, "F's token and", size=12, fill=INK2, anchor="middle")
+text(ex, ey + 59, "its neighbors", size=12, fill=INK2, anchor="middle")
+lx = x0 + 106                                  # the three terms of the objective
+line(lx, 127, lx + 12, 127, stroke=TEAL, sw=1.6, marker="arrT")
+text(lx + 20, 131, "neighborhood", size=12)
+text(lx + 20, 144, "unlikelihood", size=12)
+diamond(lx + 6, 158)
+text(lx + 20, 162, "expectation", size=12)
+text(lx + 20, 175, "weighting", size=12)
+bars(lx + 1, 193, (6, 8, 7), TEAL, w=3, gap=1.5)
+text(lx + 20, 193, "entropy", size=12)
+text(lx + 20, 206, "regularizer", size=12)
+rect(x0 + 8, CHIP_Y, P[2][1] - 16, 24, r=4, fill=SOFT, stroke=RULE, sw=1)
+text(x0 + 16, CHIP_Y + 16, "hardness of each turn", size=12, weight="bold")
+for i, h in enumerate((15, 5, 12)):
+    add(f'<rect x="{x0 + 170 + i*10:.1f}" y="{CHIP_Y + 20 - h:.1f}" width="7" height="{h}" rx="1" fill="{TEAL}"/>')
 
-# (c) keep entropy
-cx0 = ex0 + ew + 6; cw = P2x + P2w - cx0 - 8
-rrect(cx0, ey0, cw, eh, r=6, fill="#f8f8f6", stroke=GRAY_S, sw=1)
-text(cx0 + cw / 2, ey0 + 16, "keep entropy", size=12, weight="bold", fill=INK, anchor="middle")
-base = ey0 + 60
-for i, h in enumerate((3, 30, 3, 2)):
-    add(f'<rect x="{cx0 + 8 + i*9:.1f}" y="{base - h:.1f}" width="6" height="{h}" rx="1.5" fill="{MUTED}"/>')
-for i, h in enumerate((12, 16, 14, 10)):
-    add(f'<rect x="{cx0 + cw - 42 + i*9:.1f}" y="{base - h:.1f}" width="6" height="{h}" rx="1.5" fill="{AQUA}"/>')
-line(cx0 + 5, base, cx0 + cw - 5, base, stroke=GRAY_S, sw=1)
-cross(cx0 + 22, base + 11, r=4)
-check(cx0 + cw - 30, base + 11, s=9)
-text(cx0 + 22, base + 28, "spike", size=12, fill=RED, anchor="middle")
-text(cx0 + cw - 24, base + 28, "spread", size=12, fill=AQUA, anchor="middle")
+# ===== (3) localized LoRA =====
+x0 = P[3][0]
+rect(x0 + 12, 56, 44, 44, r=2, fill=FROZEN, stroke=MUTED, sw=1.1)
+lock(x0 + 34, 77, s=1.2)
+text(x0 + 66, 83, "+", size=15, weight="bold", fill=INK2, anchor="middle")
+rect(x0 + 78, 56, 10, 44, r=2, fill=TEAL_T, stroke=TEAL, sw=1.2)
+rect(x0 + 92, 56, 44, 10, r=2, fill=TEAL_T, stroke=TEAL, sw=1.2)
+text(x0 + 34, 116, "frozen", size=12, fill=INK2, anchor="middle")
+text(x0 + 94, 86, "low-rank", size=12, fill=INK2)
+text(x0 + 94, 99, "update", size=12, fill=INK2)
+text(x0 + 10, 134, "on attention and MLP", size=12, fill=INK2)
+for i, wgt in enumerate((30, 9, 25)):          # warm-start turns weighted by hardness
+    yy = 148 + i * 17
+    rect(x0 + 12, yy, 22, 12, r=2, fill="#ffffff", stroke=MUTED, sw=1)
+    add(f'<rect x="{x0 + 38:.1f}" y="{yy + 2:.1f}" width="{wgt}" height="8" rx="1" fill="{TEAL}"/>')
+line(x0 + 74, 171, x0 + 86, 171, stroke=INK2, sw=1.3, marker="arr")
+rect(x0 + 90, 158, 68, 26, r=4, fill=NAVY_T, stroke=NAVY, sw=1)
+text(x0 + 124, 175, "F's replies", size=12, anchor="middle")
+text(x0 + 10, 206, "turns weighted by hardness", size=12, fill=INK2)
+chip(x0 + 8, CHIP_Y, P[3][1] - 16, "adapted G")
+model(x0 + 110, CHIP_Y + 4, 22, 16, "G", OCHRE, OCHRE_T, adapter=True, size=11)
 
-# (d) best of M prompts -> hardness per warm-start turn
-dy0 = 310
-for k in range(3):
-    prompt_row(x0 + 14, dy0 + k * 13, n=4, s=9, gap=2.5, sw=1.1,
-               color=AQUA if k == 1 else MUTED, tint=AQUA_T if k == 1 else "#ffffff")
-check(x0 + 62, dy0 + 18, s=9)
-text(x0 + 34, dy0 + 52, "best of M", size=12, fill=INK2, anchor="middle")
-line(x0 + 80, dy0 + 18, x0 + 98, dy0 + 18, stroke=INK2, sw=1.4, marker="arr")
-bb = dy0 + 38
-for i, (h, c) in enumerate(((30, AQUA), (8, GRAY_S), (25, AQUA))):
-    add(f'<rect x="{x0 + 108 + i*24:.1f}" y="{bb - h:.1f}" width="15" height="{h}" rx="3" fill="{c}"/>')
-    text(x0 + 115.5 + i * 24, bb + 14, f"t{i+1}", size=12, fill=INK2, anchor="middle")
-line(x0 + 102, bb, x0 + 178, bb, stroke=GRAY_S, sw=1)
-text(x0 + 190, dy0 + 10, "hardness per turn:", size=12, fill=INK2)
-text(x0 + 190, dy0 + 26, "t1, t3 = weak spots", size=12, weight="bold", fill=AQUA)
-text(x0 + 190, dy0 + 42, "(G easy to push)", size=12, fill=INK2)
-
-# ===== panel 3: localized LoRA =====
-x0 = P3x
-wx, wy = x0 + 14, 134
-rrect(wx, wy, 54, 54, r=3, fill="#eeeeec", stroke=MUTED, sw=1.2)
-snowflake(wx + 27, wy + 27, r=11, color=BLUE)
-text(wx + 27, wy + 70, "base weights", size=12, fill=INK2, anchor="middle")
-text(wx + 70, wy + 33, "+", size=16, weight="bold", fill=INK2, anchor="middle")
-rrect(wx + 84, wy, 13, 54, r=2, fill=AQUA_T, stroke=AQUA, sw=1.4)
-rrect(wx + 102, wy, 54, 13, r=2, fill=AQUA_T, stroke=AQUA, sw=1.4)
-flame(wx + 129, wy + 36, s=0.95)
-text(wx + 121, wy + 70, "LoRA (low-rank)", size=12, fill=AQUA, anchor="middle")
-text(x0 + P3w / 2, wy + 86, "on attention + MLP", size=12, fill=INK2, anchor="middle")
-cy0 = 238
-for i, wgt in enumerate((34, 9, 28)):
-    yy = cy0 + i * 19
-    hard = wgt > 20
-    rrect(x0 + 12, yy, 30, 15, r=3, fill="#fff", stroke=AQUA if hard else MUTED, sw=1.2)
-    text(x0 + 27, yy + 11.5, f"t{i+1}", size=12, fill=INK2, anchor="middle")
-    add(f'<rect x="{x0 + 47:.1f}" y="{yy + 3:.1f}" width="{wgt}" height="9" rx="2" fill="{AQUA if hard else GRAY_S}"/>')
-line(x0 + 88, cy0 + 26, x0 + 104, cy0 + 26, stroke=INK2, sw=1.4, marker="arr")
-rrect(x0 + 108, cy0 + 11, 72, 30, r=7, fill=BLUE_T, stroke=BLUE, sw=1.2)
-text(x0 + 144, cy0 + 30, "F's replies", size=12, fill=INK, anchor="middle")
-text(x0 + 12, cy0 + 70, "weight = hardness", size=12, fill=INK2)
-trash(x0 + 14, 326)
-prompt_row(x0 + 12, 314, n=3, s=6, gap=2, sw=1)
-text(x0 + 38, 336, "prompt", size=12, fill=MUTED)
-text(x0 + 38, 350, "discarded", size=12, fill=MUTED)
-flame(x0 + 124, 333, s=0.75)
-text(x0 + 134, 337, "trained", size=12, fill=INK2)
-snowflake(x0 + 124, 351, r=5, color=BLUE)
-text(x0 + 134, 355, "frozen", size=12, fill=INK2)
-
-# ===== panel 4: gate, serve, roll back =====
-x0 = P4x
-text(x0 + 10, 139, "gate: both checks must pass", size=12, weight="bold", fill=ORANGE)
-ox, oy = x0 + 16, 198
-for ang, col, mk in ((62, BLUE, "arrB"), (44, ORANGE, "arrO")):
+# ===== (4) gated serving =====
+x0 = P[4][0]
+ox, oy = x0 + 18, 100                          # fidelity: G's reply points where F's does
+for ang, col, mk in ((64, NAVY, "arrN"), (46, OCHRE, "arrO")):
     t = math.radians(ang)
-    line(ox, oy, ox + 46 * math.cos(t), oy - 46 * math.sin(t), stroke=col, sw=2, marker=mk)
-path(f'M{ox + 17*math.cos(math.radians(44)):.1f},{oy - 17*math.sin(math.radians(44)):.1f} '
-     f'A17,17 0 0 0 {ox + 17*math.cos(math.radians(62)):.1f},{oy - 17*math.sin(math.radians(62)):.1f}',
-     stroke=INK2, sw=1)
-text(ox + 14, oy - 46, "F", size=12, weight="bold", fill=BLUE)
-text(ox + 39, oy - 30, "G", size=12, weight="bold", fill=ORANGE)
-text(ox + 56, oy - 16, "replies", size=12)
-text(ox + 56, oy - 2, "agree", size=12)
-check(ox + 90, oy - 50, s=10)
-qx, qy = x0 + 150, 176
-circle(qx, qy, 24, fill="#eef6fd", stroke=BLUE, sw=1.1, dash="3 3")
-for dx, dy in ((-10, -9), (9, -12), (-13, 8), (5, 11)):
-    circle(qx + dx, qy + dy, 3, fill=BLUE)
-line(qx - 3, qy - 3, qx + 3, qy + 3, stroke=INK, sw=1.4); line(qx - 3, qy + 3, qx + 3, qy - 3, stroke=INK, sw=1.4)
-circle(qx + 14, qy + 1, 4.2, fill=ORANGE, stroke="#fff", sw=1)
-text(qx + 30, qy - 2, "query", size=12)
-text(qx + 30, qy + 12, "on topic", size=12)
-check(qx + 60, qy - 28, s=10)
-sy0 = 226
-robot(x0 + 22, sy0 + 20, 24, ORANGE, ORANGE_T)
-line(x0 + 38, sy0 + 20, x0 + 52, sy0 + 20, stroke=INK2, sw=1.3, marker="arr")
-doc_card(x0 + 54, sy0 + 6, 38, 28, color=ORANGE, nlines=3)
+    line(ox, oy, ox + 42 * math.cos(t), oy - 42 * math.sin(t), stroke=col, sw=1.8, marker=mk)
+path(f'M{ox + 15*math.cos(math.radians(46)):.1f},{oy - 15*math.sin(math.radians(46)):.1f} '
+     f'A15,15 0 0 0 {ox + 15*math.cos(math.radians(64)):.1f},{oy - 15*math.sin(math.radians(64)):.1f}',
+     stroke=INK2, sw=0.9)
+text(ox + 12, oy - 42, "F", size=12, weight="bold", fill=NAVY)
+text(ox + 36, oy - 26, "G", size=12, weight="bold", fill=OCHRE)
+text(ox + 26, oy + 18, "fidelity", size=12, anchor="middle")
+check(ox + 52, oy - 44)
+qx, qy = x0 + 130, 78                          # locality: query near the warm-start centroid
+circle(qx, qy, 20, fill=NAVY_T, stroke=NAVY, sw=1, dash="3 2.5")
+for dx, dy in ((-9, -8), (8, -10), (-11, 7), (4, 9)):
+    circle(qx + dx, qy + dy, 2.6, fill=NAVY)
+line(qx - 3, qy - 3, qx + 3, qy + 3, stroke=INK, sw=1.3); line(qx - 3, qy + 3, qx + 3, qy - 3, stroke=INK, sw=1.3)
+circle(qx + 12, qy + 1, 3.8, fill=OCHRE, stroke="#ffffff", sw=0.8)
+text(qx, oy + 18, "locality", size=12, anchor="middle")
+check(qx + 26, oy - 44)
+line(x0 + 10, 128, x0 + P[4][1] - 10, 128, stroke=RULE, sw=1)
+doc(x0 + 12, 138, 34, 26, nlines=3)            # compressed context -> adapted G
+text(x0 + 53, 156, "+", size=12, weight="bold", fill=INK2, anchor="middle")
 for i in range(3):
-    rrect(x0 + 108 + i * 12, sy0 + 6, 9, 28, r=2, fill=GRAY, stroke=MUTED, sw=1)
-text(x0 + 99, sy0 + 25, "+", size=13, weight="bold", fill=INK2, anchor="middle")
-text(x0 + 98, sy0 + 48, "summary + last K turns", size=12, fill=INK2, anchor="middle")
-rrect(x0 + 164, sy0 + 14, 80, 12, r=3, fill=GRAY, stroke=MUTED, sw=1)
-line(x0 + 162, sy0 + 32, x0 + 246, sy0 + 8, stroke=RED, sw=1.8)
-text(x0 + 204, sy0 + 48, "full history", size=12, fill=MUTED, anchor="middle")
-text(x0 + 10, 296, "drift monitor", size=12, weight="bold")
-ax0, ay0, ax1, ay1 = x0 + 16, 344, x0 + 146, 302
-line(ax0, ay0, ax1, ay0, stroke=MUTED, sw=1)
-line(ax0, ay0, ax0, ay1, stroke=MUTED, sw=1, marker="arr")
-thr = 321
-line(ax0, thr, ax1, thr, stroke=RED, sw=1.2, dash="4 3")
-pts = [(ax0 + 16 + 24 * i, y) for i, y in enumerate((337, 333, 338, 315, 308))]
-path("M" + " L".join(f"{px:.1f},{py:.1f}" for px, py in pts), stroke=MUTED, sw=1.2)
-for i, (px, py) in enumerate(pts):
-    circle(px, py, 4, fill=RED if py < thr else ORANGE, stroke="#fff", sw=1)
-    text(px, ay0 + 14, f"t{i+4}", size=12, fill=INK2, anchor="middle")
-text(pts[3][0] + 12, 302, "2 in a row", size=12, fill=RED, anchor="middle")
-line(ax1 + 6, 321, ax1 + 30, 321, stroke=RED, sw=1.6, marker="arrR")
-robot(x0 + 212, 316, 26, BLUE, BLUE_T)
-text(x0 + 212, 354, "back to F", size=12, weight="bold", fill=RED, anchor="middle")
+    rect(x0 + 60 + i * 10, 138, 7, 26, r=1.5, fill=FROZEN, stroke=MUTED, sw=0.9)
+line(x0 + 94, 151, x0 + 112, 151, stroke=INK2, sw=1.3, marker="arr")
+model(x0 + 118, 138, 28, 26, "G", OCHRE, OCHRE_T, adapter=True, size=13)
+text(x0 + 10, 180, "summary + last K turns", size=12, fill=INK2)
+bx0, by0 = x0 + 12, 238                        # drift monitor
+line(bx0, by0, bx0 + 96, by0, stroke=MUTED, sw=0.9)
+line(bx0, by0, bx0, 194, stroke=MUTED, sw=0.9)
+thr = 212
+line(bx0, thr, bx0 + 96, thr, stroke=RED, sw=1.1, dash="4 3")
+pts = [(bx0 + 12 + 18 * i, y) for i, y in enumerate((232, 228, 233, 207, 201))]
+path("M" + " L".join(f"{px:.1f},{py:.1f}" for px, py in pts), stroke=MUTED, sw=1)
+for px, py in pts:
+    circle(px, py, 3.4, fill=RED if py < thr else OCHRE, stroke="#ffffff", sw=0.8)
+text(bx0 + 108, 216, "drift", size=12)
+text(bx0 + 108, 229, "monitor", size=12)
+
+# ===== session timeline, aligned with the stages above =====
+TY, TH = 258, 22
+tx = P[1][0]
+for i, w in enumerate((64, 48, 40)):
+    rect(tx, TY, w, TH, r=3, fill=NAVY_T, stroke=NAVY, sw=1)
+    text(tx + w / 2, TY + 15.5, f"t{i+1}", size=12, anchor="middle")
+    tx += w + 4
+line(tx, TY + TH / 2, P[2][0] - 2, TY + TH / 2, stroke=INK2, sw=1.2, marker="arr")
+ax0, ax1 = P[2][0], P[3][0] + P[3][1]
+rect(ax0, TY, ax1 - ax0, TH, r=3, fill=SOFT, stroke=MUTED, sw=1, dash="4 3")
+text((ax0 + ax1) / 2, TY + 15.5, "one-time adaptation between turn 3 and turn 4 (steps 2–3)", size=12,
+     fill=INK2, anchor="middle")
+line(ax1 + 2, TY + TH / 2, P[4][0] - 2, TY + TH / 2, stroke=INK2, sw=1.2, marker="arr")
+tx = P[4][0]
+for i in range(4):
+    rect(tx, TY, 34, TH, r=3, fill=OCHRE_T, stroke=OCHRE, sw=1)
+    text(tx + 17, TY + 15.5, f"t{i+4}", size=12, anchor="middle")
+    tx += 38
+xe = P[4][0] + P[4][1]
+rect(tx, TY, xe - tx, TH, r=3, fill=RED_T, stroke=RED, sw=1.2)
+t8c = tx + (xe - tx) / 2
+text(t8c, TY + 15.5, "t8", size=12, weight="bold", fill=RED, anchor="middle")
+path(f'M{t8c:.1f},{TY + TH + 1} V{TY + TH + 16} H{P[1][0] + 32} V{TY + TH + 3}', stroke=RED, sw=1.5, marker="arrR")
+add(f'<rect x="{400 - 200}" y="{TY + TH + 9}" width="400" height="15" fill="#ffffff"/>')
+text(400, TY + TH + 21, "drift detected at turn 8: roll back to F and refresh the warm-start state",
+     size=12, fill=RED, anchor="middle")
+lgx, lgy = P[4][0] + 50, H - 4                  # legend
+rect(lgx, lgy - 10, 12, 10, r=2, fill=TEAL_T, stroke=TEAL, sw=1)
+text(lgx + 17, lgy, "trained", size=12, fill=INK2)
+lock(lgx + 78, lgy - 5, s=1.0)
+text(lgx + 88, lgy, "frozen", size=12, fill=INK2)
 
 add('</svg>')
 svg = "\n".join(out)

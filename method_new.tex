@@ -4,14 +4,14 @@
   \centering
   \includegraphics[width=\textwidth]{figure/overview.pdf}
   \vspace{-2mm}
-  \caption{Overview of SOMA on an example session (top; block width is the length of the user turn, color shows who serves it). (1) $F$ answers the warm-start turns, and its replies become targets. (2) A soft prompt on the frozen surrogate $G$ pushes $G$'s next-word mass away from $F$'s words and their embedding neighbors under an entropy guard; the best of $M$ prompts scores how hard each turn is. (3) A LoRA adapter is fitted to $F$'s replies with these hardness weights, and the prompt is discarded. (4) A gate switches to $G$ when its replies agree with $F$ and the query stays on topic; $G$ then serves from a summary plus the last $K$ turns until a drift monitor rolls back to $F$.}
+  \caption{Overview of SOMA. \textbf{(1) Warm-start:} the large model $F$ answers the first $W$ turns, and each turn yields a context--reply pair. \textbf{(2) Soft-prompt mining:} a soft prompt $\mathbf P$ is trained on the frozen surrogate $G$ to push $G$ away from $F$'s tokens and their embedding neighbors, using neighborhood unlikelihood with expectation weighting and an entropy regularizer; how far $G$ can be pushed gives the hardness of each warm-start turn. \textbf{(3) Localized LoRA:} a low-rank update of $G$ is fitted to $F$'s replies with hardness-weighted turns, and the prompt is discarded. \textbf{(4) Gated serving:} $G$ takes over only if its replies match $F$'s (fidelity) and the query stays near the warm-start centroid (locality), and it then serves from a summary plus the last $K$ turns. Bottom: the session timeline, in which adaptation runs once and a drift monitor rolls the session back to $F$.}
   \label{fig:overview}
 \vspace{-3mm}
 \end{figure}
 
-Figure~\ref{fig:overview} summarizes SOMA. The original model \(F\) serves the early turns and thereby establishes the dialogue state; soft-prompt mining finds where the surrogate \(G\) is least aligned with \(F\) within that state; a lightweight LoRA adapter distills these hard cases; and a semantic gate hands the session to \(G\), with rollback to \(F\) when the dialogue leaves the learned region.
+Figure~\ref{fig:overview} summarizes SOMA in four steps. (1) The original model \(F\) serves the first \(W\) turns and thereby establishes the dialogue state. (2) Soft-prompt mining finds where the surrogate \(G\) is least aligned with \(F\) within that state (Sections~\ref{sec:init}--\ref{sec:mining}). (3) A lightweight LoRA adapter distills these hard cases, and (4) a semantic gate hands the session to \(G\), with rollback to \(F\) when the dialogue leaves the learned region (Section~\ref{sec:ft-switch}).
 
-\subsection{Initialization}
+\subsection{Initialization}\label{sec:init}
 
 We initialize a soft prompt $\mathbf{P}\in\mathbb{R}^{L_p\times d}$ on the surrogate $G$ by sampling each row i.i.d.\ from $\boldsymbol{p}_{\ell}\sim\mathcal{N}(\boldsymbol{0},\sigma^2\mathbf{I}_d)$, where $\sigma>0$ sets the initialization scale. Let $\mathbf{E}=[\boldsymbol e_v]_{v\in\mathcal V}\in\mathbb{R}^{d\times |\mathcal V|}$ be the surrogate embedding matrix and let $\mathrm{tok}(v)$ denote the token string associated with index $v$.
 
@@ -31,7 +31,7 @@ a_t^{F}=F\!\left(V(\mathbf P)\oplus\mathcal D_{t-1}\oplus q_t\right),
 \]
 Here $\mathrm{tok}_G(\cdot)$ is the tokenizer of $G$, $\mathbf E(\cdot)$ maps tokens to embeddings, and $\oplus_{\mathrm{emb}}$ concatenates along the sequence. Both models thus see the same dialogue state, and gradients flow only through $\mathbf P$ on $G$\rev{; the original-model responses used as mining targets are generated once in the warm-start window and kept fixed during optimization, so $F$ is never re-queried while $\mathbf P$ changes (Appendix~\ref{sec:app_rationale})}.
 
-\subsection{Soft Prompt Tuning for Mining Weak Alignment Directions}
+\subsection{Soft Prompt Tuning for Mining Weak Alignment Directions}\label{sec:mining}
 
 We learn $\mathbf P$ by minimizing a differentiable objective that pushes $G$ away from $F$ on the local dialogue context. The objective has three parts: a token-level semantic divergence loss, an expectation-weighted distribution-level term, and an anti-degeneration regularizer.
 
@@ -107,7 +107,7 @@ The complete prompt-mining objective for a minibatch of warm-start turns $\mathc
 \end{equation}
 We minimize Eq.~\ref{eq:prompt-final} with AdamW while all weights of $G$ stay frozen, and we clip gradients to stabilize the prompt scale. Two choices keep mining cheap: semantic neighbors are retrieved from an ANN index over normalized token embeddings, and $\bar{\boldsymbol e}_{t,i}$ uses a top-$m$ truncation of $\Pi_{t,i}(\mathbf P)$ instead of a dense sum over the vocabulary. The per-step overhead is therefore linear in the number of teacher-prefix positions and scales with $k+m$ rather than $|\mathcal V|$.
 
-\subsection{Localized Fine-Tuning, Switching, and Rollback}
+\subsection{Localized Fine-Tuning, Switching, and Rollback}\label{sec:ft-switch}
 
 The learned soft prompts are session-local mining tools, not inference-time inputs. After mining, SOMA converts them into ordinary local supervision. Each warm-start turn receives a hardness score equal to its largest mined divergence, $r_t=\max_{\mathbf P\in\mathcal P_{\mathrm{cand}}}
 \mathcal L_{\mathrm{sem\_exp}}(\mathbf P;\mathcal D_{t-1},q_t)$, and the highest-scoring turns together with their original-model responses form a local training set $\mathcal H$. \rev{This makes the data-mining role of soft prompts explicit: instead of training on all or randomly chosen warm-start turns, SOMA trains on the turns that prompt mining exposes as least aligned.}
