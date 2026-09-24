@@ -75,7 +75,7 @@ s_{\tau}(v\mid y_{t,i}^{F})
 Thus the loss blocks local copying through the neighborhood term and detects broader semantic shadowing through the expectation weight.
 
 \textbf{Anti-degeneration regularizer.}
-Mining can collapse if $G$ piles probability onto a few high-frequency tokens, yielding bland continuations that \rev{suppress $F$'s tokens trivially and make the per-turn scores uninformative}~\citep{li2023repetition,holtzman2019curious,meister2023locally}. We therefore preserve entropy near the prompt-context boundary; reusing the logits of the same forward pass, define
+Mining can collapse if $G$ piles probability onto a few high-frequency tokens, yielding bland continuations that \rev{suppress $F$'s tokens trivially and make the per-turn scores uninformative}~\citep{li2023repetition,holtzman2019curious,meister2023locally}. We therefore preserve \rev{the entropy of $G$'s predictions over the last $K$ positions of the teacher response}; reusing the logits of the same forward pass, define
 \[
 H_{\mathrm{tail}}(\mathbf P;t)=
 \frac{1}{K}\sum_{i\in\mathrm{tail}(t,K)}
@@ -93,7 +93,7 @@ The complete prompt-mining objective for a minibatch of warm-start turns $\mathc
 \right]
 +\lambda_P\|\mathbf P\|_F^2 .
 \end{equation}
-We minimize Eq.~\ref{eq:prompt-final} with AdamW and gradient clipping while all weights of $G$ stay frozen. Neighbors come from an ANN index over normalized token embeddings, and $\bar{\boldsymbol e}_{t,i}$ uses a top-$m$ truncation of $\Pi_{t,i}(\mathbf P)$, so the per-step overhead is linear in the number of teacher-prefix positions and scales with $k+m$ rather than with the vocabulary size $|\mathcal V|$.
+We minimize Eq.~\ref{eq:prompt-final} with AdamW and gradient clipping while all weights of $G$ stay frozen. \rev{Neighbors are precomputed once by nearest-neighbor search over normalized token embeddings}, and $\bar{\boldsymbol e}_{t,i}$ uses a top-$m$ truncation of $\Pi_{t,i}(\mathbf P)$, so the per-step overhead is linear in the number of teacher-prefix positions and scales with $k+m$ rather than with the vocabulary size $|\mathcal V|$.
 
 \subsection{Localized Fine-Tuning, Switching, and Rollback}\label{sec:ft-switch}
 

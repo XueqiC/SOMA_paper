@@ -39,6 +39,20 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 13 — text checked sentence by sentence against the implementation (2026-09-24)
+
+- App. G: gradual drift *raises* the centroid distance (was "lowers").
+- §3.2: the entropy term covers the last K positions of the teacher response, matching its own equation (was "near the prompt-context boundary");
+  neighbors are "precomputed by nearest-neighbor search" (was "ANN index"; the code uses exact search).
+- App. C.2: "a single forward pass per warm-start turn and step" (was "a KV cache ..."); early stopping on the training loss, since every
+  warm-start turn is used for adaptation (was "validation divergence", which implies a held-out split that does not exist).
+- Fig. 6(b): the x-axis is the relative switch point W/T, which is what is plotted (was "Truncation point W (turns)"); data unchanged.
+- Still open for the author:
+  - §3.3 says that after a rollback SOMA refreshes the summary and centroid and can switch back to G. The released code rolls back for the
+    rest of the session without refreshing.
+  - In Fig. 6(a), three datasets have their switch-point marker at W = 1 because the notebook passes W/T fractions.
+  - "Cosine decay" in App. C.2 is not in the released code.
+
 ## Round 12 — bibliography corrected; references end on page 13 again (2026-09-24)
 
 - 47 of 58 cited entries corrected against publisher records (details: `../notes/bib_check_2026-09-24.md`).
