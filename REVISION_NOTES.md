@@ -39,6 +39,11 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 10 — references end on page 13 (2026-09-24)
+
+- Dropped the GPT-2 citation (radford2019language) from the "GPT series" group in the introduction; GPT-3 and GPT-4 remain. The last
+  reference no longer spills onto its own page, and the PDF is 24 pages. Main text unchanged (still exactly 9 pages).
+
 ## Round 9 — table captions state their takeaway (2026-09-24)
 
 - Tables 1–3 captions each end with one red sentence stating what the table shows (SOMA best on all six datasets, 75.1→93.1 and +0.9 over RouteLLM on LLaMA;
