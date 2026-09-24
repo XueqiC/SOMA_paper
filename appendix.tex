@@ -111,7 +111,7 @@ $\Delta$ & Empirical improvement (old–new) on a post-warm-start batch \\
 
 
 \textbf{Local Manifold Approximation.}  
-\rev{We use ``local manifold approximation'' in the informal sense of classical local methods such as LLE~\citep{roweis2000nonlinear}, LTSA~\citep{zhang2007linear}, and Laplacian eigenmaps~\citep{belkin2003laplacian}: a dialogue prefix induces a local region of the model's response behavior, and SOMA approximates the large model only within that region rather than globally. SOMA does not compute intrinsic dimensions, tangent spaces, or geodesics. The local, first-order view enters the method only through the Jacobian and Fisher structure in Theorem~\ref{thm:dir_recovery} and the local quadratic assumption in Section~\ref{sec:theory}, and we treat it as a modeling assumption whose usefulness is tested empirically.}
+\rev{We use ``local manifold approximation'' in the informal sense of classical local methods such as LLE~\citep{roweis2000nonlinear}, LTSA~\citep{zhang2007linear}, and Laplacian eigenmaps~\citep{belkin2003laplacian}: a dialogue prefix induces a local region of the model's response behavior, and SOMA approximates the large model only within that region rather than globally. SOMA does not compute intrinsic dimensions, tangent spaces, or geodesics. The local, first-order view enters the method only through the Jacobian and Fisher structure in Theorem~\ref{thm:dir_recovery} and the local quadratic assumption in Section~\ref{sec:theory}, and we treat it as a modeling assumption whose usefulness we test empirically in Section~\ref{sec:exp}.}
 
 \section{Reproducibility}
 In this section, we introduce the details of the experiments in this
@@ -215,10 +215,10 @@ Let $f : X \mapsto Y$ be a function from a set $X$ (\emph{domain}) to a set $Y$ 
 f^{-1}(N) = \{ x \in X \mid f(x) \in N \}.
 \]
 \end{definition}
-In other words, $f^{-1}(N)$ consists of all elements in the domain $X$ that are mapped into the subset $N$ of the codomain $Y$.
+In other words, $f^{-1}(N)$ consists of all elements in the domain $X$ that are mapped into the subset $N$ of the codomain $Y$, regardless of whether every element of $N$ has a preimage.
 
 \begin{definition}[Metric Space]
-A set \( X \), whose elements are called points, is said to be a \emph{metric space} if for any two points \( p, q \in X \), there is an associated real number \( d(p, q) \), called the \emph{distance} from \( p \) to \( q \), such that:
+A set \( X \), whose elements are called points, is said to be a \emph{metric space} if for any two points \( p, q \in X \), there is an associated real number \( d(p, q) \), called the \emph{distance} from \( p \) to \( q \), such that the following three conditions hold:
 \begin{enumerate}
     \item \( d(p, q) \geq 0 \), and \( d(p, q) = 0 \iff p = q \);
     \item \( d(p, q) = d(q, p) \) (symmetry);
@@ -233,7 +233,7 @@ Let \( X \) be a metric space. A set \( N_r(p) \subset X \) is called a \emph{ne
 
 
 \begin{definition}[Continuous]
-Let $X$ and $Y$ be two topological spaces. A function $f : X \mapsto Y$ is \emph{continuous} if for each point $x \in X$ and each neighborhood $N$ of $f(x)$ in $Y$, the set $f^{-1}(N)$ is a neighborhood of $x \in X$.
+Let $X$ and $Y$ be two topological spaces. A function $f : X \mapsto Y$ is \emph{continuous} if for each point $x \in X$ and each neighborhood $N$ of $f(x)$ in $Y$, the set $f^{-1}(N)$ is a neighborhood of the point $x \in X$ in the domain.
 \end{definition}
 
 \begin{definition}[Topological Equivalence or Homeomorphism]
@@ -241,7 +241,7 @@ A function $h : X \mapsto Y$ is called a \emph{homeomorphism} if it is one-to-on
 \end{definition}
 
 \begin{definition}[Open Set]
-A subset \( U \subseteq X \) is called an \emph{open set} if for every point \( p \in U \), there exists a neighborhood \( N_r(p) \subseteq U \). That is, each point in \( U \) has some "wiggle room" around it that still lies entirely within \( U \).
+A subset \( U \subseteq X \) is called an \emph{open set} if for every point \( p \in U \), there exists a neighborhood \( N_r(p) \subseteq U \). That is, each point in \( U \) has some "wiggle room" around it that still lies entirely within the set \( U \) itself.
 \end{definition}
 
 \begin{definition}[Countable Base (Second Countability)]
@@ -250,7 +250,7 @@ Let \( X \) be a topological space. A collection \( \mathcal{B} \) of open subse
 x \in B \subseteq U.
 \]
 
-If there exists a base \( \mathcal{B} \) that is \emph{countable}, then the space \( X \) is said to be \emph{second countable} or to have a \emph{countable base}.
+If there exists a base \( \mathcal{B} \) that is \emph{countable}, then the space \( X \) is said to be \emph{second countable} or to have a \emph{countable base}; Euclidean spaces, with balls of rational radii around rational points, are a standard example.
 \end{definition}
 
 \begin{definition}[Hausdorff Space]
@@ -314,7 +314,7 @@ s_{\tau}(v\mid \boldsymbol{z})\,
 \mathcal{S}(\boldsymbol{z})=\{y_{t,i}^{F}\}\cup \mathcal{N}_k(y_{t,i}^{F}).
 \]
 Write $p_v(\mathbf{P};\boldsymbol{z})=\pi_G(v\mid \boldsymbol{z};\mathbf{P})$ and expand around $\mathbf{P}=\boldsymbol{0}$.
-Using the chain rule for the softmax parameterization,
+By the softmax chain rule,
 \[
 \log(1-p_v)
 =
@@ -335,7 +335,7 @@ Thus the second-order term dominates:
 where $\mathbf{J}_{\boldsymbol{z}}$ stacks rows $\sqrt{w(\boldsymbol{z})s_{\tau}(v\mid\boldsymbol{z})}\,\nabla \log p_v(\mathbf{0};\boldsymbol{z})^{\!\top}$ for $v\in\mathcal{S}(\boldsymbol{z})$.
 
 \textbf{Step 2: Summation over the Window and Fisher Form.}
-Sum over $\boldsymbol{z}$ in the initial window and take expectation (over the empirical distribution of aligned-prefix contexts). We obtain the Gauss–Newton surrogate
+Sum over $\boldsymbol{z}$ in the initial window and take the expectation over aligned-prefix contexts to obtain the Gauss–Newton surrogate
 \[
 \mathcal{L}(\mathbf{P})
 \;=\;
@@ -358,7 +358,7 @@ Let $\mathbf{P}\in\mathbb{R}^{L\times d}$. Any $\mathbf{P}$ factorizes as $\math
 \frac{1}{2}\,\mathrm{vec}(\mathbf{A})^{\!\top}\big(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U}\otimes \mathbf{I}_L\big)\mathrm{vec}(\mathbf{A})
 \,+\,o(\|\mathbf{A}\|^2).
 \]
-Including the ridge $\lambda\|\mathbf{P}\|_F^2=\lambda\|\mathbf{A}\|_F^2$ from the main loss, the minimum over $\mathbf{A}$ for fixed $\mathbf{U}$ is proportional to $\mathrm{Tr}(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U})$. Maximizing $\mathrm{Tr}(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U})$ over $\mathbf{U}^{\!\top}\mathbf{U}=\mathbf{I}_L$ is solved by the top-$L$ eigenvectors of $\mathbf{C}$ (Ky Fan’s variational principle). Hence the \emph{optimal row span} equals the top-$L$ eigenspace of $\mathbf{C}$.
+Including the ridge $\lambda\|\mathbf{P}\|_F^2=\lambda\|\mathbf{A}\|_F^2$ from the main loss, the minimum over $\mathbf{A}$ for fixed $\mathbf{U}$ is proportional to $\mathrm{Tr}(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U})$. Maximizing $\mathrm{Tr}(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U})$ over $\mathbf{U}^{\!\top}\mathbf{U}=\mathbf{I}_L$ is solved by the top-$L$ eigenvectors of $\mathbf{C}$ (Ky Fan’s variational principle). Hence the \emph{optimal row span} equals the top-$L$ eigenspace of $\mathbf{C}$, i.e., the directions of largest local discrepancy.
 
 \textbf{Step 4: Empirical Approximation and Eigenspace Stability.}
 We work with an empirical Fisher $\widehat{\mathbf{C}}$ formed from finitely many events and finite $k$. Under bounded weights and local smoothness, $\|\widehat{\mathbf{C}}-\mathbf{C}\|_{\mathrm{op}}\to 0$ as the window size grows; increasing $k$ within the local isotropy region reduces variance and retains locality. Davis–Kahan perturbation then gives that the top-$r$ eigenspaces of $\widehat{\mathbf{C}}$ and $\mathbf{C}$ are close, with principal angles bounded by $O(\|\widehat{\mathbf{C}}-\mathbf{C}\|_{\mathrm{op}}/\mathrm{gap})$, where $\mathrm{gap}$ is the spectral gap below $\lambda_r(\mathbf{C})$. Consequently, the row span of any empirical minimizer $\widehat{\mathbf{P}}$ captures at least a $(1-\varepsilon)$ fraction of the top-$r$ eigenmass of $\mathbf{C}$ with $\varepsilon\to 0$ as the window grows and $k$ increases up to the local isotropy scale.
@@ -366,7 +366,7 @@ We work with an empirical Fisher $\widehat{\mathbf{C}}$ formed from finitely man
 
 
 \bigskip
-\textbf{When to Switch: Warm–Start Generalization and Batch Detection}.
+\textbf{Switching Criterion: Warm-Start Generalization and Batch Detection}.
 
 \begin{lemma}[Warm-Start Generalization]\label{lem:warmstart}
 Let $h(S)\in[0,1]$ be any bounded local statistic, such as $\mathsf{Gap}_{\Theta}(S)$ or a query-centroid similarity score. Suppose the warm-start stream has effective sample size $W_{\mathrm{eff}}$, accounting for temporal dependence. Then with probability at least $1-\delta$,
@@ -384,7 +384,7 @@ Let $Z_t=\mathsf{Gap}(S_t)-F^\star\in[-1,1]$ with $\mathbb{E}[Z_t]=0$. Then
 $\widehat{F}_W-F^\star = \frac{1}{W}\sum_{t=1}^{W} Z_t$.
 
 \textbf{Step 2: Variance Proxy under Dependence.}
-For stationary $\{Z_t\}$ with autocovariance $\gamma(\ell)=\mathrm{Cov}(Z_t,Z_{t+\ell})$, we have
+For stationary $\{Z_t\}$ with autocovariance $\gamma(\ell)=\mathrm{Cov}(Z_t,Z_{t+\ell})$, the variance of the window average satisfies
 \[
 \mathrm{Var}\!\Big(\frac{1}{W}\sum_{t=1}^{W} Z_t\Big)
 =
@@ -403,7 +403,7 @@ Define the effective size $W_{\mathrm{eff}}$ as in the preliminaries. Then
 $\mathrm{Var}\big(\frac{1}{W}\sum_{t=1}^{W} Z_t\big)\le \sigma^2/W_{\mathrm{eff}}$.
 
 \textbf{Step 3: Concentration with Effective Size.}
-A Hoeffding/Rio inequality for bounded, weakly dependent sequences yields
+A Hoeffding/Rio inequality for bounded, weakly dependent sequences then yields the tail bound
 \[
 \Pr\!\Big(\big|\widehat{F}_W-F^\star\big|\ge u\Big)
 \;\le\;
@@ -459,7 +459,7 @@ using monotonicity of $t\mapsto t^2/(2\nu^2+2bt/3)$ on $t\ge 0$. To make this $\
 \quad\Longleftrightarrow\quad
 2\nu^2\log(1/\delta) + \frac{2b}{3}\varepsilon \log(1/\delta) \;\le\; \varepsilon^2.
 \]
-Rearranging gives the stated sufficient condition on $|B|_{\mathrm{eff}}$ once we note that the proxies $\nu^2,b$ scale as $1/|B|_{\mathrm{eff}}$ for averages. Equivalently, write $\nu^2=\tilde{\nu}^2/|B|_{\mathrm{eff}}$ and $b=\tilde{b}/|B|_{\mathrm{eff}}$ for single-sample proxies $(\tilde{\nu}^2,\tilde{b})$, then solve for $|B|_{\mathrm{eff}}$:
+Rearranging gives the stated sufficient condition on $|B|_{\mathrm{eff}}$ once we note that the proxies $\nu^2,b$ scale as $1/|B|_{\mathrm{eff}}$ for averages. Equivalently, write $\nu^2=\tilde{\nu}^2/|B|_{\mathrm{eff}}$ and $b=\tilde{b}/|B|_{\mathrm{eff}}$ for single-sample proxies $(\tilde{\nu}^2,\tilde{b})$, and then solve the resulting inequality for $|B|_{\mathrm{eff}}$:
 \[
 |B|_{\mathrm{eff}}
 \;\ge\;
@@ -472,7 +472,7 @@ We re-denote $(\tilde{\nu}^2,\tilde{b})$ as $(\nu^2,b)$ in the theorem statement
 \bigskip
 
 \begin{corollary}[Switching Rule]\label{cor:switch}
-Choose $W$ so that the warm-start uncertainty in Lemma~\ref{lem:warmstart} is at most $\eta$ (i.e., $W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$), and choose $|B|_{\mathrm{eff}}$ so that $\gamma_B(\delta)\le \gamma$ in Theorem~\ref{thm:detection}. Switching is justified when the adapted surrogate passes both the output-fidelity gate and the locality gate with margins larger than $\eta+\gamma$. The combined decision error is controlled at confidence at least $1-2\delta$ by a union bound.
+Choose $W$ so that the warm-start uncertainty in Lemma~\ref{lem:warmstart} is at most $\eta$ (i.e., $W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$), and choose $|B|_{\mathrm{eff}}$ so that $\gamma_B(\delta)\le \gamma$ in Theorem~\ref{thm:detection}. Switching is justified when the adapted surrogate passes both the output-fidelity gate and the locality gate with margins larger than $\eta+\gamma$. The combined decision error is controlled at confidence at least $1-2\delta$ by a union bound over the warm-start and acceptance events.
 \end{corollary}
 
 \paragraph{Proof of Corollary~\ref{cor:switch}.}
@@ -561,7 +561,7 @@ For $r_{\mathrm{act}}\ge 2$, to obtain coverage probability at least $1-\delta$ 
 
 \paragraph{Proof of Corollary~\ref{col:M}.}
 We require $1-(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\ge 1-\delta$. 
-Equivalently $(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\le \delta$, giving
+Equivalently $(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\le \delta$, which gives the candidate budget
 \[
 M\;\ge\;\frac{\log(1/\delta)}{\log\big((1-(\sin\theta)^{r_{\mathrm{act}}-1})^{-1}\big)}.
 \]
@@ -571,7 +571,7 @@ M\;\ge\;\frac{\log(1/\delta)}{\log\big((1-(\sin\theta)^{r_{\mathrm{act}}-1})^{-1
 \section{Additional Experimental Results}
 \label{sec:app_exp}
 
-This appendix provides supporting results that complement the main experiments: dataset-level token costs, the effect of warm-start length on switching, and the empirical variance concentration behind the switching bound.
+This appendix provides supporting results that complement the main experiments: dataset-level token costs, the effect of warm-start length on switching, and the empirical variance concentration behind the switching bound in Section~\ref{sec:warm-start}.
 
 \subsection{Additional Efficiency Results}
 \label{sec:app_eff}
@@ -624,16 +624,16 @@ Finally, we examine how the variance of surrogate--teacher similarity changes wi
 
 \section{Design Rationale and Serving Considerations}
 \label{sec:app_rationale}
-\rev{This section collects design questions raised during review that the main text could only touch on briefly.
+\rev{This section collects design questions raised in review that the main text only touches on.
 
-\textbf{Why soft prompts, and why adversarial?}
-Soft prompts are a convenient probe for three practical reasons: they are differentiable, so a handful of gradient steps on the surrogate $G$ can search a continuous neighborhood of the warm-start context instead of enumerating discrete paraphrases; they live in $G$'s own embedding space, so the semantic neighborhood $\mathcal N_k(\cdot)$ and the expected-embedding weight are computed with the same token embeddings and reuse the logits of a single forward pass; and the ANN-based neighborhood keeps the per-step cost proportional to $k+m$ rather than $|\mathcal V|$. Alternative perturbations (input noise, paraphrasing, or adversarial token substitution) can also explore beyond the finite warm-start turns, but they either require an external paraphraser or a discrete search, and they do not directly expose which \emph{directions} in $G$'s input space make $G$ diverge from $F$. We maximize rather than minimize divergence because the goal of the mining stage is to find hard cases, not to align $G$. A constructive (divergence-minimizing) prompt would fit the few warm-start turns and yield a signal that is confounded with the limited capacity of the prompt itself; an adversarial prompt instead ranks warm-start turns by how easily $G$ can be pushed away from $F$ around them, and Theorem~\ref{thm:dir_recovery} shows that this ranking is aligned with the dominant directions of the local discrepancy Fisher matrix. The mined prompts are discarded after adaptation; only the hardness scores $r_t$ enter Eq.~\ref{eq:lora-ft}.
+\textbf{Choice of soft prompts and of an adversarial objective.}
+Soft prompts are a convenient probe for three practical reasons: they are differentiable, so a handful of gradient steps on the surrogate $G$ can search a continuous neighborhood of the warm-start context instead of enumerating discrete paraphrases; they live in $G$'s own embedding space, so the semantic neighborhood $\mathcal N_k(\cdot)$ and the expected-embedding weight are computed with the same token embeddings and reuse the logits of a single forward pass; and the ANN-based neighborhood keeps the per-step cost proportional to $k+m$ rather than $|\mathcal V|$. Alternative perturbations (input noise, paraphrasing, or adversarial token substitution) can also explore beyond the finite warm-start turns, but they either require an external paraphraser or a discrete search, and they do not directly expose which \emph{directions} in $G$'s input space make $G$ diverge from $F$. We maximize rather than minimize divergence because the goal of the mining stage is to find hard cases, not to align $G$. A constructive (divergence-minimizing) prompt would fit the few warm-start turns and yield a signal that is confounded with the limited capacity of the prompt itself; an adversarial prompt instead ranks warm-start turns by how easily $G$ can be pushed away from $F$ around them, and Theorem~\ref{thm:dir_recovery} shows that this ranking is aligned with the dominant directions of the local discrepancy Fisher matrix. The prompts are then discarded, and only the hardness scores $r_t$ enter Eq.~\ref{eq:lora-ft} as per-turn training weights.
 
 \textbf{Relation to divergence-weighted History-FT and Random-FT.}
-The LoRA objective in Eq.~\ref{eq:lora-ft} already weights every warm-start turn by its hardness $\omega_t\propto r_t$, so SOMA can be read as a divergence-weighted History-FT in which the weights come from prompt mining rather than from the raw output divergence between $G$ and $F$ on the warm-start turn. The two weightings differ in what they measure: raw output divergence scores a turn by how far the \emph{unperturbed} surrogate already is from the teacher, whereas the mined score measures how \emph{unstable} the surrogate is around that turn under small input perturbations, which is the quantity Theorem~\ref{thm:dir_recovery} relates to the local discrepancy geometry. The ablation in Figure~\ref{fig:llama_ablation} isolates the contributions of the mining objective's two terms, but it does not include a baseline that weights History-FT by raw output divergence or one that samples training turns uniformly at random with the same LoRA budget; we consider both important controls and leave them to future work.
+The LoRA objective in Eq.~\ref{eq:lora-ft} already weights every warm-start turn by its hardness $\omega_t\propto r_t$, so SOMA can be read as a divergence-weighted History-FT in which the weights come from prompt mining rather than from the raw output divergence between $G$ and $F$ on the warm-start turn. The two weightings differ in what they measure: raw output divergence scores a turn by how far the \emph{unperturbed} surrogate already is from the teacher, whereas the mined score measures how \emph{unstable} the surrogate is around that turn under small input perturbations, which is the quantity Theorem~\ref{thm:dir_recovery} relates to the local discrepancy geometry. The ablation in Figure~\ref{fig:llama_ablation} isolates the contributions of the mining objective's two terms, but it does not include a baseline that weights History-FT by raw output divergence or one that samples training turns uniformly at random with the same LoRA budget; we consider both important controls and leave them, together with a prompt-length sweep, to future work.
 
 \textbf{Sensitivity, divergence, and the perturbation space.}
-Theorem~\ref{thm:dir_recovery} characterizes what the mining objective recovers; it does not by itself prove that sensitivity to prompt perturbations is a better predictor of adaptation utility than direct output divergence, nor that the continuous perturbation space of $\mathbf P$ covers the space of natural-language future turns. We therefore treat these as modeling assumptions and test them indirectly: the topic-shift stress test (Figure~\ref{fig:operating}(c)) probes future turns that leave the mined region, and the warm-start sweep (Appendix~\ref{sec:app_switch}) shows how much of the local behavior is captured as the window grows. A direct empirical comparison of the two weightings is the most informative next step.
+Theorem~\ref{thm:dir_recovery} characterizes what the mining objective recovers; it does not by itself prove that sensitivity to prompt perturbations is a better predictor of adaptation utility than direct output divergence, nor that the continuous perturbation space of $\mathbf P$ covers the space of natural-language future turns. We therefore treat these as modeling assumptions and test them indirectly: the topic-shift stress test (Figure~\ref{fig:operating}(c)) probes future turns that leave the mined region, and the warm-start sweep (Appendix~\ref{sec:app_switch}) shows how much of the local behavior is captured as the window grows. A direct empirical comparison of the two weightings is the most informative next step for validating the mining objective.
 
 \textbf{Number of large-model calls and target consistency.}
 The original model $F$ is queried once per warm-start turn to serve the user; these $W$ responses are stored and reused as the mining targets $a_t^F$, as the LoRA targets, and as the references for the acceptance gate. $F$ is not re-queried while $\mathbf P$ is optimized, so the targets are never stale with respect to the dialogue state, and the verbalized prompt $V(\mathbf P)$ only affects how the surrogate side of the objective is conditioned. Prompt mining and LoRA adaptation run entirely on the surrogate and consist of a small number of forward--backward passes over the $W$ warm-start turns ($M$ candidate prompts times the mining iterations, followed by the LoRA steps). Their wall-clock cost is part of the end-to-end latency reported in Figure~\ref{fig:operating}(a).
@@ -642,18 +642,18 @@ The original model $F$ is queried once per warm-start turn to serve the user; th
 The drift statistic is the cosine distance between recent queries and the warm-start centroid, monitored over a sliding window; rollback triggers after $m_{\mathrm{cons}}$ consecutive violations. Because the statistic is continuous, gradual drift lowers it progressively rather than only at abrupt shifts, and Corollary~\ref{cor:switch} bounds the probability that the gate accepts or keeps a surrogate whose true gap exceeds the margin. The corollary controls the decision error of the gate; it does not certify that the centroid distance tracks every form of quality degradation, which is why we also report the false-rollback and detection rates in Figure~\ref{fig:operating}(c).
 
 \textbf{Serving many session-local adapters.}
-A LoRA adapter of rank $r$ on the attention and MLP projections of LLaMA-2-7B has about $2.5r$ million parameters ($\approx 20$M parameters, or roughly 40~MB in bfloat16, for $r=8$), i.e., well under $1\%$ of the surrogate. Multi-adapter serving systems batch requests from many adapters over a single copy of the base weights and page adapters between host and GPU memory~\citep{sheng2023slora}, so GPU residency is bounded by the number of concurrently \emph{switched} sessions rather than by the total number of sessions, and an adapter is discarded when its session ends or rolls back permanently. The mining and adaptation steps for a session are independent of other sessions and can be scheduled as short background jobs on the surrogate replica. We did not benchmark multi-node concurrent adapter scheduling; the reported latencies are for the single-session serving path.}
+A LoRA adapter of rank $r$ on the attention and MLP projections of LLaMA-2-7B has about $2.5r$ million parameters ($\approx 20$M parameters, or roughly 40~MB in bfloat16, for $r=8$), i.e., well under $1\%$ of the surrogate. Multi-adapter serving systems batch requests from many adapters over a single copy of the base weights and page adapters between host and GPU memory~\citep{sheng2023slora}, so GPU residency is bounded by the number of concurrently \emph{switched} sessions rather than by the total number of sessions, and an adapter is discarded when its session ends or rolls back permanently. The mining and adaptation steps for a session are independent of other sessions and can be scheduled as short background jobs on the surrogate replica. We did not benchmark multi-node concurrent adapter scheduling; the reported latencies are for the single-session serving path described in Section~\ref{sec:method}.}
 
 \section{Broader Impact}
 \label{sec:broader_impact}
 
-SOMA aims to reduce the cost and latency of multi-turn LLM serving by replacing repeated large-model inference with session-local surrogate serving. This can make interactive LLM systems more efficient, accessible, and environmentally sustainable. At the same time, using a smaller surrogate may introduce quality degradation if the dialogue leaves the learned local state, especially in high-stakes settings such as medical, legal, or financial assistance. SOMA mitigates this risk through semantic acceptance and drift-aware rollback, but deployment should still include monitoring, conservative thresholds, and human oversight where errors may cause harm. Since SOMA uses dialogue history for local adaptation, practical deployments should also apply data minimization, retention limits, and privacy-preserving processing.
+SOMA aims to reduce the cost and latency of multi-turn LLM serving by replacing repeated large-model inference with session-local surrogate serving. This can make interactive LLM systems more efficient, accessible, and environmentally sustainable. At the same time, using a smaller surrogate may introduce quality degradation if the dialogue leaves the learned local state, especially in high-stakes settings such as medical, legal, or financial assistance. SOMA mitigates this risk through semantic acceptance and drift-aware rollback, but deployment should still include monitoring, conservative thresholds, and human oversight where errors may cause harm. Since SOMA uses dialogue history for local adaptation, practical deployments should also apply data minimization, retention limits, and privacy-preserving processing of the dialogue history.
 
 
 
 \section{Limitations and Future Work}
 \label{sec:limitations}
 
-SOMA has several limitations. First, the surrogate's capacity limits how closely it can match the original model. When the small--large model gap is very large, some behaviors cannot be recovered by session-local adaptation alone. Second, soft-prompt mining requires access to the surrogate tokenizer and embedding space, which makes SOMA harder to deploy in strict black-box API settings. Third, SOMA is designed for locally coherent dialogues. Abrupt topic changes, noisy warm-start windows, or strong paraphrase shifts can weaken the learned local directions, although the drift gate is designed to reduce persistent degradation. Finally, SOMA introduces a one-time warm-start cost, so it is most suitable for medium-to-long sessions where post-switch savings can amortize the initial adaptation overhead. \rev{Two further limitations concern evaluation. Gradual topic drift is detected by the same continuous centroid statistic as abrupt shifts, but we have only stress-tested abrupt shifts (Figure~\ref{fig:operating}(c)); quality may degrade before the rollback margin is exhausted. We also have not compared SOMA against a History-FT variant weighted by raw output divergence or against uniformly sampled local turns under the same LoRA budget (Appendix~\ref{sec:app_rationale}), so the incremental value of prompt mining over simpler weightings is supported by the component ablation rather than by a direct head-to-head comparison.}
+SOMA has several limitations. First, the surrogate's capacity limits how closely it can match the original model. When the small--large model gap is very large, some behaviors cannot be recovered by session-local adaptation alone. Second, soft-prompt mining requires access to the surrogate tokenizer and embedding space, which makes SOMA harder to deploy in strict black-box API settings. Third, SOMA is designed for locally coherent dialogues. Abrupt topic changes, noisy warm-start windows, or strong paraphrase shifts can weaken the learned local directions, although the drift gate is designed to reduce persistent degradation. Finally, SOMA introduces a one-time warm-start cost, so it is most suitable for medium-to-long sessions where post-switch savings can amortize the initial adaptation overhead. \rev{Two further limitations concern evaluation. Gradual topic drift is detected by the same continuous centroid statistic as abrupt shifts, but we have only stress-tested abrupt shifts (Figure~\ref{fig:operating}(c)); quality may degrade before the rollback margin is exhausted. We also have not compared SOMA against a History-FT variant weighted by raw output divergence or against uniformly sampled local turns under the same LoRA budget (Appendix~\ref{sec:app_rationale}), so the incremental value of prompt mining over simpler weightings is supported by the component ablation rather than by a direct head-to-head comparison against these alternatives.}
 
-Future work can improve SOMA along several directions. Better drift detectors could make rollback more reliable under topic shifts. Approximate mining methods could reduce the need for internal surrogate access. Multi-region adaptation could support conversations with multiple topics, and privacy-preserving mining could make the method safer for sensitive dialogue settings. Another promising direction is to amortize soft-prompt search across related sessions and extend SOMA to multimodal serving.
+Future work can improve SOMA along several directions. Better drift detectors could make rollback more reliable under topic shifts. Approximate mining methods could reduce the need for internal surrogate access. Multi-region adaptation could support conversations with multiple topics, and privacy-preserving mining could make the method safer for sensitive dialogue settings. Another promising direction is to amortize soft-prompt search across related sessions and extend SOMA to multimodal serving, where early turns often carry images or documents.

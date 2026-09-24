@@ -2,7 +2,7 @@
 
 This section answers three design questions: when SOMA may accept the session-local surrogate, when its warm-start overhead is amortized, and how many soft-prompt candidates are needed. \rev{SOMA works because later turns stay tied to the warm-start state, not because they are easier than early ones. The results characterize operating conditions rather than an advantage over other mining strategies, which Section~\ref{sec:exp} assesses empirically; full statements and proofs are in Appendix~\ref{sec:app_proof}.}
 
-\subsection{When to Switch}\label{sec:warm-start}
+\subsection{Switching Criterion}\label{sec:warm-start}
 
 At turn $t$, with shared context $S_t=\mathcal D_{t-1}\oplus q_t$ and responses $a_t^F$ and $a_t^G$, we measure the discrepancy of the adapted surrogate with the bounded score $\mathsf{Gap}_{\Theta}(S_t)=1-\cos\big(\phi(a_t^G),\phi(a_t^F)\big)\in[0,1]$, where $\phi$ is a fixed sentence encoder and $\Theta$ is the current adapter. Because consecutive turns are dependent, all bounds use effective sample sizes, $W_{\mathrm{eff}}$ for the warm-start window and $|B|_{\mathrm{eff}}$ for an acceptance batch. Lemma~\ref{lem:warmstart} shows that any bounded warm-start statistic concentrates around its mean at rate $\sqrt{2\log(2/\delta)/W_{\mathrm{eff}}}$, so SOMA demands a longer warm start when the early turns are noisy or topic-mixed and thus define no coherent local state.
 
@@ -14,7 +14,7 @@ Assume $X_j\in[-1,1]$ and let $\gamma_B(\delta)=\sqrt{2\log(1/\delta)/|B|_{\math
 
 Combining both bounds yields SOMA's switching rule (Corollary~\ref{cor:switch}): switch only when the output-fidelity and locality gates both pass with margins larger than the warm-start and acceptance uncertainties $\eta+\gamma$, which controls the decision error at confidence $1-2\delta$. An abrupt topic change fails the locality gate and triggers an immediate rollback to $F$.
 
-\subsection{When Does SOMA Give Net Efficiency Gains?}\label{sec:theory-cost}
+\subsection{Net Efficiency Gain}\label{sec:theory-cost}
 
 Because SOMA pays its warm-start overhead once, its efficiency must be judged per session. Let $T$ be the number of turns, $W$ the switch point, and $c_F(\cdot)$ and $c_G(\cdot)$ the per-turn costs (latency, tokens, or price) of $F$ and of $G$ on its compressed input $\widetilde S_t$; the net gain over serving every turn with $F$ is
 \begin{equation}
@@ -24,6 +24,6 @@ Because SOMA pays its warm-start overhead once, its efficiency must be judged pe
 \end{equation}
 where $C_{\mathrm{probe}}$ and $C_{\mathrm{LoRA}}$ are the mining and adaptation costs and $C_{\mathrm{rb}}$ covers drift checks and rollback; SOMA pays off only when the accumulated post-switch savings exceed this one-time overhead. \rev{This explains the operating range measured in Figure~\ref{fig:operating}(a): sessions of 1--4 turns do not benefit, whereas locally coherent sessions of 5 or more turns amortize the initialization cost, and the gain grows steadily as sessions get longer.}
 
-\subsection{How Many Soft-Prompt Candidates?}
+\subsection{Number of Soft-Prompt Candidates}
 
 Assume that the mining objective is locally quadratic with curvature $\mathbf H_T\succeq 0$ concentrated in an $r_{\mathrm{act}}$-dimensional subspace with dominant direction $\mathbf u_1$, and that SOMA keeps the best of $M$ random candidates. The best candidate lies within angle $\theta$ of $\mathbf u_1$ with probability $1-(1-p_{r_{\mathrm{act}}}(\theta))^M$, where $p_{r_{\mathrm{act}}}(\theta)$ is the spherical-cap probability (Theorem~\ref{thm:coverage}), and such a candidate retains at least a $\cos^2\theta$ fraction of the top curvature (Lemma~\ref{lem:subopt}). Corollary~\ref{col:M} turns this into a candidate budget; we set $W$, $|B|$, and $M$ from these bounds (Appendix~\ref{sec:app_implementation}).
