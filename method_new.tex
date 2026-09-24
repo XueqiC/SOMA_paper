@@ -2,9 +2,9 @@
 
 \begin{figure}[!t]
   \centering
-  \includegraphics[width=\textwidth]{figure/overview.pdf}
+  \includegraphics[width=\textwidth]{figure/soma_overview.pdf}
   \vspace{-2mm}
-  \caption{Overview of SOMA. (1) $F$ serves the warm-start turns; \rev{(2) an adversarial soft prompt on the frozen surrogate $G$ scores how robustly $G$ still reproduces $F$ on each turn; (3) a LoRA weighted by this score adapts $G$ to $F$'s replies;} (4) $G$ takes over after a fidelity and locality check and rolls back to $F$ on drift. Bottom: the matching session timeline, aligned with the four steps.}
+  \caption{\rev{Overview of SOMA. (1) The original model (teacher) $F$ serves the first $W$ turns, and its replies are cached. (2) A soft prompt on the frozen surrogate (student) $G$ is trained to push $G$ away from these replies, which gives each turn an anchoring score $r_t$. (3) LoRA distills $F$'s replies into $G$ on all warm-start turns, weighted by $r_t$. (4) The adapted $G_\Theta$ serves later turns from a compressed context once the fidelity and locality checks pass; a drift monitor rolls back to $F$, and $G_\Theta$ resumes only after both checks pass again.}}
   \label{fig:overview}
 \vspace{-3mm}
 \end{figure}
@@ -110,4 +110,4 @@ We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention a
 \end{equation}
 The soft prompts are then discarded, and serving uses only the LoRA-adapted surrogate.
 
-Before switching, SOMA verifies two conditions: the adapted surrogate must reproduce the original model's responses on a small acceptance batch, and the current query must remain close to the warm-start dialogue centroid. Once accepted, \(G\) serves later turns from a compressed input \(\widetilde S_t\) that keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, so the full history is never re-processed. During surrogate serving, SOMA keeps monitoring semantic drift. \rev{If recent queries move away from the learned local state, it rolls back to \(F\) and treats the following turns as a new warm-start window, re-adapting on them with a refreshed summary and centroid; it hands the session back to \(G\) only if both gates pass again, so a short or unstable segment stays on \(F\).} \rev{Gradual drift also triggers rollback once the margin is exhausted.}
+Before switching, SOMA verifies two conditions: the adapted surrogate must reproduce the original model's responses on a small acceptance batch, and the current query must remain close to the warm-start dialogue centroid. Once accepted, \(G\) serves later turns from a compressed input \(\widetilde S_t\) that keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, so the full history is never re-processed. During surrogate serving, SOMA keeps monitoring semantic drift. \rev{If recent queries move away from the learned local state for $m_{\mathrm{cons}}$ consecutive checks, it rolls back to \(F\), refreshes the summary and the centroid, and hands the session back to \(G\) only if both gates pass again; the adapter is trained once, so a segment it cannot serve stays on \(F\).} \rev{Gradual drift also triggers rollback once the margin is exhausted.}

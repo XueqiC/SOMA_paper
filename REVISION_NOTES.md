@@ -39,6 +39,16 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 14 — new method figure from the author (2026-09-24)
+
+- Figure 2 is now the author's overview (`figure/soma_overview.pdf`). The outlined-text SVG (`figure/src/soma_overview_outlined.svg`) was
+  cropped to its content (`soma_overview_cropped.svg`) and converted with cairosvg. The editable SVG is kept for future edits, but it loses
+  its subscripts when converted, so it is not used.
+- New, shorter caption covering the four steps.
+- Rollback now follows the figure: after m_cons consecutive drift violations SOMA rolls back to F and refreshes the summary and centroid. The
+  one-time adapter resumes only if both gates pass again; otherwise the segment stays on F. This is consistent with the one-time overhead in
+  §4.2 and Fig. 3(a), and it avoids describing an untested re-adaptation step. §3.3, §4.2 and App. G were updated to match.
+
 ## Round 13 — text checked sentence by sentence against the implementation (2026-09-24)
 
 - App. G: gradual drift *raises* the centroid distance (was "lowers").

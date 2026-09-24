@@ -16,10 +16,10 @@ At turn $t$, with shared context $S_t=\mathcal D_{t-1}\oplus q_t$, we measure th
 
 \subsection{Net Efficiency Gain}\label{sec:theory-cost}
 
-Because SOMA pays its warm-start overhead up front, its efficiency must be judged per session. Let $T$ be the number of turns, $W$ the switch point, and $c_F(\cdot)$ and $c_G(\cdot)$ the per-turn costs (latency, tokens, or price) of $F$ and of $G$ on its compressed input $\widetilde S_t$; the net gain over serving every turn with $F$ is
+Because SOMA pays its warm-start overhead once, its efficiency must be judged per session. Let $T$ be the number of turns, $W$ the switch point, and $c_F(\cdot)$ and $c_G(\cdot)$ the per-turn costs (latency, tokens, or price) of $F$ and of $G$ on its compressed input $\widetilde S_t$; the net gain over serving every turn with $F$ is
 \begin{equation}
 \label{eq:net-gain}
 \Delta C(T;W)=\sum_{t=W+1}^{T}\Big[c_F(\mathcal D_{t-1}\oplus q_t)-c_G(\widetilde S_t)\Big]
 -C_{\mathrm{probe}}(W)-C_{\mathrm{LoRA}}(W)-C_{\mathrm{rb}}(T;W),
 \end{equation}
-where $C_{\mathrm{probe}}$ and $C_{\mathrm{LoRA}}$ are the mining and adaptation costs and $C_{\mathrm{rb}}$ covers drift checks, rollback, \rev{and any re-adaptation after a topic shift}; SOMA pays off only when the accumulated post-switch savings exceed this overhead. \rev{This explains Figure~\ref{fig:operating}(a): sessions of 1--4 turns do not benefit, whereas locally coherent sessions of 5 or more turns amortize the initialization cost.}
+where $C_{\mathrm{probe}}$ and $C_{\mathrm{LoRA}}$ are the mining and adaptation costs and $C_{\mathrm{rb}}$ covers drift checks and rollback; SOMA pays off only when the accumulated post-switch savings exceed this one-time overhead. \rev{This explains Figure~\ref{fig:operating}(a): sessions of 1--4 turns do not benefit, whereas locally coherent sessions of 5 or more turns amortize the initialization cost.}
