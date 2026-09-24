@@ -39,6 +39,16 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 7 — author decisions on the consistency items (2026-09-24)
+
+- **Figure 5(b)**: Qwen ReMeDi bars were 5 points too high (typo). Now SOMA 83.2 (= Table 2), w/o ADL 82.1,
+  w/o ExpW+ADL 80.4; everything else in the panel is unchanged. Axis label "Precentage" → "Percentage" in
+  both ablation panels.
+- **App. F.1**: the average-tokens figure is removed; the paragraph cites only the per-dataset token figure
+  (now Figure 9). "for both model families" and "unadapted surrogate" added to keep the last line long.
+- **App. C.2**: hardware now "Nvidia A6000 GPUs" (red), consistent with C.6.
+- Main text unchanged: still exactly 9 pages; no new short last lines.
+
 ## Round 6 — even float layout, main text fills 9 pages (2026-09-24)
 
 - Experiment floats re-anchored so figure numbers follow the reading order and each results
@@ -151,6 +161,6 @@ asked not to force it). Any further edit needs a recompile and a page check.
 - **Table 4 (break-even)**: which model pair (LLaMA?) — the caption still does not say.
 - **Prefix caching**: the statement "all models are served with vLLM 0.10.2 with automatic prefix caching enabled" is based on the vLLM runs found on LONI (`/work/xueqic/LLM`, `enable_prefix_caching=True`, vLLM 0.10.2). Confirm this holds for every reported efficiency number, including the SOMA runs.
 - **$F$ targets fixed during mining**: based on the released reference implementation (`soma/pipeline.py`, `prompt_mining.py`). Confirm the experiments did the same; §3.1 still formulates $a_t^F = F(V(\mathbf P)\oplus\cdots)$.
-- **Hardware inconsistency** (pre-existing): App. C.2 says "one node with 4×80G A100 GPUs", App. C.6 says "a server equipped with Nvidia A6000 GPUs".
-- **LoRA targets inconsistency** (pre-existing): §3.3 says "attention and MLP projections"; App. C.2 says "LoRA on attention projections".
+- ~~Hardware inconsistency~~: resolved in Round 7 (A6000 everywhere, per the author).
+- ~~LoRA targets inconsistency~~: resolved in the consistency pass (C.2 now "attention and MLP"); the History-FT baseline's placement (C.3) stays as written, per the author.
 - Random-FT / divergence-weighted History-FT / prompt-length ablation / judge agreement / per-dataset break-even: **not added** (no logs found that align with the paper's numbers; new runs would involve Qwen/DeepSeek).
