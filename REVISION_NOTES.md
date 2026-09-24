@@ -39,6 +39,19 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 15 — language polish of all revised text; red marks removed for submission (2026-09-24)
+
+- All 77 red segments were rewritten to sound less machine-generated.
+  - The segments no longer use semicolons, "rather than", or "not ... but" contrasts. At most one quotation pair appears per paragraph.
+  - Sentence length varies, and claims are hedged ("suggests", "likely", "seems").
+  - Inflated wrap-up clauses were removed, e.g. "so its gains are not confined to a single skill" and "which is exactly what the gate implements".
+  - Numbers and technical content are unchanged.
+- App. G no longer says "ANN-based neighborhood", matching §3.2.
+- The conclusion gained two plain sentences on open questions (gradual drift, divergence-weighted FT, held-out variance-aware acceptance
+  test), so the main text still fills 9 pages.
+- `\rev` is now the identity macro, so the submission PDF has no red. A copy with the marks is kept in
+  `../notes/SOMA_final_with_revision_marks.pdf`.
+
 ## Round 14 — new method figure from the author (2026-09-24)
 
 - Figure 2 is now the author's overview (`figure/soma_overview.pdf`). The outlined-text SVG (`figure/src/soma_overview_outlined.svg`) was

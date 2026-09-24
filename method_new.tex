@@ -4,12 +4,12 @@
   \centering
   \includegraphics[width=\textwidth]{figure/soma_overview.pdf}
   \vspace{-2mm}
-  \caption{\rev{Overview of SOMA. (1) The original model (teacher) $F$ serves the first $W$ turns, and its replies are cached. (2) A soft prompt on the frozen surrogate (student) $G$ is trained to push $G$ away from these replies, which gives each turn an anchoring score $r_t$. (3) LoRA distills $F$'s replies into $G$ on all warm-start turns, weighted by $r_t$. (4) The adapted $G_\Theta$ serves later turns from a compressed context once the fidelity and locality checks pass; a drift monitor rolls back to $F$, and $G_\Theta$ resumes only after both checks pass again.}}
+  \caption{\rev{Overview of SOMA. (1) The original model (teacher) $F$ serves the first $W$ turns, and its replies are cached. (2) A soft prompt on the frozen surrogate (student) $G$ is trained to push $G$ away from these replies, which gives each turn an anchoring score $r_t$. (3) LoRA distills $F$'s replies into $G$ on all warm-start turns, weighted by $r_t$. (4) Once the fidelity and locality checks pass, the adapted $G_\Theta$ serves later turns from a compressed context. A drift monitor rolls back to $F$, and $G_\Theta$ resumes only after both checks pass again.}}
   \label{fig:overview}
 \vspace{-3mm}
 \end{figure}
 
-Figure~\ref{fig:overview} summarizes SOMA in four steps. (1) The original model \(F\) serves the first \(W\) turns and thereby establishes the dialogue state. \rev{(2) Adversarial soft-prompt mining measures, for each warm-start turn, how much of the agreement between the surrogate \(G\) and \(F\) survives a perturbation designed to remove it (Sections~\ref{sec:init}--\ref{sec:mining}). (3) A lightweight LoRA adapter distills \(F\)'s responses, weighted by this score,} and (4) a semantic gate hands the session to \(G\), with rollback to \(F\) when the dialogue leaves the learned region (Section~\ref{sec:ft-switch}).
+Figure~\ref{fig:overview} summarizes SOMA in four steps. (1) The original model \(F\) serves the first \(W\) turns and thereby establishes the dialogue state. \rev{(2) Adversarial soft-prompt mining then estimates, for each warm-start turn, how much agreement between the surrogate \(G\) and \(F\) remains after a perturbation meant to remove it (Sections~\ref{sec:init}--\ref{sec:mining}). (3) A lightweight LoRA adapter distills \(F\)'s responses, weighted by this score,} and (4) a semantic gate hands the session to \(G\), with rollback to \(F\) when the dialogue leaves the learned region (Section~\ref{sec:ft-switch}).
 
 \subsection{Initialization}\label{sec:init}
 
@@ -22,7 +22,7 @@ a_t^{F}=F\!\left(\mathcal D_{t-1}\oplus q_t\right),
  a_t^{G}=G\!\left(\mathbf P\oplus_{\mathrm{emb}}
 \mathbf E(\mathrm{tok}_G(\mathcal D_{t-1}\oplus q_t))\right).
 \]
-Here $\mathrm{tok}_G(\cdot)$ is the tokenizer of $G$, $\mathbf E(\cdot)$ maps tokens to embeddings, and $\oplus_{\mathrm{emb}}$ concatenates along the sequence. \rev{Both models see the same dialogue state, and only the surrogate is perturbed: $F$ is called once per warm-start turn, never with the prompt, its responses stay fixed during optimization, and gradients flow only through $\mathbf P$ on $G$ (Appendix~\ref{sec:app_rationale}).}
+Here $\mathrm{tok}_G(\cdot)$ is the tokenizer of $G$, $\mathbf E(\cdot)$ maps tokens to embeddings, and $\oplus_{\mathrm{emb}}$ concatenates along the sequence. \rev{Both models see the same dialogue state, and only the surrogate is perturbed. We call $F$ once per warm-start turn and never with the prompt, so its responses stay fixed during optimization, while gradients flow only through $\mathbf P$ on $G$ (Appendix~\ref{sec:app_rationale}).}
 
 \subsection{\rev{Adversarial Soft-Prompt Mining}}\label{sec:mining}
 
@@ -55,7 +55,7 @@ The semantic divergence loss is
 s_{\tau}(v\mid y_{t,i}^F)
 \Big[-\log\big(1-\Pi_{t,i}(\mathbf P)[v]\big)\Big].
 \end{equation}
-\rev{Minimizing Eq.~\ref{eq:sem-with-aF} removes the agreement of $G$ with $F$ on exact tokens and on nearby semantic alternatives, so agreement expressed through a paraphrase cannot survive the probe.}
+\rev{Minimizing Eq.~\ref{eq:sem-with-aF} lowers the agreement of $G$ with $F$ on exact tokens and on nearby semantic alternatives, so agreement that rests only on a paraphrase is unlikely to survive the probe.}
 
 \textbf{Expectation-weighted semantic divergence.}
 The neighborhood loss can still miss distribution-level alignment: $G$ may lower the probability of a teacher token and its neighbors while spreading mass over many other tokens with similar meaning. We therefore compare the teacher token's embedding with the expected embedding of the surrogate's next-token distribution, $\bar{\boldsymbol e}_{t,i}=\mathbf E\Pi_{t,i}(\mathbf P)
@@ -97,7 +97,7 @@ We minimize Eq.~\ref{eq:prompt-final} with AdamW and gradient clipping while all
 
 \subsection{Localized Fine-Tuning, Switching, and Rollback}\label{sec:ft-switch}
 
-\rev{Each warm-start turn receives an anchoring score, its largest residual mining loss over the candidate prompts, $r_t=\max_{\mathbf P\in\mathcal P_{\mathrm{cand}}}\mathcal L_{\mathrm{sem\_exp}}(\mathbf P;\mathcal D_{t-1},q_t)$. Since $\mathcal L_{\mathrm{sem\_exp}}$ grows with the probability that $G$ assigns to $F$'s tokens and their neighbors, a large $r_t$ means that $G$ still predicts $F$'s response after a probe has pushed it away, so the response is anchored in the dialogue state rather than in turn-specific details. The training set $\mathcal H$ holds the warm-start turns with $F$'s responses, weighted by $r_t$: anchored responses carry the topic, constraints, and style that later turns share, whereas fragile ones carry turn-specific content that can dominate a fit on $W$ examples, in the spirit of small-loss selection~\citep{han2018coteaching} and self-paced learning~\citep{kumar2010selfpaced}.}
+\rev{Each warm-start turn receives an anchoring score, its largest residual mining loss over the candidate prompts, $r_t=\max_{\mathbf P\in\mathcal P_{\mathrm{cand}}}\mathcal L_{\mathrm{sem\_exp}}(\mathbf P;\mathcal D_{t-1},q_t)$. Because $\mathcal L_{\mathrm{sem\_exp}}$ grows with the probability that $G$ assigns to $F$'s tokens and their neighbors, a large $r_t$ indicates that $G$ still predicts $F$'s response after a probe has pushed it away, which suggests that the response is anchored in the dialogue state. The training set $\mathcal H$ holds the warm-start turns with $F$'s responses, weighted by $r_t$. Anchored responses tend to carry the topic, constraints, and style that later turns share. Fragile ones often carry turn-specific content that can dominate a fit on $W$ examples, a concern that also motivates small-loss selection~\citep{han2018coteaching} and self-paced learning~\citep{kumar2010selfpaced}.}
 
 We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention and MLP projections, and optimize \rev{the weighted negative log-likelihood of $F$'s responses}
 \begin{equation}
@@ -110,4 +110,4 @@ We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention a
 \end{equation}
 The soft prompts are then discarded, and serving uses only the LoRA-adapted surrogate.
 
-Before switching, SOMA verifies two conditions: the adapted surrogate must reproduce the original model's responses on a small acceptance batch, and the current query must remain close to the warm-start dialogue centroid. Once accepted, \(G\) serves later turns from a compressed input \(\widetilde S_t\) that keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, so the full history is never re-processed. During surrogate serving, SOMA keeps monitoring semantic drift. \rev{If recent queries move away from the learned local state for $m_{\mathrm{cons}}$ consecutive checks, it rolls back to \(F\), refreshes the summary and the centroid from the turns \(F\) serves after the shift, and hands the session back to \(G\) only if both gates pass on these turns; the one-time adapter is never retrained, so a segment it cannot serve stays on \(F\).} \rev{Gradual drift also triggers rollback once the margin is exhausted.}
+Before switching, SOMA verifies two conditions: the adapted surrogate must reproduce the original model's responses on a small acceptance batch, and the current query must remain close to the warm-start dialogue centroid. Once accepted, \(G\) serves later turns from a compressed input \(\widetilde S_t\) that keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, so the full history is never re-processed. During surrogate serving, SOMA keeps monitoring semantic drift. \rev{If recent queries move away from the learned local state for $m_{\mathrm{cons}}$ consecutive checks, SOMA rolls back to \(F\) and refreshes the summary and the centroid from the turns \(F\) serves after the shift. It hands the session back to \(G\) only if both gates pass on these turns. The adapter is trained once, so a segment it cannot serve stays on \(F\).} \rev{Gradual drift also triggers rollback once the margin is exhausted.}
