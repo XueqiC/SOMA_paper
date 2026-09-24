@@ -48,6 +48,8 @@ asked not to force it). Any further edit needs a recompile and a page check.
 - Rollback now follows the figure: after m_cons consecutive drift violations SOMA rolls back to F and refreshes the summary and centroid. The
   one-time adapter resumes only if both gates pass again; otherwise the segment stays on F. This is consistent with the one-time overhead in
   §4.2 and Fig. 3(a), and it avoids describing an untested re-adaptation step. §3.3, §4.2 and App. G were updated to match.
+- Precision added (§3.3, App. G): the refreshed summary and centroid and the recheck all use the turns F serves after the shift. This keeps
+  the locality gate from being circular, and it makes each re-switch decision held out, so Proposition 4.1 applies to it.
 
 ## Round 13 — text checked sentence by sentence against the implementation (2026-09-24)
 
