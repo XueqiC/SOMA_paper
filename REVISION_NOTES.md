@@ -48,8 +48,10 @@ asked not to force it). Any further edit needs a recompile and a page check.
   warm-start turn is used for adaptation (was "validation divergence", which implies a held-out split that does not exist).
 - Fig. 6(b): the x-axis is the relative switch point W/T, which is what is plotted (was "Truncation point W (turns)"); data unchanged.
 - Still open for the author:
-  - §3.3 says that after a rollback SOMA refreshes the summary and centroid and can switch back to G. The released code rolls back for the
-    rest of the session without refreshing.
+  - (resolved, author: choose the scientifically sounder story) After a rollback, the turns after the shift form a new warm-start window.
+    SOMA re-adapts on them with a refreshed summary and centroid and switches back only if both gates pass again, so short or unstable
+    segments stay on F. This matches the local view and Figure 2's timeline. §4.2's C_rb includes re-adaptation, and App. G discards an adapter
+    when a shift triggers re-adaptation. (The released code keeps F for the rest of the session; the author said the code may be inaccurate.)
   - In Fig. 6(a), three datasets have their switch-point marker at W = 1 because the notebook passes W/T fractions.
   - "Cosine decay" in App. C.2 is not in the released code.
 
