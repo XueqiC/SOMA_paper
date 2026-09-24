@@ -1,120 +1,120 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="330" viewBox="0 0 800 330" role="img" aria-label="SOMA overview. Warm-start: F answers the first turns. Soft-prompt mining on the frozen G scores how hard each warm-start turn is. Localized LoRA fits G to F on the hard turns. Gated serving: G takes over after a fidelity and locality check and serves from a compressed context; a drift monitor rolls back to F.">
-<defs><marker id="arr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555555"/></marker><marker id="arrT" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2A9D8F"/></marker><marker id="arrR" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B5454A"/></marker><marker id="arrN" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3A62A0"/></marker><marker id="arrO" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#D08A45"/></marker></defs>
+<defs><marker id="arr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2F2F2F"/></marker><marker id="arrT" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2A9D8F"/></marker><marker id="arrR" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B5454A"/></marker><marker id="arrN" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3A62A0"/></marker><marker id="arrO" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#D08A45"/></marker></defs>
 <rect x="0" y="0" width="800" height="330" fill="#ffffff"/>
-<rect x="8.0" y="6.0" width="168.0" height="244.0" rx="6" ry="6" fill="#ffffff" stroke="#C9C9C9" stroke-width="1"/>
-<circle cx="23.0" cy="22.0" r="9" fill="#3D3D3D" stroke="none" stroke-width="1.1"/>
-<text x="23.0" y="26.2" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text>
-<text x="38.0" y="27.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#222222" text-anchor="start">Warm-start</text>
-<text x="18.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">F answers turns 1–W</text>
-<rect x="190.0" y="6.0" width="214.0" height="244.0" rx="6" ry="6" fill="#ffffff" stroke="#C9C9C9" stroke-width="1"/>
-<circle cx="205.0" cy="22.0" r="9" fill="#3D3D3D" stroke="none" stroke-width="1.1"/>
-<text x="205.0" y="26.2" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">2</text>
-<text x="220.0" y="27.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#222222" text-anchor="start">Soft-prompt mining</text>
-<text x="200.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">probe frozen G on turns 1–W</text>
-<rect x="418.0" y="6.0" width="168.0" height="244.0" rx="6" ry="6" fill="#ffffff" stroke="#C9C9C9" stroke-width="1"/>
-<circle cx="433.0" cy="22.0" r="9" fill="#3D3D3D" stroke="none" stroke-width="1.1"/>
-<text x="433.0" y="26.2" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">3</text>
-<text x="448.0" y="27.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#222222" text-anchor="start">Localized LoRA</text>
-<text x="428.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">fit G to F's replies</text>
-<rect x="600.0" y="6.0" width="192.0" height="244.0" rx="6" ry="6" fill="#ffffff" stroke="#C9C9C9" stroke-width="1"/>
-<circle cx="615.0" cy="22.0" r="9" fill="#3D3D3D" stroke="none" stroke-width="1.1"/>
-<text x="615.0" y="26.2" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
-<text x="630.0" y="27.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#222222" text-anchor="start">Gated serving</text>
-<text x="610.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">switch if both checks pass</text>
-<line x1="177.0" y1="128.0" x2="189.0" y2="128.0" stroke="#555555" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arr)"/>
-<line x1="405.0" y1="128.0" x2="417.0" y2="128.0" stroke="#555555" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arr)"/>
-<line x1="587.0" y1="128.0" x2="599.0" y2="128.0" stroke="#555555" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arr)"/>
-<rect x="20.0" y="56.0" width="82.0" height="11.0" rx="2" ry="2" fill="#E9E9E9" stroke="#8C8C8C" stroke-width="0.9"/>
-<rect x="20.0" y="71.0" width="58.0" height="11.0" rx="2" ry="2" fill="#E9E9E9" stroke="#8C8C8C" stroke-width="0.9"/>
-<rect x="20.0" y="86.0" width="38.0" height="11.0" rx="2" ry="2" fill="#E9E9E9" stroke="#8C8C8C" stroke-width="0.9"/>
-<text x="108.0" y="76.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">user turns</text>
-<line x1="48.0" y1="102.0" x2="48.0" y2="116.0" stroke="#555555" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
+<rect x="8.0" y="6.0" width="168.0" height="244.0" rx="6" ry="6" fill="#ffffff" stroke="#A9A9A9" stroke-width="1.3"/>
+<circle cx="23.0" cy="22.0" r="9" fill="#222222" stroke="none" stroke-width="1.1"/>
+<text x="23.0" y="26.2" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text>
+<text x="38.0" y="27.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="start">Warm-start</text>
+<text x="18.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">F answers turns 1–W</text>
+<rect x="190.0" y="6.0" width="214.0" height="244.0" rx="6" ry="6" fill="#ffffff" stroke="#A9A9A9" stroke-width="1.3"/>
+<circle cx="205.0" cy="22.0" r="9" fill="#222222" stroke="none" stroke-width="1.1"/>
+<text x="205.0" y="26.2" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#ffffff" text-anchor="middle">2</text>
+<text x="220.0" y="27.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="start">Soft-prompt mining</text>
+<text x="200.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">probe frozen G on turns 1–W</text>
+<rect x="418.0" y="6.0" width="168.0" height="244.0" rx="6" ry="6" fill="#ffffff" stroke="#A9A9A9" stroke-width="1.3"/>
+<circle cx="433.0" cy="22.0" r="9" fill="#222222" stroke="none" stroke-width="1.1"/>
+<text x="433.0" y="26.2" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#ffffff" text-anchor="middle">3</text>
+<text x="448.0" y="27.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="start">Localized LoRA</text>
+<text x="428.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">fit G to F's replies</text>
+<rect x="600.0" y="6.0" width="192.0" height="244.0" rx="6" ry="6" fill="#ffffff" stroke="#A9A9A9" stroke-width="1.3"/>
+<circle cx="615.0" cy="22.0" r="9" fill="#222222" stroke="none" stroke-width="1.1"/>
+<text x="615.0" y="26.2" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
+<text x="630.0" y="27.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="start">Gated serving</text>
+<text x="610.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">switch if both checks pass</text>
+<line x1="177.0" y1="128.0" x2="189.0" y2="128.0" stroke="#111111" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arr)"/>
+<line x1="405.0" y1="128.0" x2="417.0" y2="128.0" stroke="#111111" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arr)"/>
+<line x1="587.0" y1="128.0" x2="599.0" y2="128.0" stroke="#111111" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arr)"/>
+<rect x="20.0" y="56.0" width="82.0" height="11.0" rx="2" ry="2" fill="#E6E6E6" stroke="#6F6F6F" stroke-width="0.9"/>
+<rect x="20.0" y="71.0" width="58.0" height="11.0" rx="2" ry="2" fill="#E6E6E6" stroke="#6F6F6F" stroke-width="0.9"/>
+<rect x="20.0" y="86.0" width="38.0" height="11.0" rx="2" ry="2" fill="#E6E6E6" stroke="#6F6F6F" stroke-width="0.9"/>
+<text x="108.0" y="76.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">user turns</text>
+<line x1="48.0" y1="102.0" x2="48.0" y2="116.0" stroke="#2F2F2F" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
 <rect x="36.0" y="120.0" width="38.0" height="32.0" rx="3" ry="3" fill="#ffffff" stroke="#3A62A0" stroke-width="0.9"/>
 <rect x="33.0" y="123.0" width="38.0" height="32.0" rx="3" ry="3" fill="#ffffff" stroke="#3A62A0" stroke-width="0.9"/>
 <rect x="30.0" y="126.0" width="38.0" height="32.0" rx="3" ry="3" fill="#E3EAF4" stroke="#3A62A0" stroke-width="1.3"/>
 <text x="49.0" y="147.4" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="15" font-weight="bold" fill="#3A62A0" text-anchor="middle">F</text>
-<text x="108.0" y="146.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">large LLM</text>
-<line x1="48.0" y1="162.0" x2="48.0" y2="174.0" stroke="#555555" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
+<text x="108.0" y="146.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">large LLM</text>
+<line x1="48.0" y1="162.0" x2="48.0" y2="174.0" stroke="#2F2F2F" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
 <rect x="20.0" y="178.0" width="78.0" height="8.0" rx="2" ry="2" fill="#E3EAF4" stroke="#3A62A0" stroke-width="0.9"/>
 <rect x="20.0" y="189.0" width="60.0" height="8.0" rx="2" ry="2" fill="#E3EAF4" stroke="#3A62A0" stroke-width="0.9"/>
 <rect x="20.0" y="200.0" width="48.0" height="8.0" rx="2" ry="2" fill="#E3EAF4" stroke="#3A62A0" stroke-width="0.9"/>
-<text x="108.0" y="196.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">replies</text>
-<rect x="16.0" y="216.0" width="152.0" height="24.0" rx="4" ry="4" fill="#F4F4F4" stroke="#C9C9C9" stroke-width="1"/>
-<text x="24.0" y="232.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#222222" text-anchor="start">context–reply pairs</text>
+<text x="108.0" y="196.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">replies</text>
+<rect x="16.0" y="216.0" width="152.0" height="24.0" rx="4" ry="4" fill="#F2F2F2" stroke="#A9A9A9" stroke-width="1.2"/>
+<text x="24.0" y="232.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#111111" text-anchor="start">context–reply pairs</text>
 <rect x="200.0" y="68.0" width="10.0" height="12.0" rx="2" ry="2" fill="#DDF0ED" stroke="#2A9D8F" stroke-width="1.1"/>
 <rect x="213.0" y="68.0" width="10.0" height="12.0" rx="2" ry="2" fill="#DDF0ED" stroke="#2A9D8F" stroke-width="1.1"/>
 <rect x="226.0" y="68.0" width="10.0" height="12.0" rx="2" ry="2" fill="#DDF0ED" stroke="#2A9D8F" stroke-width="1.1"/>
 <rect x="239.0" y="68.0" width="10.0" height="12.0" rx="2" ry="2" fill="#DDF0ED" stroke="#2A9D8F" stroke-width="1.1"/>
-<text x="256.0" y="79.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#555555" text-anchor="middle">+</text>
-<rect x="264.0" y="64.0" width="30.0" height="20.0" rx="2" ry="2" fill="#ffffff" stroke="#8C8C8C" stroke-width="1"/>
-<line x1="268.0" y1="70.7" x2="290.0" y2="70.7" stroke="#C9C9C9" stroke-width="1.4" stroke-linecap="round"/>
-<line x1="268.0" y1="77.3" x2="285.0" y2="77.3" stroke="#C9C9C9" stroke-width="1.4" stroke-linecap="round"/>
-<line x1="298.0" y1="74.0" x2="312.0" y2="74.0" stroke="#555555" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
+<text x="256.0" y="79.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="bold" fill="#2F2F2F" text-anchor="middle">+</text>
+<rect x="264.0" y="64.0" width="30.0" height="20.0" rx="2" ry="2" fill="#ffffff" stroke="#6F6F6F" stroke-width="1"/>
+<line x1="268.0" y1="70.7" x2="290.0" y2="70.7" stroke="#A9A9A9" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="268.0" y1="77.3" x2="285.0" y2="77.3" stroke="#A9A9A9" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="298.0" y1="74.0" x2="312.0" y2="74.0" stroke="#2F2F2F" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
 <rect x="322.0" y="56.0" width="26.0" height="26.0" rx="3" ry="3" fill="#ffffff" stroke="#D08A45" stroke-width="0.9"/>
 <rect x="319.0" y="59.0" width="26.0" height="26.0" rx="3" ry="3" fill="#ffffff" stroke="#D08A45" stroke-width="0.9"/>
 <rect x="316.0" y="62.0" width="26.0" height="26.0" rx="3" ry="3" fill="#F8ECDF" stroke="#D08A45" stroke-width="1.3"/>
 <text x="329.0" y="79.7" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="13" font-weight="bold" fill="#D08A45" text-anchor="middle">G</text>
-<rect x="347.9" y="83.1" width="8.1" height="6.3" rx="1.2" ry="1.2" fill="#555555" stroke="#555555" stroke-width="0.8"/>
-<path d="M349.3,83.1 v-2.25 a2.7,2.7 0 0 1 5.4,0 v2.25" stroke="#555555" stroke-width="1.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-<line x1="358.0" y1="74.0" x2="368.0" y2="74.0" stroke="#555555" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
-<rect x="370.0" y="78.0" width="5" height="6" rx="1" fill="#8C8C8C"/>
-<rect x="377.0" y="66.0" width="5" height="18" rx="1" fill="#8C8C8C"/>
-<rect x="384.0" y="73.0" width="5" height="11" rx="1" fill="#8C8C8C"/>
-<rect x="391.0" y="80.0" width="5" height="4" rx="1" fill="#8C8C8C"/>
-<text x="225.0" y="100.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="middle">prompt P</text>
-<text x="279.0" y="100.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="middle">context</text>
-<text x="374.0" y="100.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="middle">next token</text>
-<line x1="200.0" y1="112.0" x2="394.0" y2="112.0" stroke="#C9C9C9" stroke-width="1" stroke-linecap="round"/>
+<rect x="347.9" y="83.1" width="8.1" height="6.3" rx="1.2" ry="1.2" fill="#2F2F2F" stroke="#2F2F2F" stroke-width="0.8"/>
+<path d="M349.3,83.1 v-2.25 a2.7,2.7 0 0 1 5.4,0 v2.25" stroke="#2F2F2F" stroke-width="1.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="358.0" y1="74.0" x2="368.0" y2="74.0" stroke="#2F2F2F" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
+<rect x="370.0" y="78.0" width="5" height="6" rx="1" fill="#6F6F6F"/>
+<rect x="377.0" y="66.0" width="5" height="18" rx="1" fill="#6F6F6F"/>
+<rect x="384.0" y="73.0" width="5" height="11" rx="1" fill="#6F6F6F"/>
+<rect x="391.0" y="80.0" width="5" height="4" rx="1" fill="#6F6F6F"/>
+<text x="225.0" y="100.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="middle">prompt P</text>
+<text x="279.0" y="100.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="middle">context</text>
+<text x="374.0" y="100.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="middle">next token</text>
+<line x1="200.0" y1="112.0" x2="394.0" y2="112.0" stroke="#A9A9A9" stroke-width="1" stroke-linecap="round"/>
 <circle cx="236.0" cy="152.0" r="22" fill="#E3EAF4" stroke="#3A62A0" stroke-width="1" stroke-dasharray="3 2.5"/>
-<circle cx="224.0" cy="143.0" r="2.8" fill="#8C8C8C" stroke="none" stroke-width="1.1"/>
-<circle cx="247.0" cy="162.0" r="2.8" fill="#8C8C8C" stroke="none" stroke-width="1.1"/>
-<circle cx="248.0" cy="143.0" r="2.8" fill="#8C8C8C" stroke="none" stroke-width="1.1"/>
+<circle cx="224.0" cy="143.0" r="2.8" fill="#6F6F6F" stroke="none" stroke-width="1.1"/>
+<circle cx="247.0" cy="162.0" r="2.8" fill="#6F6F6F" stroke="none" stroke-width="1.1"/>
+<circle cx="248.0" cy="143.0" r="2.8" fill="#6F6F6F" stroke="none" stroke-width="1.1"/>
 <polygon points="236.0,145.0 237.9,149.5 242.7,149.8 239.0,153.0 240.1,157.7 236.0,155.2 231.9,157.7 233.0,153.0 229.3,149.8 234.1,149.5" fill="#3A62A0" stroke="#ffffff" stroke-width="0.7"/>
 <polygon points="243,153.8 247.2,158 243,162.2 238.8,158" fill="#D08A45" stroke="#ffffff" stroke-width="0.7"/>
 <line x1="254.4" y1="136.6" x2="263.6" y2="128.9" stroke="#2A9D8F" stroke-width="1.6" stroke-linecap="round" marker-end="url(#arrT)"/>
 <line x1="217.6" y1="136.6" x2="208.4" y2="128.9" stroke="#2A9D8F" stroke-width="1.6" stroke-linecap="round" marker-end="url(#arrT)"/>
 <line x1="217.6" y1="167.4" x2="208.4" y2="175.1" stroke="#2A9D8F" stroke-width="1.6" stroke-linecap="round" marker-end="url(#arrT)"/>
 <line x1="254.4" y1="167.4" x2="263.6" y2="175.1" stroke="#2A9D8F" stroke-width="1.6" stroke-linecap="round" marker-end="url(#arrT)"/>
-<text x="236.0" y="198.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="middle">F's token and</text>
-<text x="236.0" y="211.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="middle">its neighbors</text>
+<text x="236.0" y="198.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="middle">F's token and</text>
+<text x="236.0" y="211.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="middle">its neighbors</text>
 <line x1="296.0" y1="127.0" x2="308.0" y2="127.0" stroke="#2A9D8F" stroke-width="1.6" stroke-linecap="round" marker-end="url(#arrT)"/>
-<text x="316.0" y="131.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="start">neighborhood</text>
-<text x="316.0" y="144.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="start">unlikelihood</text>
+<text x="316.0" y="131.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#111111" text-anchor="start">neighborhood</text>
+<text x="316.0" y="144.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#111111" text-anchor="start">unlikelihood</text>
 <polygon points="302,153.8 306.2,158 302,162.2 297.8,158" fill="#D08A45" stroke="#ffffff" stroke-width="0.7"/>
-<text x="316.0" y="162.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="start">expectation</text>
-<text x="316.0" y="175.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="start">weighting</text>
+<text x="316.0" y="162.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#111111" text-anchor="start">expectation</text>
+<text x="316.0" y="175.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#111111" text-anchor="start">weighting</text>
 <rect x="297.0" y="187.0" width="3" height="6" rx="1" fill="#2A9D8F"/>
 <rect x="301.5" y="185.0" width="3" height="8" rx="1" fill="#2A9D8F"/>
 <rect x="306.0" y="186.0" width="3" height="7" rx="1" fill="#2A9D8F"/>
-<text x="316.0" y="193.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="start">entropy</text>
-<text x="316.0" y="206.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="start">regularizer</text>
-<rect x="198.0" y="216.0" width="198.0" height="24.0" rx="4" ry="4" fill="#F4F4F4" stroke="#C9C9C9" stroke-width="1"/>
-<text x="206.0" y="232.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#222222" text-anchor="start">hardness of each turn</text>
+<text x="316.0" y="193.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#111111" text-anchor="start">entropy</text>
+<text x="316.0" y="206.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#111111" text-anchor="start">regularizer</text>
+<rect x="198.0" y="216.0" width="198.0" height="24.0" rx="4" ry="4" fill="#F2F2F2" stroke="#A9A9A9" stroke-width="1"/>
+<text x="206.0" y="232.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#111111" text-anchor="start">hardness of each turn</text>
 <rect x="360.0" y="221.0" width="7" height="15" rx="1" fill="#2A9D8F"/>
 <rect x="370.0" y="231.0" width="7" height="5" rx="1" fill="#2A9D8F"/>
 <rect x="380.0" y="224.0" width="7" height="12" rx="1" fill="#2A9D8F"/>
-<rect x="430.0" y="56.0" width="44.0" height="44.0" rx="2" ry="2" fill="#E9E9E9" stroke="#8C8C8C" stroke-width="1.1"/>
-<rect x="446.6" y="75.8" width="10.8" height="8.4" rx="1.2" ry="1.2" fill="#555555" stroke="#555555" stroke-width="0.8"/>
-<path d="M448.4,75.8 v-3.0 a3.5999999999999996,3.5999999999999996 0 0 1 7.199999999999999,0 v3.0" stroke="#555555" stroke-width="1.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="484.0" y="83.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="15" font-weight="bold" fill="#555555" text-anchor="middle">+</text>
+<rect x="430.0" y="56.0" width="44.0" height="44.0" rx="2" ry="2" fill="#E6E6E6" stroke="#6F6F6F" stroke-width="1.1"/>
+<rect x="446.6" y="75.8" width="10.8" height="8.4" rx="1.2" ry="1.2" fill="#2F2F2F" stroke="#2F2F2F" stroke-width="0.8"/>
+<path d="M448.4,75.8 v-3.0 a3.5999999999999996,3.5999999999999996 0 0 1 7.199999999999999,0 v3.0" stroke="#2F2F2F" stroke-width="1.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="484.0" y="83.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="15" font-weight="bold" fill="#2F2F2F" text-anchor="middle">+</text>
 <rect x="496.0" y="56.0" width="10.0" height="44.0" rx="2" ry="2" fill="#DDF0ED" stroke="#2A9D8F" stroke-width="1.2"/>
 <rect x="510.0" y="56.0" width="44.0" height="10.0" rx="2" ry="2" fill="#DDF0ED" stroke="#2A9D8F" stroke-width="1.2"/>
-<text x="452.0" y="116.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="middle">frozen</text>
-<text x="512.0" y="86.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">low-rank</text>
-<text x="512.0" y="99.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">update</text>
-<text x="428.0" y="134.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">on attention and MLP</text>
-<rect x="430.0" y="148.0" width="22.0" height="12.0" rx="2" ry="2" fill="#ffffff" stroke="#8C8C8C" stroke-width="1"/>
+<text x="452.0" y="116.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="middle">frozen</text>
+<text x="512.0" y="86.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">low-rank</text>
+<text x="512.0" y="99.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">update</text>
+<text x="428.0" y="134.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">on attention and MLP</text>
+<rect x="430.0" y="148.0" width="22.0" height="12.0" rx="2" ry="2" fill="#ffffff" stroke="#6F6F6F" stroke-width="1"/>
 <rect x="456.0" y="150.0" width="30" height="8" rx="1" fill="#2A9D8F"/>
-<rect x="430.0" y="165.0" width="22.0" height="12.0" rx="2" ry="2" fill="#ffffff" stroke="#8C8C8C" stroke-width="1"/>
+<rect x="430.0" y="165.0" width="22.0" height="12.0" rx="2" ry="2" fill="#ffffff" stroke="#6F6F6F" stroke-width="1"/>
 <rect x="456.0" y="167.0" width="9" height="8" rx="1" fill="#2A9D8F"/>
-<rect x="430.0" y="182.0" width="22.0" height="12.0" rx="2" ry="2" fill="#ffffff" stroke="#8C8C8C" stroke-width="1"/>
+<rect x="430.0" y="182.0" width="22.0" height="12.0" rx="2" ry="2" fill="#ffffff" stroke="#6F6F6F" stroke-width="1"/>
 <rect x="456.0" y="184.0" width="25" height="8" rx="1" fill="#2A9D8F"/>
-<line x1="492.0" y1="171.0" x2="504.0" y2="171.0" stroke="#555555" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
+<line x1="492.0" y1="171.0" x2="504.0" y2="171.0" stroke="#2F2F2F" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
 <rect x="508.0" y="158.0" width="68.0" height="26.0" rx="4" ry="4" fill="#E3EAF4" stroke="#3A62A0" stroke-width="1"/>
-<text x="542.0" y="175.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">F's replies</text>
-<text x="428.0" y="206.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">turns weighted by hardness</text>
-<rect x="426.0" y="216.0" width="152.0" height="24.0" rx="4" ry="4" fill="#F4F4F4" stroke="#C9C9C9" stroke-width="1"/>
-<text x="434.0" y="232.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#222222" text-anchor="start">adapted G</text>
+<text x="542.0" y="175.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">F's replies</text>
+<text x="428.0" y="206.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">turns weighted by hardness</text>
+<rect x="426.0" y="216.0" width="152.0" height="24.0" rx="4" ry="4" fill="#F2F2F2" stroke="#A9A9A9" stroke-width="1.2"/>
+<text x="434.0" y="232.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#111111" text-anchor="start">adapted G</text>
 <rect x="534.0" y="214.0" width="22.0" height="16.0" rx="3" ry="3" fill="#ffffff" stroke="#D08A45" stroke-width="0.9"/>
 <rect x="531.0" y="217.0" width="22.0" height="16.0" rx="3" ry="3" fill="#ffffff" stroke="#D08A45" stroke-width="0.9"/>
 <rect x="528.0" y="220.0" width="22.0" height="16.0" rx="3" ry="3" fill="#F8ECDF" stroke="#D08A45" stroke-width="1.3"/>
@@ -122,74 +122,74 @@
 <rect x="544.0" y="223.0" width="4.0" height="10.0" rx="1" ry="1" fill="#2A9D8F" stroke="#2A9D8F" stroke-width="0.6"/>
 <line x1="618.0" y1="100.0" x2="636.4" y2="62.3" stroke="#3A62A0" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrN)"/>
 <line x1="618.0" y1="100.0" x2="647.2" y2="69.8" stroke="#D08A45" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrO)"/>
-<path d="M628.4,89.2 A15,15 0 0 0 624.6,86.5" stroke="#555555" stroke-width="0.9" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="630.0" y="58.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#3A62A0" text-anchor="start">F</text>
-<text x="654.0" y="74.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#D08A45" text-anchor="start">G</text>
-<text x="644.0" y="118.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">fidelity</text>
+<path d="M628.4,89.2 A15,15 0 0 0 624.6,86.5" stroke="#2F2F2F" stroke-width="0.9" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="630.0" y="58.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#3A62A0" text-anchor="start">F</text>
+<text x="654.0" y="74.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#D08A45" text-anchor="start">G</text>
+<text x="644.0" y="118.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">fidelity</text>
 <path d="M670,56 l3.15,3.15 l6.3,-7.2" stroke="#2A9D8F" stroke-width="2.0" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
 <circle cx="730.0" cy="78.0" r="20" fill="#E3EAF4" stroke="#3A62A0" stroke-width="1" stroke-dasharray="3 2.5"/>
 <circle cx="721.0" cy="70.0" r="2.6" fill="#3A62A0" stroke="none" stroke-width="1.1"/>
 <circle cx="738.0" cy="68.0" r="2.6" fill="#3A62A0" stroke="none" stroke-width="1.1"/>
 <circle cx="719.0" cy="85.0" r="2.6" fill="#3A62A0" stroke="none" stroke-width="1.1"/>
 <circle cx="734.0" cy="87.0" r="2.6" fill="#3A62A0" stroke="none" stroke-width="1.1"/>
-<line x1="727.0" y1="75.0" x2="733.0" y2="81.0" stroke="#222222" stroke-width="1.3" stroke-linecap="round"/>
-<line x1="727.0" y1="81.0" x2="733.0" y2="75.0" stroke="#222222" stroke-width="1.3" stroke-linecap="round"/>
+<line x1="727.0" y1="75.0" x2="733.0" y2="81.0" stroke="#111111" stroke-width="1.3" stroke-linecap="round"/>
+<line x1="727.0" y1="81.0" x2="733.0" y2="75.0" stroke="#111111" stroke-width="1.3" stroke-linecap="round"/>
 <circle cx="742.0" cy="79.0" r="3.8" fill="#D08A45" stroke="#ffffff" stroke-width="0.8"/>
-<text x="730.0" y="118.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">locality</text>
+<text x="730.0" y="118.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">locality</text>
 <path d="M756,56 l3.15,3.15 l6.3,-7.2" stroke="#2A9D8F" stroke-width="2.0" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-<line x1="610.0" y1="128.0" x2="782.0" y2="128.0" stroke="#C9C9C9" stroke-width="1" stroke-linecap="round"/>
-<rect x="612.0" y="138.0" width="34.0" height="26.0" rx="2" ry="2" fill="#ffffff" stroke="#8C8C8C" stroke-width="1"/>
-<line x1="616.0" y1="144.5" x2="642.0" y2="144.5" stroke="#C9C9C9" stroke-width="1.4" stroke-linecap="round"/>
-<line x1="616.0" y1="151.0" x2="637.0" y2="151.0" stroke="#C9C9C9" stroke-width="1.4" stroke-linecap="round"/>
-<line x1="616.0" y1="157.5" x2="632.0" y2="157.5" stroke="#C9C9C9" stroke-width="1.4" stroke-linecap="round"/>
-<text x="653.0" y="156.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#555555" text-anchor="middle">+</text>
-<rect x="660.0" y="138.0" width="7.0" height="26.0" rx="1.5" ry="1.5" fill="#E9E9E9" stroke="#8C8C8C" stroke-width="0.9"/>
-<rect x="670.0" y="138.0" width="7.0" height="26.0" rx="1.5" ry="1.5" fill="#E9E9E9" stroke="#8C8C8C" stroke-width="0.9"/>
-<rect x="680.0" y="138.0" width="7.0" height="26.0" rx="1.5" ry="1.5" fill="#E9E9E9" stroke="#8C8C8C" stroke-width="0.9"/>
-<line x1="694.0" y1="151.0" x2="712.0" y2="151.0" stroke="#555555" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
+<line x1="610.0" y1="128.0" x2="782.0" y2="128.0" stroke="#A9A9A9" stroke-width="1" stroke-linecap="round"/>
+<rect x="612.0" y="138.0" width="34.0" height="26.0" rx="2" ry="2" fill="#ffffff" stroke="#6F6F6F" stroke-width="1"/>
+<line x1="616.0" y1="144.5" x2="642.0" y2="144.5" stroke="#A9A9A9" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="616.0" y1="151.0" x2="637.0" y2="151.0" stroke="#A9A9A9" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="616.0" y1="157.5" x2="632.0" y2="157.5" stroke="#A9A9A9" stroke-width="1.4" stroke-linecap="round"/>
+<text x="653.0" y="156.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#2F2F2F" text-anchor="middle">+</text>
+<rect x="660.0" y="138.0" width="7.0" height="26.0" rx="1.5" ry="1.5" fill="#E6E6E6" stroke="#6F6F6F" stroke-width="0.9"/>
+<rect x="670.0" y="138.0" width="7.0" height="26.0" rx="1.5" ry="1.5" fill="#E6E6E6" stroke="#6F6F6F" stroke-width="0.9"/>
+<rect x="680.0" y="138.0" width="7.0" height="26.0" rx="1.5" ry="1.5" fill="#E6E6E6" stroke="#6F6F6F" stroke-width="0.9"/>
+<line x1="694.0" y1="151.0" x2="712.0" y2="151.0" stroke="#2F2F2F" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arr)"/>
 <rect x="724.0" y="132.0" width="28.0" height="26.0" rx="3" ry="3" fill="#ffffff" stroke="#D08A45" stroke-width="0.9"/>
 <rect x="721.0" y="135.0" width="28.0" height="26.0" rx="3" ry="3" fill="#ffffff" stroke="#D08A45" stroke-width="0.9"/>
 <rect x="718.0" y="138.0" width="28.0" height="26.0" rx="3" ry="3" fill="#F8ECDF" stroke="#D08A45" stroke-width="1.3"/>
 <text x="730.0" y="155.7" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="13" font-weight="bold" fill="#D08A45" text-anchor="middle">G</text>
 <rect x="740.0" y="141.0" width="4.0" height="20.0" rx="1" ry="1" fill="#2A9D8F" stroke="#2A9D8F" stroke-width="0.6"/>
-<text x="610.0" y="180.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">summary + last K turns</text>
-<line x1="612.0" y1="238.0" x2="708.0" y2="238.0" stroke="#8C8C8C" stroke-width="0.9" stroke-linecap="round"/>
-<line x1="612.0" y1="238.0" x2="612.0" y2="194.0" stroke="#8C8C8C" stroke-width="0.9" stroke-linecap="round"/>
+<text x="610.0" y="180.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">summary + last K turns</text>
+<line x1="612.0" y1="238.0" x2="708.0" y2="238.0" stroke="#6F6F6F" stroke-width="0.9" stroke-linecap="round"/>
+<line x1="612.0" y1="238.0" x2="612.0" y2="194.0" stroke="#6F6F6F" stroke-width="0.9" stroke-linecap="round"/>
 <line x1="612.0" y1="212.0" x2="708.0" y2="212.0" stroke="#B5454A" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="4 3"/>
-<path d="M624.0,232.0 L642.0,228.0 L660.0,233.0 L678.0,207.0 L696.0,201.0" stroke="#8C8C8C" stroke-width="1" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M624.0,232.0 L642.0,228.0 L660.0,233.0 L678.0,207.0 L696.0,201.0" stroke="#6F6F6F" stroke-width="1" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
 <circle cx="624.0" cy="232.0" r="3.4" fill="#D08A45" stroke="#ffffff" stroke-width="0.8"/>
 <circle cx="642.0" cy="228.0" r="3.4" fill="#D08A45" stroke="#ffffff" stroke-width="0.8"/>
 <circle cx="660.0" cy="233.0" r="3.4" fill="#D08A45" stroke="#ffffff" stroke-width="0.8"/>
 <circle cx="678.0" cy="207.0" r="3.4" fill="#B5454A" stroke="#ffffff" stroke-width="0.8"/>
 <circle cx="696.0" cy="201.0" r="3.4" fill="#B5454A" stroke="#ffffff" stroke-width="0.8"/>
-<text x="720.0" y="216.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="start">drift</text>
-<text x="720.0" y="229.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="start">monitor</text>
+<text x="720.0" y="216.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#111111" text-anchor="start">drift</text>
+<text x="720.0" y="229.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#111111" text-anchor="start">monitor</text>
 <rect x="8.0" y="258.0" width="64.0" height="22.0" rx="3" ry="3" fill="#E3EAF4" stroke="#3A62A0" stroke-width="1"/>
-<text x="40.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">t1</text>
+<text x="40.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">t1</text>
 <rect x="76.0" y="258.0" width="48.0" height="22.0" rx="3" ry="3" fill="#E3EAF4" stroke="#3A62A0" stroke-width="1"/>
-<text x="100.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">t2</text>
+<text x="100.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">t2</text>
 <rect x="128.0" y="258.0" width="40.0" height="22.0" rx="3" ry="3" fill="#E3EAF4" stroke="#3A62A0" stroke-width="1"/>
-<text x="148.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">t3</text>
-<line x1="172.0" y1="269.0" x2="188.0" y2="269.0" stroke="#555555" stroke-width="1.2" stroke-linecap="round" marker-end="url(#arr)"/>
-<rect x="190.0" y="258.0" width="396.0" height="22.0" rx="3" ry="3" fill="#F4F4F4" stroke="#8C8C8C" stroke-width="1" stroke-dasharray="4 3"/>
-<text x="388.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="middle">one-time adaptation between turn 3 and turn 4 (steps 2–3)</text>
-<line x1="588.0" y1="269.0" x2="598.0" y2="269.0" stroke="#555555" stroke-width="1.2" stroke-linecap="round" marker-end="url(#arr)"/>
+<text x="148.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">t3</text>
+<line x1="172.0" y1="269.0" x2="188.0" y2="269.0" stroke="#2F2F2F" stroke-width="1.2" stroke-linecap="round" marker-end="url(#arr)"/>
+<rect x="190.0" y="258.0" width="396.0" height="22.0" rx="3" ry="3" fill="#F2F2F2" stroke="#6F6F6F" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="388.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="middle">one-time adaptation between turn 3 and turn 4 (steps 2–3)</text>
+<line x1="588.0" y1="269.0" x2="598.0" y2="269.0" stroke="#2F2F2F" stroke-width="1.2" stroke-linecap="round" marker-end="url(#arr)"/>
 <rect x="600.0" y="258.0" width="34.0" height="22.0" rx="3" ry="3" fill="#F8ECDF" stroke="#D08A45" stroke-width="1"/>
-<text x="617.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">t4</text>
+<text x="617.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">t4</text>
 <rect x="638.0" y="258.0" width="34.0" height="22.0" rx="3" ry="3" fill="#F8ECDF" stroke="#D08A45" stroke-width="1"/>
-<text x="655.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">t5</text>
+<text x="655.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">t5</text>
 <rect x="676.0" y="258.0" width="34.0" height="22.0" rx="3" ry="3" fill="#F8ECDF" stroke="#D08A45" stroke-width="1"/>
-<text x="693.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">t6</text>
+<text x="693.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">t6</text>
 <rect x="714.0" y="258.0" width="34.0" height="22.0" rx="3" ry="3" fill="#F8ECDF" stroke="#D08A45" stroke-width="1"/>
-<text x="731.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#222222" text-anchor="middle">t7</text>
+<text x="731.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#111111" text-anchor="middle">t7</text>
 <rect x="752.0" y="258.0" width="40.0" height="22.0" rx="3" ry="3" fill="#F5E1E2" stroke="#B5454A" stroke-width="1.2"/>
-<text x="772.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="bold" fill="#B5454A" text-anchor="middle">t8</text>
+<text x="772.0" y="273.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="bold" fill="#B5454A" text-anchor="middle">t8</text>
 <path d="M772.0,281 V296 H40 V283" stroke="#B5454A" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arrR)"/>
 <rect x="200" y="289" width="400" height="15" fill="#ffffff"/>
-<text x="400.0" y="301.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#B5454A" text-anchor="middle">drift detected at turn 8: roll back to F and refresh the warm-start state</text>
+<text x="400.0" y="301.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#B5454A" text-anchor="middle">drift detected at turn 8: roll back to F and refresh the warm-start state</text>
 <rect x="650.0" y="316.0" width="12.0" height="10.0" rx="2" ry="2" fill="#DDF0ED" stroke="#2A9D8F" stroke-width="1"/>
-<text x="667.0" y="326.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">trained</text>
-<rect x="723.5" y="320.0" width="9.0" height="7.0" rx="1.2" ry="1.2" fill="#555555" stroke="#555555" stroke-width="0.8"/>
-<path d="M725.0,320.0 v-2.5 a3.0,3.0 0 0 1 6.0,0 v2.5" stroke="#555555" stroke-width="1.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="738.0" y="326.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">frozen</text>
+<text x="667.0" y="326.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">trained</text>
+<rect x="723.5" y="320.0" width="9.0" height="7.0" rx="1.2" ry="1.2" fill="#2F2F2F" stroke="#2F2F2F" stroke-width="0.8"/>
+<path d="M725.0,320.0 v-2.5 a3.0,3.0 0 0 1 6.0,0 v2.5" stroke="#2F2F2F" stroke-width="1.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="738.0" y="326.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="12.5" font-weight="normal" fill="#2F2F2F" text-anchor="start">frozen</text>
 </svg>

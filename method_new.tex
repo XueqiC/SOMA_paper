@@ -4,7 +4,7 @@
   \centering
   \includegraphics[width=\textwidth]{figure/overview.pdf}
   \vspace{-2mm}
-  \caption{Overview of SOMA. \textbf{(1) Warm-start:} $F$ answers the first $W$ turns, yielding context--reply pairs. \textbf{(2) Soft-prompt mining:} a soft prompt $\mathbf P$ on the frozen surrogate $G$ pushes $G$ away from $F$'s tokens and their embedding neighbors (neighborhood unlikelihood, expectation weighting, entropy regularizer); how far $G$ can be pushed gives each turn's hardness. \textbf{(3) Localized LoRA:} a low-rank update fits $G$ to $F$'s replies on hardness-weighted turns. \textbf{(4) Gated serving:} $G$ takes over if its replies match $F$'s (fidelity) and the query stays near the warm-start centroid (locality), and then serves from a summary plus the last $K$ turns. Bottom: the session timeline; adaptation runs once, and a drift monitor rolls the session back to $F$ when the topic changes.}
+  \caption{Overview of SOMA. (1) $F$ serves the warm-start turns; (2) a soft prompt on the frozen surrogate $G$ scores how hard each turn is for $G$; (3) a hardness-weighted LoRA adapts $G$ to $F$'s replies; (4) $G$ takes over after a fidelity and locality check and rolls back to $F$ on drift. Bottom: the matching session timeline, aligned with the four steps.}
   \label{fig:overview}
 \vspace{-3mm}
 \end{figure}

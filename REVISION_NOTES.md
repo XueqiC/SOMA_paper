@@ -39,6 +39,21 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 5 — figure styling pass (2026-09-24)
+
+- Shared style module `figure/src/paper_style.py` (Times New Roman bold, black text, palette of
+  Figures 2 and 5, figures4papers-style spines/legends). `figure/src/restyle_figs.py` re-renders
+  Figure 1 (long tail), Figure 3 (throughput) and the appendix average-token figure with the
+  values copied verbatim from `~/Dropbox/intern/test.ipynb` cells 13, 47, 53. Figure 3's y-axis
+  now reads "Throughput (tokens/s)" (the old PDF said "Similarity Precentage"), and the Qwen panel's
+  y-range no longer clips bars above 150.
+- Figures 4 and 6 and the appendix variance figure are unchanged, per the author's request, until
+  the measured arrays for the values the notebook computes at plot time are available
+  (see `notes/figure_provenance.md`).
+- Figure 2: darker text and borders, 12.5px labels; caption cut to about three lines.
+- Appendix: every short paragraph ending fixed; question-style headings replaced by declarative
+  phrases (Sections 4.1–4.3, RQ4/RQ5, appendix design-rationale heading).
+
 ## Round 4 — tables to figures (2026-09-23, night)
 
 - Table 3 (MATH exact match) now spans the full text width.
