@@ -4,7 +4,7 @@
   \centering
   \includegraphics[width=\textwidth]{figure/soma_overview.pdf}
   \vspace{-2mm}
-  \caption{\rev{Overview of SOMA. (1) The original model (teacher) $F$ serves the first $W$ turns, and its replies are cached. (2) A soft prompt on the frozen surrogate (student) $G$ is trained to push $G$ away from these replies, which gives each turn an anchoring score $r_t$. (3) LoRA distills $F$'s replies into $G$ on all warm-start turns, weighted by $r_t$. (4) Once the fidelity and locality checks pass, the adapted $G_\Theta$ serves later turns from a compressed context. A drift monitor rolls back to $F$, and $G_\Theta$ resumes only after both checks pass again.}}
+  \caption{\rev{Overview of SOMA. (1) The original model (teacher) $F$ serves the first $W$ turns, and its replies are cached. (2) A soft prompt on the frozen surrogate (student) $G$ is trained to push $G$ away from these replies, which gives each turn an anchoring score $r_t$. (3) LoRA distills $F$'s replies into $G$ on all warm-start turns, weighted by $r_t$. (4) Once both checks pass, the adapted $G_\Theta$ serves later turns from a compressed context, and a drift monitor rolls back to $F$.}}
   \label{fig:overview}
 \vspace{-3mm}
 \end{figure}
@@ -72,10 +72,10 @@ w_{t,i}(\mathbf P)
 s_{\tau}(v\mid y_{t,i}^{F})
 \Big[-\log\big(1-\Pi_{t,i}(\mathbf P)[v]\big)\Big].
 \end{equation}
-Thus the loss blocks local copying through the neighborhood term and detects broader semantic shadowing through the expectation weight.
+The two terms thus block local copying and semantic shadowing.
 
 \textbf{Anti-degeneration regularizer.}
-Mining can collapse if $G$ piles probability onto a few high-frequency tokens, yielding bland continuations that \rev{suppress $F$'s tokens trivially and make the per-turn scores uninformative}~\citep{li2023repetition,holtzman2019curious,meister2023locally}. We therefore preserve \rev{the entropy of $G$'s predictions over the last $K$ positions of the teacher response}; reusing the logits of the same forward pass, define
+Mining can collapse if $G$ piles probability onto a few high-frequency tokens, yielding bland continuations that \rev{suppress $F$'s tokens trivially and make the per-turn scores uninformative}~\citep{li2023repetition,holtzman2019curious,meister2023locally}. We therefore preserve \rev{the entropy of $G$'s predictions over the last $K$ teacher positions}, reusing the logits of the same pass:
 \[
 H_{\mathrm{tail}}(\mathbf P;t)=
 \frac{1}{K}\sum_{i\in\mathrm{tail}(t,K)}

@@ -39,6 +39,16 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 16 — final citation pass (2026-09-24)
+
+See `../notes/bib_check_2026-09-24.md` ("Final citation pass").
+- ShareGPT is cited correctly (it was ShareGPT4V), and the App. C.1 description is fixed.
+- Citations were regrouped so that each supports its clause (HealthMamba, EEG, content-generation, Toolformer).
+- The models, judges, vLLM and MT-Bench-101 are now cited.
+- To stay within 9 pages: shorter step (4) in the Figure 2 caption, tighter §2.3 and §3.2 sentences, a shorter baselines sentence,
+  and slightly shorter AI use and ethics statements.
+- The references end on p13. The AI use statement now starts at the bottom of p9, right after the conclusion.
+
 ## Round 15 — language polish of all revised text; red marks removed for submission (2026-09-24)
 
 - All 77 red segments were rewritten to sound less machine-generated.

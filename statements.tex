@@ -2,10 +2,10 @@
 % references; none of these count toward the page limit.
 
 \subsection*{AI use statement}
-We used generative AI tools to polish the writing, such as grammar and wording, and to assist with parts of the experimental code, such as evaluation and plotting scripts. The research ideas, methods, theory, experiments, and conclusions are the authors' own; the authors reviewed and verified all AI-assisted text and code and take full responsibility for the content of this paper.
+We used generative AI tools to polish the writing and to help with parts of the evaluation and plotting code. The research itself is the authors' own work, and the authors checked all AI-assisted text and code and take full responsibility for this paper.
 
 \subsection*{Ethics statement}
-This work uses only publicly available benchmarks under their licenses and involves no human subjects or new personal data. Replacing a large model with a smaller surrogate can degrade response quality when a conversation drifts, especially in high-stakes domains; SOMA's acceptance gate and rollback reduce but do not remove this risk, so deployments should keep monitoring, conservative thresholds, and privacy-preserving handling of dialogue history (Appendices~\ref{sec:broader_impact} and~\ref{sec:limitations}).
+This work uses public benchmarks under their licenses and involves no human subjects or new personal data. A smaller surrogate may lower response quality when a conversation drifts, especially in high-stakes domains, so deployments should keep monitoring, conservative thresholds, and privacy-preserving handling of dialogue history (Appendices~\ref{sec:broader_impact} and~\ref{sec:limitations}).
 
 \subsection*{Reproducibility statement}
 An anonymized implementation of SOMA with scripts for the main experiments is available at \url{https://anonymous.4open.science/r/SOMA-4175}. Appendix~\ref{sec:app_dataset} and the following subsections describe the datasets, filtering, baselines, hyperparameters, judge protocol, and software versions, and Appendix~\ref{sec:app_proof} states the assumptions and proofs of all theoretical results.
