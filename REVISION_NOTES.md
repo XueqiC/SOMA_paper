@@ -39,6 +39,13 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 9 — table captions state their takeaway (2026-09-24)
+
+- Tables 1–3 captions each end with one red sentence stating what the table shows (SOMA best on all six datasets, 75.1→93.1 and +0.9 over RouteLLM on LLaMA;
+  +27.1 over the surrogate on Qwen; 77–78% of the surrogate-to-original EM gap recovered on MATH). Notation tables left as is.
+- To keep the main text at exactly 9 pages: shorter §4 opening, last clause of §4.2 dropped (RQ3 covers it), Proposition 4.1 ends at the certificate,
+  §3.3 "compressed context" clause dropped (described in the next paragraph).
+
 ## Round 8 — theory corrected and narrative unified with the implementation (2026-09-24)
 
 Details and verification: `../notes/theory_check_2026-09-24.md` (in the soma project repo).

@@ -108,6 +108,6 @@ We freeze the base weights of $G$, attach LoRA~\citep{hu2022lora} to attention a
 \qquad
 \omega_t\propto r_t .
 \end{equation}
-The soft prompts are then discarded, so the online serving path uses only the LoRA-adapted surrogate together with a compressed context.
+The soft prompts are then discarded, and serving uses only the LoRA-adapted surrogate.
 
 Before switching, SOMA verifies two conditions: the adapted surrogate must reproduce the original model's responses on a small acceptance batch, and the current query must remain close to the warm-start dialogue centroid. Once accepted, \(G\) serves later turns from a compressed input \(\widetilde S_t\) that keeps a fixed-budget summary of earlier content together with the most recent \(K\) turns, so the full history is never re-processed. During surrogate serving, SOMA keeps monitoring semantic drift. If recent queries move away from the learned local state, it rolls back to \(F\), refreshes the summary and the centroid, and returns to \(G\) only after the acceptance gate passes again. \rev{Because the drift statistic is a continuous distance to the warm-start centroid, gradual drift raises it progressively and triggers rollback once the margin is exhausted, rather than only on abrupt shifts.}

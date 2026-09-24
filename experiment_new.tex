@@ -17,7 +17,7 @@ We evaluate SOMA through five questions. \textbf{RQ1}: Can a small surrogate pre
 
 \begin{table}[!t]
 \centering
-\caption{Response similarity to the original model on the LLaMA family. Higher is better.}
+\caption{Response similarity to the original model on the LLaMA family. Higher is better. \rev{SOMA is the closest to the original model on all six datasets, raising the average from 75.1 for the unadapted surrogate to 93.1 and exceeding the strongest baseline, RouteLLM, by 0.9 points.}}
 \label{tab:llama-pct}
 \resizebox{0.96\textwidth}{!}{
 \begin{tabular}{lccccccc}
@@ -38,7 +38,7 @@ RouteLLM       & 95.3 $\pm$ 1.44 & 92.5 $\pm$ 1.07 & 91.0 $\pm$ 1.86 & 91.4 $\pm
 
 \begin{table}[!t]
 \centering
-\caption{Response similarity to the original model on the Qwen family. Higher is better.}
+\caption{Response similarity to the original model on the Qwen family. Higher is better. \rev{SOMA again leads on all six datasets; similarities are lower than for LLaMA because the size gap is wider, and SOMA's average gain over the unadapted surrogate grows to 27.1 points.}}
 \label{tab:qwen-pct}
 \resizebox{0.96\textwidth}{!}{
 \begin{tabular}{lccccccc}
@@ -59,7 +59,7 @@ RouteLLM        & 79.6 $\pm$ 1.04 & 81.9 $\pm$ 1.36 & 75.1 $\pm$ 2.91 & 72.8 $\p
 
 \begin{table}[!t]
 \centering
-\caption{MATH exact-match accuracy. SOMA improves task-grounded quality over baselines.}
+\caption{MATH exact-match accuracy. \rev{SOMA stays below the original model but recovers 77--78\% of the gap between the surrogate and the original model and outperforms every other baseline.}}
 \label{tab:math-em}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lcccccc}
