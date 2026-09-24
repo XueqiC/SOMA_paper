@@ -111,32 +111,6 @@ SOMA reduces post-switch cost by serving the adapted surrogate with compressed c
 
 \paragraph{\textbf{RQ4: Component contributions.}}
 
-\begin{figure}[!t]
-  \centering
-  \begin{subfigure}[t]{0.32\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figure/ablation_llama.pdf}
-    \caption{LLaMA ablation.}
-    \label{fig:llama_ablation}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.32\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figure/ablation_qwen.pdf}
-    \caption{Qwen ablation.}
-    \label{fig:qwen_ablation}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.32\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{figure/mt_radar.pdf}
-    \caption{Ability profile.}
-    \label{fig:mt_radar}
-  \end{subfigure}
-  \vspace{-2mm}
-  \caption{Component and capability analysis. Anti-degeneration regularization and expectation-weighted divergence both improve mining on LLaMA (a) and Qwen (b). (c) MT-Bench-101 ability profile of \textbf{\textcolor{radarsur}{Surrogate}}, \textbf{\textcolor{radarhp}{History-Prefix}}, \textbf{\textcolor{radarft}{History-FT}}, and \textbf{\textcolor{radarsoma}{SOMA}}.}
-  \label{fig:token_ablation}
-\vspace{-3mm}
-\end{figure}
-
 We first ablate SOMA on the LLaMA family to identify which components drive the gains. Figure~\ref{fig:llama_ablation} shows that full SOMA performs best across all datasets. Removing the anti-degeneration loss consistently reduces performance, showing that entropy regularization keeps prompt mining stable and prevents collapsed, low-diversity soft prompts. Removing both the expectation-weighted term and the anti-degeneration loss leads to a larger drop, especially on harder datasets. This result shows that SOMA benefits from both stable prompt search and disagreement-aware mining. \rev{Figure~\ref{fig:qwen_ablation} repeats the ablation on the Qwen family with the same ordering, so the conclusion does not depend on the backbone. Figure~\ref{fig:mt_radar} breaks MT-Bench-101 down by ability for the LLaMA family: SOMA improves most on reasoning and questioning, where the original model has the largest advantage over the surrogate, and also improves memory, understanding, rephrasing, and interference handling.}
 
 % \begin{figure}[t]
@@ -147,6 +121,32 @@ We first ablate SOMA on the LLaMA family to identify which components drive the 
 % \end{figure}
 
 \paragraph{\textbf{RQ5: Reliability and fallback.}}
+
+\begin{figure}[!t]
+  \centering
+  \begin{subfigure}[t]{0.37\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/ablation_llama.pdf}
+    \caption{LLaMA ablation.}
+    \label{fig:llama_ablation}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.37\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/ablation_qwen.pdf}
+    \caption{Qwen ablation.}
+    \label{fig:qwen_ablation}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.225\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/mt_radar.pdf}
+    \caption{Ability profile.}
+    \label{fig:mt_radar}
+  \end{subfigure}
+  \vspace{-2mm}
+  \caption{Component and capability analysis. Anti-degeneration regularization and expectation-weighted divergence both improve mining on LLaMA (a) and Qwen (b). (c) MT-Bench-101 ability profile of \textbf{\textcolor{radarsur}{Surrogate}}, \textbf{\textcolor{radarhp}{History-Prefix}}, \textbf{\textcolor{radarft}{History-FT}}, and \textbf{\textcolor{radarsoma}{SOMA}}.}
+  \label{fig:token_ablation}
+\vspace{-3mm}
+\end{figure}
 
 \begin{figure}[!t]
   \centering
