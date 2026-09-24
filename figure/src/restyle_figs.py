@@ -7,6 +7,8 @@ styling (fonts, colours, sizes, labels) changes.
   figure/llama_through.pdf      Fig. 3a  (cell 47)
   figure/qwen_through.pdf       Fig. 3b  (cell 47)
   figure/overall_avg_token.pdf  appendix (cell 53)
+  figure/llama_token_costs.pdf, qwen_token_costs.pdf  appendix (cell 47, the typed per-dataset
+      token tables; bar-height ratios verified against the previous PDFs to within 0.3%)
 """
 import os
 import numpy as np
@@ -91,17 +93,56 @@ tm = ["RouteLLM", "Original", "Surrogate", "History-Prefix", "History-FT", "LLML
 llama_means = np.array([1.55, 1.45, 1.10, 1.21, 1.08, 0.97, 0.90]) * 1e4
 qwen_means = np.array([1.83, 1.72, 1.57, 1.46, 1.41, 1.33, 1.23]) * 1e4
 fig, ax = plt.subplots(figsize=(3.3, 1.9))
-x = np.arange(len(tm)); w = 0.34
-ax.bar(x - w / 2, llama_means, width=w, color=ps.SLATE_D, label="LLaMA", zorder=2)
-ax.bar(x + w / 2, qwen_means, width=w, color=ps.SLATE_L, label="Qwen", zorder=2)
+x = np.arange(len(tm)); w = 0.36
+from matplotlib.patches import Patch
+for k, m in enumerate(tm):
+    c = ps.METHOD_COLOR[m]; hatch = "////" if m == "SOMA" else None
+    ax.bar(x[k] - w / 2, llama_means[k], width=w, color=c, edgecolor="#1A1A1A", lw=0.35, hatch=hatch, zorder=2)
+    ax.bar(x[k] + w / 2, qwen_means[k], width=w, color=c, alpha=0.45, edgecolor="#1A1A1A", lw=0.35,
+           hatch=hatch, zorder=2)
 ax.set_yscale("log"); ax.set_ylim(8.5e3, 2.1e4)
 ax.yaxis.set_major_locator(FixedLocator([1e4, 1.5e4, 2e4]))
 ax.set_yticklabels(["1.0", "1.5", "2.0"]); ax.yaxis.set_minor_locator(NullLocator())
-ax.set_ylabel("Avg. tokens per dialogue (×$10^4$)", labelpad=1.5)
-ax.set_xticks(x); ax.set_xticklabels(tm, rotation=22, ha="right", rotation_mode="anchor", fontsize=7.2)
+ax.set_ylabel("Tokens per dialogue (×$10^4$)", labelpad=1.5)
+ax.set_xticks(x); ax.set_xticklabels(tm, rotation=30, ha="right", rotation_mode="anchor", fontsize=6.8)
 ax.tick_params(axis="x", length=0)
 ps.ygrid(ax)
-ax.legend(loc="upper right", handlelength=1.2)
+ax.legend(handles=[Patch(facecolor="#8A8A8A", edgecolor="#1A1A1A", lw=0.35, label="LLaMA (left)"),
+                   Patch(facecolor="#8A8A8A", alpha=0.45, edgecolor="#1A1A1A", lw=0.35, label="Qwen (right)")],
+          loc="upper right", handlelength=1.2)
 fig.tight_layout(pad=0.2)
 save(fig, "overall_avg_token")
-print("wrote long_tail, llama_through, qwen_through, overall_avg_token")
+# ---------------- appendix: average tokens per dialogue by dataset (cell 47 typed tables) ----------------
+tok = {
+    "llama_token_costs": np.array([  # rows = datasets, cols = Original, Surrogate, History-Prefix, History-FT, SOMA
+        [84330.12, 56437.70, 63410.80, 55308.95, 45993.46],
+        [4478.53, 5104.60, 4979.39, 5002.51, 4128.47],
+        [1088.79, 1395.35, 1304.17, 1367.44, 1125.17],
+        [1026.90, 1230.91, 1140.19, 1206.29, 992.00],
+        [1131.43, 1006.79, 1025.49, 986.65, 816.75],
+        [838.62, 951.74, 895.38, 932.71, 767.78]]),
+    "qwen_token_costs": np.array([
+        [114352.33, 76725.01, 86131.84, 75190.51, 62523.53],
+        [8537.36, 5412.12, 6037.17, 5303.88, 4415.07],
+        [2075.56, 1666.98, 1740.52, 1633.64, 1354.34],
+        [1786.58, 1343.33, 1423.12, 1316.46, 1092.53],
+        [4448.57, 4504.64, 4496.23, 4414.55, 3648.20],
+        [2093.15, 1644.94, 1725.62, 1612.04, 1336.88]]),
+}
+for name, data in tok.items():
+    fig, ax = plt.subplots(figsize=(2.65, 1.65))
+    x = np.arange(len(datasets)); w = 0.16
+    for j, m in enumerate(methods):
+        ax.bar(x + (j - 2) * w, data[:, j], width=w, color=ps.METHOD_COLOR[m], edgecolor="#1A1A1A", lw=0.35,
+               hatch="////" if m == "SOMA" else None, label=m, zorder=2)
+    ax.set_yscale("log"); ax.set_ylim(400, 6e5)
+    ax.set_xticks(x); ax.set_xticklabels(datasets, rotation=30, ha="right", rotation_mode="anchor", fontsize=6.8)
+    ax.tick_params(axis="x", length=0)
+    ax.set_ylabel("Tokens per dialogue", labelpad=1.5)
+    ax.yaxis.set_minor_formatter(NullFormatter())
+    ps.ygrid(ax)
+    ax.legend(loc="upper right", ncol=3, fontsize=6.3, handlelength=1.1, handletextpad=0.3, columnspacing=0.6,
+              borderaxespad=0.05, labelspacing=0.2)
+    fig.tight_layout(pad=0.2)
+    save(fig, name)
+print("wrote long_tail, llama_through, qwen_through, overall_avg_token, llama/qwen_token_costs")
