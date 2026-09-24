@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Compact re-render of Figure 5(c), the MT-Bench-101 ability radar, sized to share its row height
-with the two ablation panels. Values, series, labels and line colours are exactly those of
+with the two ablation panels. Values, series and labels are exactly those of
 ~/Dropbox/intern/test.ipynb cell 49 (including its History-Prefix series); the plotted vertices
-were checked against the previous figure/mt_radar.pdf and agree to 0.01. The legend is omitted
-because the Figure 5 caption carries a coloured key.
+were checked against the previous figure/mt_radar.pdf and agree to 0.01. Colours and vertex markers follow the shared method scheme in paper_style.py. The legend is
+omitted because the Figure 5 caption carries a key with the same colours and marker glyphs.
 """
 import os
 import numpy as np
@@ -23,8 +23,9 @@ mid = (sur + ou) / 2.0
 between = np.where(ou > sur, np.clip(mid, sur + eps, ou - eps), np.minimum(ou - eps, sur + eps))
 
 # series as plotted in cell 49: (values, label, colour, line width, fill alpha)
-series = [(sur, "Surrogate", "#e07a5f", 0.9, 0.20), (between, "History-Prefix", "#7e57c2", 0.9, 0.22),
-          (ou, "History-FT", "#3d9a7a", 1.0, 0.25), (gt, "SOMA", "#457b9d", 1.0, 0.18)]
+C, MK = ps.METHOD_COLOR, ps.METHOD_MARKER                  # shared method colours and markers
+series = [(sur, "Surrogate", C["Surrogate"], 0.9, 0.16), (between, "History-Prefix", C["History-Prefix"], 0.9, 0.16),
+          (ou, "History-FT", C["History-FT"], 1.0, 0.14), (gt, "SOMA", C["SOMA"], 1.1, 0.16)]
 
 N = len(abilities)
 angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist(); angles += angles[:1]
@@ -40,7 +41,8 @@ ax.set_ylim(4, 10); ax.set_yticks([6, 8, 10]); ax.set_yticklabels([])
 ax.set_xticks(angles[:-1]); ax.set_xticklabels([])
 ax.grid(color="#D9D9D9", lw=0.4); ax.spines["polar"].set_color("#8C8C8C"); ax.spines["polar"].set_linewidth(0.5)
 for vals, lab, col, lw, a in series:
-    ax.plot(angles, close(vals), color=col, lw=lw, label=lab, zorder=3)
+    ax.plot(angles, close(vals), color=col, lw=lw, label=lab, zorder=3,
+            marker=MK[lab], ms=1.9, markeredgewidth=0, markevery=list(range(N)))
     ax.fill(angles, close(vals), color=col, alpha=a, lw=0, zorder=2)
 halo = [pe.withStroke(linewidth=1.6, foreground="white")]
 for r in (6, 8, 10):                                     # radial scale along the gap between two spokes

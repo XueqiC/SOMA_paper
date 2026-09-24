@@ -33,7 +33,7 @@ final_results = {
     "Craigslist": dict(zip([1, 4, 7, 10, 13, 16, 19, 22], [6.72, 19.61, 19.61, 6.9, 3.86, 2.46, 2, 2])),
     "Multi-Character": dict(zip([1, 4, 7, 10, 13, 16, 19], [7.3, 19.96, 19.076, 7.16, 4.71, 4, 3])),
 }
-colors = {"ShareGPT": ps.NAVY, "ReMeDi": ps.RED, "Craigslist": ps.TEAL, "Multi-Character": ps.OCHRE}
+colors = {n: ps.DATASET_COLOR[n] for n in final_results}          # shared dataset palette
 group_turns = list(range(1, 41, 3))
 bar_w = 0.6
 fig, ax = plt.subplots(figsize=(2.32, 1.6))
@@ -42,7 +42,7 @@ for i, name in enumerate(final_results):
     y = [series.get(t, np.nan) for t in group_turns]
     xo = np.array(group_turns) + (i - 1.5) * bar_w
     ax.bar(xo, y, width=bar_w, color=colors[name], alpha=0.45, lw=0, zorder=2)
-    ax.plot(xo, y, color=colors[name], lw=1.1, marker="o", ms=2.2, zorder=3,
+    ax.plot(xo, y, color=colors[name], lw=1.1, marker=ps.DATASET_MARKER[name], ms=2.4, zorder=3,
             ls="-" if name in ("ShareGPT", "ReMeDi") else (0, (3, 1.5)), label=name)
 ax.set_yscale("log")
 ax.set_xlim(-1, 37)
@@ -76,7 +76,7 @@ for name, data, ylim in (("llama_through", llama, (10, 400)), ("qwen_through", q
     x = np.arange(len(datasets)); w = 0.16
     for j, m in enumerate(methods):
         ax.bar(x + (j - 2) * w, data[:, j], width=w, color=ps.METHOD_COLOR[m], edgecolor="#1A1A1A", lw=0.35,
-               hatch="////" if m == "SOMA" else None, label=m, zorder=2)
+               hatch=ps.SOMA_HATCH if m == "SOMA" else None, label=m, zorder=2)
     ax.set_yscale("log"); ax.set_ylim(*ylim)
     ax.set_xticks(x); ax.set_xticklabels(datasets, rotation=30, ha="right", rotation_mode="anchor", fontsize=6.8)
     ax.tick_params(axis="x", length=0)
@@ -134,7 +134,7 @@ for name, data in tok.items():
     x = np.arange(len(datasets)); w = 0.16
     for j, m in enumerate(methods):
         ax.bar(x + (j - 2) * w, data[:, j], width=w, color=ps.METHOD_COLOR[m], edgecolor="#1A1A1A", lw=0.35,
-               hatch="////" if m == "SOMA" else None, label=m, zorder=2)
+               hatch=ps.SOMA_HATCH if m == "SOMA" else None, label=m, zorder=2)
     ax.set_yscale("log"); ax.set_ylim(400, 6e5)
     ax.set_xticks(x); ax.set_xticklabels(datasets, rotation=30, ha="right", rotation_mode="anchor", fontsize=6.8)
     ax.tick_params(axis="x", length=0)

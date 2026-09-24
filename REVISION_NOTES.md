@@ -39,6 +39,17 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 11 — one colour and one marker per method and per dataset, in every figure (2026-09-24)
+
+Scheme in `figure/src/paper_style.py`:
+- Methods: Original navy ■, Surrogate ochre ▲, History-Prefix light gray ▼, History-FT dark gray ◆, LLMLingua-2 lavender, RouteLLM sand,
+  SOMA teal ● (bars: teal + hatch). SOMA ablation variants are teal tints. Degraded conditions (no history, no rollback) are red ▼.
+- Datasets: ShareGPT violet ●, ReMeDi green ■, Craigslist berry ▲, Multi-Char azure ◆, MATH mustard ▼, MT-Bench sienna ✚
+  (palette checked with the dataviz validator; it avoids the method hues).
+Changed figures (plotted values verified identical against the previous PDFs): Fig. 1, Fig. 3 (a–c), Fig. 4, Fig. 5 (a–c; caption key now uses
+the marker glyphs), Fig. 6 (a, b), App. token-cost figure, App. variance figure. Figures 6 and the variance plot were re-rendered from the
+notebook cells with fixed seeds (`notes/fig_cell5{0,1,4}_regen.py`); only colours and markers changed.
+
 ## Round 10 — references end on page 13 (2026-09-24)
 
 - Dropped the GPT-2 citation (radford2019language) from the "GPT series" group in the introduction; GPT-3 and GPT-4 remain. The last

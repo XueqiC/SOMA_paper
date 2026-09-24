@@ -14,7 +14,10 @@ from matplotlib.ticker import MultipleLocator
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..")
 
-NAVY, OCHRE, RED, GRAY = "#3A62A0", "#D08A45", "#B5454A", "#8C8C8C"
+import paper_style as ps   # shared method colours/markers: Original navy square, SOMA teal circle, degraded red down-triangle
+NAVY, OCHRE, RED, GRAY = ps.METHOD_COLOR["Original"], ps.METHOD_COLOR["Surrogate"], ps.DEGRADED, "#8C8C8C"
+TEAL, TEAL_D = ps.METHOD_COLOR["SOMA"], ps.TEAL_D
+MK_ORIG, MK_SOMA, MK_DEG = ps.METHOD_MARKER["Original"], ps.METHOD_MARKER["SOMA"], ps.DEGRADED_MARKER
 INK, INK2, GRID = "#000000", "#1A1A1A", "#E3E3E3"
 NAVY_D, OCHRE_D, RED_D = "#2B4C80", "#9C5A22", "#96303A"   # darker shades for text labels
 plt.rcParams.update({
@@ -40,11 +43,11 @@ tokens = [-1.2, 8.5, 23.8, 37.2]
 x = list(range(len(buckets)))
 e.axhline(0, color=INK2, lw=0.7, ls=(0, (3, 2)), zorder=1)
 e.text(3.3, 0.9, "break-even", fontsize=6.8, color=INK, ha="right", va="bottom")
-e.plot(x, tokens, color=OCHRE, marker="s", ms=3.2, lw=1.3, label="Tokens", zorder=3)
-e.plot(x, latency, color=NAVY, marker="o", ms=3.4, lw=1.3, label="Latency", zorder=3)
+e.plot(x, tokens, color=TEAL, marker=MK_SOMA, ms=3.4, lw=1.3, ls=(0, (3.2, 1.6)), mfc="white", mew=1.1, label="Tokens", zorder=3)
+e.plot(x, latency, color=TEAL, marker=MK_SOMA, ms=3.4, lw=1.3, label="Latency", zorder=3)
 for xi, t, l in zip(x, tokens, latency):
-    e.text(xi, t + 2.3, fmt(t), ha="center", va="bottom", fontsize=6.8, color=OCHRE_D, fontweight="bold", bbox=halo, zorder=5)
-    e.text(xi, l - 2.5, fmt(l), ha="center", va="top", fontsize=6.8, color=NAVY_D, fontweight="bold", bbox=halo, zorder=5)
+    e.text(xi, t + 2.3, fmt(t), ha="center", va="bottom", fontsize=6.8, color=TEAL_D, fontweight="bold", bbox=halo, zorder=5)
+    e.text(xi, l - 2.5, fmt(l), ha="center", va="top", fontsize=6.8, color=TEAL_D, fontweight="bold", bbox=halo, zorder=5)
 e.set_xticks(x); e.set_xticklabels(buckets); e.set_xlim(-0.4, 3.4)
 e.set_xlabel("Session length (turns)", labelpad=1.5); e.set_ylabel("Saving vs. Original (%)", labelpad=1.5)
 e.set_ylim(-14, 48); e.yaxis.set_major_locator(MultipleLocator(10))
@@ -58,8 +61,8 @@ full, full_sd = [46.92, 47.18, 46.75], [0.58, 0.51, 0.49]
 none, none_sd = [43.78, 34.92, 24.88], [0.66, 0.76, 0.86]
 xs = [0, 1, 2]
 a.fill_between(xs, none, full, color=RED, alpha=0.08, lw=0)
-a.errorbar(xs, full, yerr=full_sd, color=NAVY, marker="o", ms=3.4, lw=1.3, capsize=2, label="Full history")
-a.errorbar(xs, none, yerr=none_sd, color=RED, marker="s", ms=3.1, lw=1.3, capsize=2, label="No history")
+a.errorbar(xs, full, yerr=full_sd, color=NAVY, marker=MK_ORIG, ms=3.2, lw=1.3, capsize=2, label="Full history")
+a.errorbar(xs, none, yerr=none_sd, color=RED, marker=MK_DEG, ms=3.6, lw=1.3, capsize=2, label="No history")
 for xi, f, n in zip(xs, full, none):
     a.annotate("", xy=(xi, n + 1.1), xytext=(xi, f - 1.1),
                arrowprops=dict(arrowstyle="->", color=INK, lw=0.8, shrinkA=0, shrinkB=0))
@@ -81,11 +84,11 @@ for r, (name, c, csd, n, nsd, s_, ssd, det, frb) in enumerate(data):
     b.plot([n, c], [y, y], color=GRID, lw=2.2, zorder=1, solid_capstyle="round")
     b.annotate("", xy=(s_ - 0.35, y), xytext=(n + 0.35, y),
                arrowprops=dict(arrowstyle="->", color=INK, lw=0.8, shrinkA=0, shrinkB=0), zorder=2)
-    b.errorbar(n, y, xerr=nsd, fmt="s", color=RED, ms=3.3, capsize=1.6, lw=0.8, zorder=3,
+    b.errorbar(n, y, xerr=nsd, fmt=MK_DEG, color=RED, ms=3.8, capsize=1.6, lw=0.8, zorder=3,
                label="No rollback" if r == 0 else None)
-    b.errorbar(s_, y, xerr=ssd, fmt="o", color=NAVY, ms=3.9, capsize=1.6, lw=0.8, zorder=4,
+    b.errorbar(s_, y, xerr=ssd, fmt=MK_SOMA, color=TEAL, ms=3.9, capsize=1.6, lw=0.8, zorder=4,
                label="SOMA" if r == 0 else None)
-    b.errorbar(c, y, xerr=csd, fmt="o", mfc="white", mec=GRAY, color=GRAY, ms=3.7, capsize=1.6, lw=0.8,
+    b.errorbar(c, y, xerr=csd, fmt=MK_SOMA, mfc="white", mec=TEAL, mew=1.1, color=TEAL, ms=3.7, capsize=1.6, lw=0.8,
                zorder=3, label="No shift" if r == 0 else None)
     b.text(104.2, y, f"{det:.1f} / {frb:.1f}", fontsize=6.9, color=INK, va="center", ha="center")
     b.text(79.4, y + 0.3, name, fontsize=7.4, color=INK, va="bottom", ha="left")
