@@ -47,6 +47,7 @@ asked not to force it). Any further edit needs a recompile and a page check.
 - **App. F.1**: the average-tokens figure is removed; the paragraph cites only the per-dataset token figure
   (now Figure 9). "for both model families" and "unadapted surrogate" added to keep the last line long.
 - **App. C.2**: hardware now "Nvidia A6000 GPUs" (red), consistent with C.6.
+- **Figure 6(b)**: axis label "Precentage" → "Percentage" by editing only the label text in the PDF (plot not re-run; all drawing paths identical).
 - Main text unchanged: still exactly 9 pages; no new short last lines.
 
 ## Round 6 — even float layout, main text fills 9 pages (2026-09-24)
