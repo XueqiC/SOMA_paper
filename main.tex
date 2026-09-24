@@ -8,6 +8,7 @@
 \usepackage[T1]{fontenc}    % use 8-bit T1 fonts
 \usepackage{hyperref}       % hyperlinks
 \usepackage{url}            % simple URL typesetting
+\Urlmuskip=0mu plus 1mu\relax % let long URLs stretch at their break points instead of overrunning the margin
 \usepackage{booktabs}       % professional-quality tables
 \usepackage{amsfonts}       % blackboard math symbols
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
@@ -73,7 +74,8 @@ Large Language Models (LLMs) are increasingly deployed in multi-turn dialogue se
 % count toward the 9-page limit.
 \input{statements}
 
-\bibliography{ref}
+{\setlength{\emergencystretch}{2em}% avoid long URLs overrunning the margin
+\bibliography{ref}}
 \bibliographystyle{iclr2027_conference}
 
 \appendix

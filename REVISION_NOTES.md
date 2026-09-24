@@ -39,6 +39,14 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 12 — bibliography corrected; references end on page 13 again (2026-09-24)
+
+- 47 of 58 cited entries corrected against publisher records (details: `../notes/bib_check_2026-09-24.md`).
+- The two blog citations for "serving systems resend the full history" (Tribe AI, whose live URL is dead, and a Medium post
+  whose URL ran past the margin) were replaced by the already-cited CachedAttention (USENIX ATC'24) and Jeong & Ahn (ASPLOS'25).
+- AI use, ethics and reproducibility statements shortened and kept vaguer, in the ICLR-prescribed position before the references.
+- `\Urlmuskip` and a local `\emergencystretch` keep long URLs inside the margin. The references end on p13; the PDF is 24 pages.
+
 ## Round 11 — one colour and one marker per method and per dataset, in every figure (2026-09-24)
 
 Scheme in `figure/src/paper_style.py`:
