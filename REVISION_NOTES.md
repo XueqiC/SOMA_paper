@@ -39,6 +39,17 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 6 — even float layout, main text fills 9 pages (2026-09-24)
+
+- Experiment floats re-anchored so figure numbers follow the reading order and each results
+  page carries a similar share of floats: page 7 Tables 1–3; page 8 Figure 3 (operating range
+  and reliability) and Figure 4 (throughput); page 9 Figure 5 (ablation) and Figure 6 (warm-start).
+- Section 2: the long-tail paragraph now notes that ShareGPT and ReMeDi peak at the opening turn
+  while Craigslist and Multi-Character peak shortly after it (read off Figure 1); §2.3 states that
+  the goal is a local rather than global match. A redundant clause was removed.
+- Conclusion: two sentences added (red) on applicability to API-served F given access to G's
+  embedding layer, and on when SOMA is most useful. The main text now ends at the bottom of page 9.
+
 ## Round 5 — figure styling pass (2026-09-24)
 
 - Shared style module `figure/src/paper_style.py` (Times New Roman bold, black text, palette of
