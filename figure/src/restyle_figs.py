@@ -72,7 +72,7 @@ qwen = np.array([
     [80.622339, 265.328229, 238.795406, 259.021664, 252.061818],
     [69.564893, 258.066661, 232.259995, 252.905328, 245.163328]])
 for name, data, ylim in (("llama_through", llama, (10, 400)), ("qwen_through", qwen, (40, 1500))):
-    fig, ax = plt.subplots(figsize=(2.45, 1.6))
+    fig, ax = plt.subplots(figsize=(2.7, 1.6))
     x = np.arange(len(datasets)); w = 0.16
     for j, m in enumerate(methods):
         ax.bar(x + (j - 2) * w, data[:, j], width=w, color=ps.METHOD_COLOR[m], edgecolor="#1A1A1A", lw=0.35,
