@@ -31,9 +31,9 @@ final_results = {
     "ReMeDi": dict(zip([1, 4, 7, 10, 13, 16, 19, 22, 25, 28],
                        [99.67, 11.31, 5.22, 3.11, 1.98, 1.51, 1.48, 1.54, 1.51, 1.54])),
     "Craigslist": dict(zip([1, 4, 7, 10, 13, 16, 19, 22], [6.72, 19.61, 19.61, 6.9, 3.86, 2.46, 2, 2])),
-    "Multi-character": dict(zip([1, 4, 7, 10, 13, 16, 19], [7.3, 19.96, 19.076, 7.16, 4.71, 4, 3])),
+    "Multi-Character": dict(zip([1, 4, 7, 10, 13, 16, 19], [7.3, 19.96, 19.076, 7.16, 4.71, 4, 3])),
 }
-colors = {"ShareGPT": ps.NAVY, "ReMeDi": ps.RED, "Craigslist": ps.TEAL, "Multi-character": ps.OCHRE}
+colors = {"ShareGPT": ps.NAVY, "ReMeDi": ps.RED, "Craigslist": ps.TEAL, "Multi-Character": ps.OCHRE}
 group_turns = list(range(1, 41, 3))
 bar_w = 0.6
 fig, ax = plt.subplots(figsize=(2.32, 1.6))
