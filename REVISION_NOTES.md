@@ -39,6 +39,18 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 8 — theory corrected and narrative unified with the implementation (2026-09-24)
+
+Details and verification: `../notes/theory_check_2026-09-24.md` (in the soma project repo).
+- Removed Thm 3.2 (Directional Recovery); its proof was wrong (min vs. max, dimension mismatch, invalid linear-term cancellation).
+- Problem 2.1 made computable (output-space gap over later states via a shared encoder) + the measurable prediction of the local view.
+- §4.1: m-dependent effective sample size (Janson 2004); correct Hoeffding lemma; one acceptance proposition (absolute gap, held-out batch,
+  locality premise) in both main text and App. E; main text states the reuse of warm-start turns and that γ_B (0.25) exceeds the thresholds.
+- Coverage bound corrected (exact cap probability ½·I, valid lower bound, fixed budget proof); §4.3 moved to App. E, scoped to initial directions.
+- r_t renamed and re-explained as an anchoring score (agreement surviving the adversarial probe) everywhere, including Figure 2 labels.
+- §3.1: F never receives V(P); targets are the warm-start responses. Notation table updated.
+- Main text still exactly 9 pages; floats unchanged (p7 Tables 1–3, p8 Figures 3–4, p9 Figures 5–6); no short last lines.
+
 ## Round 7 — author decisions on the consistency items (2026-09-24)
 
 - **Figure 5(b)**: Qwen ReMeDi bars were 5 points too high (typo). Now SOMA 83.2 (= Table 2), w/o ADL 82.1,

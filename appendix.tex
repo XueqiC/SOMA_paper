@@ -85,19 +85,19 @@ Symbol & Meaning \\
 $\mathcal{D}_k$ & Dialogue prefix $\{(q_t,a_t)\}_{t=1}^k$ \\
 $q_{\le t}$ & Full history up to turn $t$ \\
 $F,\,G$ & Original (large) model; surrogate (small) model \\
-$\mathbf{h}_t=f_M(q_{\le t})$ & Hidden state at turn $t$ for model $M$ \\
-$\mathcal{H}_k$ & $\{\mathbf{h}_1,\ldots,\mathbf{h}_k\}$, first-$k$ hidden states \\
-$\mathcal{M}_k^M$ & Local response manifold induced by $\mathcal{D}_k$ under $M$ \\
+$S_t$ & \rev{Dialogue state $\mathcal D_{t-1}\oplus q_t$ at turn $t$} \\
+$\mathcal{Q}_k$ & \rev{Distribution of later dialogue states after $\mathcal{D}_k$ (local region)} \\
 $\mathcal{V}$, $E$ & $G$’s vocabulary; embedding matrix $E\in\mathbb{R}^{d\times|\mathcal{V}|}$ \\
 $\Pi_t$ & Next-token distribution of $G$ at turn $t$; entry $\Pi_t[v]$ \\
 $\mathbf{e}_v$ & Embedding of token $v$ (column of $E$) \\
 $\mathbf{P}\in\mathbb{R}^{L\times d}$ & Soft prompt (row-wise prompt tokens in embedding space) \\
-$\mathsf{V}(\mathbf{P})$ & Verbalization for prompt $\mathbf{P}$\\
 $N_k(u)$ & $k$ nearest neighbors of token $u$ by cosine in $E$ \\
 $\overline{\mathbf{e}}_{t,i}$ & Expected embedding $\overline{\mathbf{e}}_{t,i}=E^\top \Pi_{t,i}$ at position $i$ \\
 $w_{t,i}$ & Expectation-weighted factor for semantic divergence loss \\
-$|B|_{\mathrm{eff}}$ & Effective batch size (accounts for dependence) \\
-$\Delta$ & Empirical improvement (old–new) on a post-warm-start batch \\
+$\mathsf{Gap}_G(S)$ & \rev{Response discrepancy $1-\cos(\phi(a^G(S)),\phi(a^F(S)))\in[0,1]$} \\
+$r_t$ & \rev{Anchoring score of warm-start turn $t$ (residual mining loss)} \\
+$|B|_{\mathrm{eff}}$ & Effective batch size \rev{$|B|/(m+1)$ under $m$-dependence} \\
+$\widehat{\mathsf G}_B$ & \rev{Average gap of the adapted surrogate on a held-out acceptance batch} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -111,7 +111,7 @@ $\Delta$ & Empirical improvement (old–new) on a post-warm-start batch \\
 
 
 \textbf{Local Manifold Approximation.}  
-\rev{We use ``local manifold approximation'' in the informal sense of classical local methods such as LLE~\citep{roweis2000nonlinear}, LTSA~\citep{zhang2007linear}, and Laplacian eigenmaps~\citep{belkin2003laplacian}: a dialogue prefix induces a local region of the model's response behavior, and SOMA approximates the large model only within that region rather than globally. SOMA does not compute intrinsic dimensions, tangent spaces, or geodesics. The local, first-order view enters the method only through the Jacobian and Fisher structure in Theorem~\ref{thm:dir_recovery} and the local quadratic assumption in Section~\ref{sec:theory}, and we treat it as a modeling assumption whose usefulness we test empirically in Section~\ref{sec:exp}.}
+\rev{We use ``local manifold approximation'' in the informal sense of classical local methods such as LLE~\citep{roweis2000nonlinear}, LTSA~\citep{zhang2007linear}, and Laplacian eigenmaps~\citep{belkin2003laplacian}: a dialogue prefix induces a local region of dialogue states, and SOMA approximates the large model only within that region rather than globally. SOMA does not compute intrinsic dimensions, tangent spaces, or geodesics, and it does not match the hidden spaces of the two models. The local view enters the method only through the output-space discrepancy of Problem~\ref{prob:lma}, which compares responses through a shared sentence encoder, and through the locality gate. Its measurable prediction, that warm-start supervision transfers to later turns until the topic shifts, is tested empirically in Section~\ref{sec:exp} and Appendix~\ref{sec:app_switch}.}
 
 \section{Reproducibility}
 In this section, we introduce the details of the experiments in this
@@ -127,7 +127,7 @@ In this section, we briefly present the real-world datasets used in this paper, 
 
 \subsection{Implementation of SOMA}\label{sec:app_implementation}
 
-We implement SOMA based on PyTorch with HuggingFace Transformers, serve inference via vLLM with FlashAttention~\citep{shah2024flashattention}, and run on \rev{Nvidia A6000 GPUs}. Soft–prompt tuning optimizes only the prompt tensor $\mathbf{P}\!\in\!\mathbb{R}^{L\times d}$ on the surrogate $G$ using AdamW, cosine decay, gradient clipping, and a KV cache for a single forward pass per turn. The objective combines unlikelihood on a semantic neighborhood, an expectation–weighted penalty using the truncated top–$m$ expectation, and a light anti-degeneration entropy term. The mined prompt–response pairs are then used to adapt $G$ with LoRA on \rev{attention and MLP} projections (rank $r$), keeping the base weights frozen; early stopping is triggered by validation divergence. At inference, a cosine closeness gate with a lightweight sentence encoder decides a one–time switch to the adapted surrogate; the window $W$ and acceptance batch $|B|$ follow the detection bound, the number of parallel candidates $M$ follows the coverage guarantee, and $(k,m)$ follow the efficiency analysis. Prompt length $L\!\in\!\{4, 8,16,32,64\}$; learning rate $\eta\!\in\![1\!\times\!10^{-4},\,5\!\times\!10^{-3}]$; AdamW weight decay $\lambda_{\mathrm{wd}}\!\in\![0,\,10^{-2}]$; gradient clip $\in[0.5,\,1.0]$; neighborhood size $k\!\in\!\{20,50,100\}$; expectation truncation $m\!\in\!\{50,100,200\}$; temperature $\tau\!\in\![0.4,\,1.2]$; expectation weight $\lambda\!\in\![0.5,\,2.0]$; anti–degeneration weight $\beta\!\in\![0.02,\,0.15]$; LoRA rank $r\!\in\!\{4, 8,16,32\}$ with scale $\alpha_{\text{lora}}\!\in\!\{4, 8,16,32\}$; LoRA LR $\eta_{\text{lora}}\!\in\![5\!\times\!10^{-5},\,2\!\times\!10^{-3}]$; warm–start window $W\!\in\![3,\,12]$ turns; acceptance batch $|B|\!\in\![6,\,24]$ contexts; parallel candidates $M\!\in\!\{3,4,5\}$; switch threshold $\varepsilon\!\in\![0.05,\,0.12]$ with $m_{\text{cons}}\!\in\!\{2,3\}$. 
+We implement SOMA based on PyTorch with HuggingFace Transformers, serve inference via vLLM with FlashAttention~\citep{shah2024flashattention}, and run on \rev{Nvidia A6000 GPUs}. Soft–prompt tuning optimizes only the prompt tensor $\mathbf{P}\!\in\!\mathbb{R}^{L\times d}$ on the surrogate $G$ using AdamW, cosine decay, gradient clipping, and a KV cache for a single forward pass per turn. The objective combines unlikelihood on a semantic neighborhood, an expectation–weighted penalty using the truncated top–$m$ expectation, and a light anti-degeneration entropy term. \rev{The warm-start context--response pairs, weighted by their anchoring scores $r_t$,} are then used to adapt $G$ with LoRA on \rev{attention and MLP} projections (rank $r$), keeping the base weights frozen; early stopping is triggered by validation divergence. At inference, a cosine closeness gate with a lightweight sentence encoder decides a one–time switch to the adapted surrogate. \rev{All hyperparameters below, including $W$, $|B|$, $M$, and $(k,m)$, are set empirically within the listed ranges; the bounds in Section~\ref{sec:theory} describe how the required margins scale but are too loose at these sample sizes to set them directly.} Prompt length $L\!\in\!\{4, 8,16,32,64\}$; learning rate $\eta\!\in\![1\!\times\!10^{-4},\,5\!\times\!10^{-3}]$; AdamW weight decay $\lambda_{\mathrm{wd}}\!\in\![0,\,10^{-2}]$; gradient clip $\in[0.5,\,1.0]$; neighborhood size $k\!\in\!\{20,50,100\}$; expectation truncation $m\!\in\!\{50,100,200\}$; temperature $\tau\!\in\![0.4,\,1.2]$; expectation weight $\lambda\!\in\![0.5,\,2.0]$; anti–degeneration weight $\beta\!\in\![0.02,\,0.15]$; LoRA rank $r\!\in\!\{4, 8,16,32\}$ with scale $\alpha_{\text{lora}}\!\in\!\{4, 8,16,32\}$; LoRA LR $\eta_{\text{lora}}\!\in\![5\!\times\!10^{-5},\,2\!\times\!10^{-3}]$; warm–start window $W\!\in\![3,\,12]$ turns; acceptance batch $|B|\!\in\![6,\,24]$ contexts; parallel candidates $M\!\in\!\{3,4,5\}$; switch threshold $\varepsilon\!\in\![0.05,\,0.12]$ with $m_{\text{cons}}\!\in\!\{2,3\}$. 
 % These choices keep computation modest while aligning with the theory–driven bounds used in the paper.
 
 
@@ -273,265 +273,94 @@ are infinitely differentiable (i.e., \( C^\infty \)). This structure is known as
 
 \section{Theoretical Results and Proofs}\label{sec:app_proof}
 
-% \subsection{Preliminaries and Notation}
-% Scalars (e.g., $n,\lambda,k,\tau$) are lowercase; vectors (e.g., $\boldsymbol{e},\boldsymbol{u}$) are bold lowercase; 
-% matrices (e.g., $\mathbf{E},\mathbf{C},\mathbf{H}_T$) are bold uppercase; sets (e.g., $\mathcal{V},\mathcal{Q}$) are calligraphic.
-% At turn $t$, the shared text is $S_t=\mathcal{D}_{t-1}\oplus q_t$. 
-% The original’s output is $a_t^{F}$; its tokens in $G$’s space are $\boldsymbol{y}_t^{F}=\mathrm{tok}_G(a_t^{F})=(y_{t,1}^{F},\ldots,y_{t,T_F(t)}^{F})$. 
-% Aligned-prefix (``teacher-forced'') next-token distributions of $G$ are $\{\Pi_{t,i}(\mathbf{P})\}_{i=1}^{T_F(t)}$.
-% The token-level neighborhood loss is Eq.~\eqref{eq:sem-with-aF}, and the expectation-weighted loss is Eq.~\eqref{eq:semexp-with-aF}.
-% For switching we use a bounded discrepancy $\mathsf{Gap}(S_t)\in[0,1]$ (e.g., $1-\cos(\phi(a_t^{G}),\phi(a_t^{F}))$ with a fixed encoder $\phi$).
+\rev{This appendix states and proves the results used in Section~\ref{sec:theory}. Each statement lists its assumptions, and Section~\ref{sec:warm-start} discusses where our implementation departs from them.
 
-We first model weak dependence in the dialogue stream via an 
-\emph{Effective Sample Size}. 
-For a bounded, stationary sequence $\{Z_t\}$ with lag-$\ell$ autocorrelation $\rho(\ell)$, define
+\textbf{Dependence and effective sample size.}
+Consecutive dialogue turns are not independent. We assume that the per-turn statistics $Z_1,\ldots,Z_N$ form an $m$-dependent sequence, that is, $\{Z_s\}_{s\le t}$ and $\{Z_s\}_{s>t+m}$ are independent for every $t$, and we define the effective sample size $N_{\mathrm{eff}}=N/(m+1)$; independent samples correspond to $m=0$. For such sequences Hoeffding's inequality holds with $N$ replaced by $N_{\mathrm{eff}}$: if each $Z_s$ takes values in an interval of length $R$, then for every $u>0$
 \[
-N_{\mathrm{eff}}
-\;:=\;
-\frac{N}{\,1 + 2\sum_{\ell=1}^{N-1}\Big(1-\frac{\ell}{N}\Big)\rho(\ell)\,} \;\;\in(0,N]\,.
+\Pr\Big(\frac1N\sum_{s=1}^{N}\big(Z_s-\mathbb E Z_s\big)\ge u\Big)\le\exp\Big(-\frac{2N_{\mathrm{eff}}\,u^2}{R^2}\Big),
 \]
-when $\rho(\ell)\equiv 0$, $N_{\mathrm{eff}}=N$; positive correlation reduces $N_{\mathrm{eff}}$.
+and the same bound holds for the lower tail. This follows from Janson's inequality for sums of partly dependent variables~\citep{janson2004large}, applied to the dependency graph of the sequence, whose fractional chromatic number is at most $m+1$.
+
+\textbf{Locality premise.}
+The results below compare statistics measured on warm-start turns with their expectations over the later turns of the session. We therefore assume, as in Section~\ref{sec:prelim}, that warm-start states and later states share the marginal distribution $\mathcal Q_k$. This is the premise that the locality gate monitors and that Figures~\ref{fig:operating}(c) and~\ref{fig:app_switching} test; otherwise they describe only the warm-start distribution.
 
 \bigskip
-\textbf{Directional Recovery for the Expectation-weighted Loss}
+\textbf{Switching Criterion: Warm-Start Concentration and Acceptance}
 
-\paragraph{Statement: Theorem~\ref{thm:dir_recovery}.}
-Under local smoothness, bounded expectation weights in Eq.~\eqref{eq:semexp-with-aF}, and a rank–$r$ discrepancy for the discrepancy Fisher 
-$\mathbf{C}=\mathbb{E}[\mathbf{J}(\mathbf{P})^{\!\top}\mathbf{J}(\mathbf{P})]$, any minimizer $\widehat{\mathbf{P}}$ of Eq.~\eqref{eq:semexp-with-aF}
-has row span that captures at least a $(1-\varepsilon)$ fraction of the top-$r$ eigenmass of $\mathbf{C}$, with $\varepsilon\!\to\!0$ as the window size growing and neighborhood size $k$ increasing within the local region.
-
-\paragraph{Proof of Theorem~\ref{thm:dir_recovery}.}
-\textbf{Step 1: Per-Event Loss and Local Expansion.}
-Index events by $\boldsymbol{z}=(t,i)$ (turn and position). Let the per-event loss be
+\begin{lemma}[Warm-Start Concentration]\label{lem:warmstart}
+Let $h(S)\in[0,1]$ be a local statistic that is fixed before the window is observed, such as $\mathsf{Gap}_{\Theta}(S)$ for a fixed adapter $\Theta$ or the distance of a query to a fixed centroid. Let $h(S_1),\ldots,h(S_W)$ be $m$-dependent with common mean $h^\star=\mathbb E_{S\sim\mathcal Q_k}[h(S)]$, and write $\hat h_W=\frac1W\sum_{t=1}^{W}h(S_t)$. Then, with probability at least $1-\delta$,
 \[
-\ell(\mathbf{P};\boldsymbol{z})
-=
-w(\boldsymbol{z})
-\sum_{v\in \mathcal{S}(\boldsymbol{z})}
-s_{\tau}(v\mid \boldsymbol{z})\,
-\Big[-\log\!\big(1-\pi_G(v\mid \boldsymbol{z};\mathbf{P})\big)\Big],
-\quad
-\mathcal{S}(\boldsymbol{z})=\{y_{t,i}^{F}\}\cup \mathcal{N}_k(y_{t,i}^{F}).
-\]
-Write $p_v(\mathbf{P};\boldsymbol{z})=\pi_G(v\mid \boldsymbol{z};\mathbf{P})$ and expand around $\mathbf{P}=\boldsymbol{0}$.
-By the softmax chain rule,
-\[
-\log(1-p_v)
-=
-\log(1-p_v|_{\mathbf{0}}) - \frac{1}{1-p_v|_{\mathbf{0}}}\,\big(\nabla p_v\big)^{\!\top}\mathrm{vec}(\mathbf{P})
--\frac{1}{2}\frac{p_v|_{\mathbf{0}}}{(1-p_v|_{\mathbf{0}})^2}\big(\mathrm{vec}(\mathbf{P})^{\!\top}\nabla \log p_v\big)^2 + o(\|\mathbf{P}\|^2),
-\]
-where $\nabla$ denotes the gradient w.r.t.\ $\mathrm{vec}(\mathbf{P})$ and we used the softmax identity 
-$\nabla p_v = p_v \nabla \log p_v$.
-Summing over $v\in\mathcal{S}(\boldsymbol{z})$ with bounded weights $w(\boldsymbol{z})s_{\tau}(\cdot\mid \boldsymbol{z})$ cancels the \emph{linear} term due to local stationarity under aligned-prefix conditioning (the gradient at $\mathbf{0}$ integrates to zero across the semantic neighborhood; this is the standard property behind Gauss–Newton/Fisher approximations). 
-Thus the second-order term dominates:
-\[
-\ell(\mathbf{P};\boldsymbol{z})
-\;=\;
-\frac{1}{2}\,
-\big\|\mathbf{J}_{\boldsymbol{z}}\,\mathrm{vec}(\mathbf{P})\big\|_2^2
-\,+\,o(\|\mathbf{P}\|^2),
-\]
-where $\mathbf{J}_{\boldsymbol{z}}$ stacks rows $\sqrt{w(\boldsymbol{z})s_{\tau}(v\mid\boldsymbol{z})}\,\nabla \log p_v(\mathbf{0};\boldsymbol{z})^{\!\top}$ for $v\in\mathcal{S}(\boldsymbol{z})$.
-
-\textbf{Step 2: Summation over the Window and Fisher Form.}
-Sum over $\boldsymbol{z}$ in the initial window and take the expectation over aligned-prefix contexts to obtain the Gauss–Newton surrogate
-\[
-\mathcal{L}(\mathbf{P})
-\;=\;
-\frac{1}{2}\,\mathrm{vec}(\mathbf{P})^{\!\top}\mathbf{C}\,\mathrm{vec}(\mathbf{P})
-\,+\,o(\|\mathbf{P}\|^2),
-\qquad
-\mathbf{C}
-=
-\mathbb{E}\big[\mathbf{J}(\mathbf{0})^{\!\top}\mathbf{J}(\mathbf{0})\big],
-\]
-which is a discrepancy Fisher matrix with importance weights folded into $\mathbf{J}$.
-
-\textbf{Step 3: Row-Span Parametrization and KY Fan.}
-Let $\mathbf{P}\in\mathbb{R}^{L\times d}$. Any $\mathbf{P}$ factorizes as $\mathbf{P}=\mathbf{A}\mathbf{U}^{\!\top}$ with $\mathbf{U}\in\mathbb{R}^{d\times L}$ having orthonormal columns spanning the row space and $\mathbf{A}\in\mathbb{R}^{L\times L}$. Then 
-\[
-\mathrm{vec}(\mathbf{P})=(\mathbf{U}\otimes \mathbf{I}_L)\,\mathrm{vec}(\mathbf{A}),
-\quad
-\mathcal{L}(\mathbf{P})
-=
-\frac{1}{2}\,\mathrm{vec}(\mathbf{A})^{\!\top}\big(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U}\otimes \mathbf{I}_L\big)\mathrm{vec}(\mathbf{A})
-\,+\,o(\|\mathbf{A}\|^2).
-\]
-Including the ridge $\lambda\|\mathbf{P}\|_F^2=\lambda\|\mathbf{A}\|_F^2$ from the main loss, the minimum over $\mathbf{A}$ for fixed $\mathbf{U}$ is proportional to $\mathrm{Tr}(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U})$. Maximizing $\mathrm{Tr}(\mathbf{U}^{\!\top}\mathbf{C}\mathbf{U})$ over $\mathbf{U}^{\!\top}\mathbf{U}=\mathbf{I}_L$ is solved by the top-$L$ eigenvectors of $\mathbf{C}$ (Ky Fan’s variational principle). Hence the \emph{optimal row span} equals the top-$L$ eigenspace of $\mathbf{C}$, i.e., the directions of largest local discrepancy.
-
-\textbf{Step 4: Empirical Approximation and Eigenspace Stability.}
-We work with an empirical Fisher $\widehat{\mathbf{C}}$ formed from finitely many events and finite $k$. Under bounded weights and local smoothness, $\|\widehat{\mathbf{C}}-\mathbf{C}\|_{\mathrm{op}}\to 0$ as the window size grows; increasing $k$ within the local isotropy region reduces variance and retains locality. Davis–Kahan perturbation then gives that the top-$r$ eigenspaces of $\widehat{\mathbf{C}}$ and $\mathbf{C}$ are close, with principal angles bounded by $O(\|\widehat{\mathbf{C}}-\mathbf{C}\|_{\mathrm{op}}/\mathrm{gap})$, where $\mathrm{gap}$ is the spectral gap below $\lambda_r(\mathbf{C})$. Consequently, the row span of any empirical minimizer $\widehat{\mathbf{P}}$ captures at least a $(1-\varepsilon)$ fraction of the top-$r$ eigenmass of $\mathbf{C}$ with $\varepsilon\to 0$ as the window grows and $k$ increases up to the local isotropy scale.
-\hfill$\square$
-
-
-\bigskip
-\textbf{Switching Criterion: Warm-Start Generalization and Batch Detection}.
-
-\begin{lemma}[Warm-Start Generalization]\label{lem:warmstart}
-Let $h(S)\in[0,1]$ be any bounded local statistic, such as $\mathsf{Gap}_{\Theta}(S)$ or a query-centroid similarity score. Suppose the warm-start stream has effective sample size $W_{\mathrm{eff}}$, accounting for temporal dependence. Then with probability at least $1-\delta$,
-\[
-\left|\frac{1}{W}\sum_{t=1}^{W}h(S_t)-\mathbb E_{S\sim\mathcal Q}[h(S)]\right|
-\le
-\sqrt{\frac{2\log(2/\delta)}{W_{\mathrm{eff}}}} .
+\big|\hat h_W-h^\star\big|\le\eta_W(\delta):=\sqrt{\frac{\log(2/\delta)}{2W_{\mathrm{eff}}}} .
 \]
 \end{lemma}
-Below we write $\widehat{F}_W=\frac{1}{W}\sum_{t=1}^{W}\mathsf{Gap}(S_t)$ and $F^\star=\mathbb{E}_{S\sim\mathcal{Q}}[\mathsf{Gap}(S)]$ for the case $h=\mathsf{Gap}$.
 
 \paragraph{Proof of Lemma~\ref{lem:warmstart}.}
-\textbf{Step 1 (Centering and boundedness).}
-Let $Z_t=\mathsf{Gap}(S_t)-F^\star\in[-1,1]$ with $\mathbb{E}[Z_t]=0$. Then
-$\widehat{F}_W-F^\star = \frac{1}{W}\sum_{t=1}^{W} Z_t$.
-
-\textbf{Step 2: Variance Proxy under Dependence.}
-For stationary $\{Z_t\}$ with autocovariance $\gamma(\ell)=\mathrm{Cov}(Z_t,Z_{t+\ell})$, the variance of the window average satisfies
-\[
-\mathrm{Var}\!\Big(\frac{1}{W}\sum_{t=1}^{W} Z_t\Big)
-=
-\frac{1}{W^2}\sum_{t,s=1}^{W}\gamma(|t-s|)
-=
-\frac{1}{W}\Big(\gamma(0)+2\sum_{\ell=1}^{W-1}\Big(1-\frac{\ell}{W}\Big)\gamma(\ell)\Big).
-\]
-Let $\sigma^2:=\gamma(0)\le 1/4$ (since $Z_t\in[-1,1]$) and $\rho(\ell):=\gamma(\ell)/\gamma(0)$ when $\gamma(0)>0$.
-Then
-\[
-\mathrm{Var}\!\Big(\frac{1}{W}\sum_{t=1}^{W} Z_t\Big)
-\;\le\;
-\frac{\sigma^2}{W}\Big(1+2\sum_{\ell=1}^{W-1}\Big(1-\frac{\ell}{W}\Big)\rho(\ell)\Big).
-\]
-Define the effective size $W_{\mathrm{eff}}$ as in the preliminaries. Then
-$\mathrm{Var}\big(\frac{1}{W}\sum_{t=1}^{W} Z_t\big)\le \sigma^2/W_{\mathrm{eff}}$.
-
-\textbf{Step 3: Concentration with Effective Size.}
-A Hoeffding/Rio inequality for bounded, weakly dependent sequences then yields the tail bound
-\[
-\Pr\!\Big(\big|\widehat{F}_W-F^\star\big|\ge u\Big)
-\;\le\;
-2\exp\!\Big(-\frac{2 u^2 W_{\mathrm{eff}}}{(b-a)^2}\Big),
-\quad a=-1,\ b=1.
-\]
-Thus $\Pr(|\widehat{F}_W-F^\star|\ge u)\le 2\exp(-2u^2 W_{\mathrm{eff}})$.
-Set the right-hand side to $\delta$ and solve for $u$ to obtain
-$u=\sqrt{(2\log(2/\delta))/W_{\mathrm{eff}}}$.
+Apply the $m$-dependent Hoeffding inequality with $R=1$ to each tail at level $\delta/2$. Setting $\exp(-2W_{\mathrm{eff}}u^2)=\delta/2$ gives $u=\eta_W(\delta)$, and a union bound over the two tails gives the claim.
 \hfill$\square$
 
-\bigskip
-\paragraph{Statement: Theorem~\ref{thm:detection}.}
-Let $\Delta=\widehat{F}_B^{\mathrm{old}}-\widehat{F}_B^{\mathrm{new}}$ on a batch $B$ of effective size $|B|_{\mathrm{eff}}$. 
-Assume $\Delta-\mathbb{E}[\Delta]$ is sub–exponential with proxy $(\nu,b)$:
-$\mathbb{E}[\exp(\lambda(\Delta-\mathbb{E}\Delta))]\le \exp(\tfrac{\lambda^2 \nu^2}{2})$ for $|\lambda|\le 1/b$.
-Then for any $\varepsilon>0$ and $\delta\in(0,1)$,
+\paragraph{Statement: Proposition~\ref{thm:detection}.}
+Let the adapter $\Theta$ be fixed given the adaptation data, and let the acceptance batch $B=\{S_1,\ldots,S_{|B|}\}$ be disjoint from that data and drawn from $\mathcal Q_k$ as an $m$-dependent sequence. Let $\widehat{\mathsf G}_B=\frac1{|B|}\sum_{j}\mathsf{Gap}_{\Theta}(S_j)$ and $\mathsf G^\star=\mathbb E_{S\sim\mathcal Q_k}[\mathsf{Gap}_{\Theta}(S)]$. Then, with probability at least $1-\delta$,
 \[
-|B|_{\mathrm{eff}}
-\;\ge\;
-\frac{2\nu^2}{\varepsilon^2}\log\!\frac{1}{\delta}
-+\frac{2b}{3\,\varepsilon}\log\!\frac{1}{\delta}
-\quad\Longrightarrow\quad
-\Pr(\Delta\ge \varepsilon)\ge 1-\delta.
+\mathsf G^\star\le\widehat{\mathsf G}_B+\gamma_B(\delta),\qquad \gamma_B(\delta)=\sqrt{\frac{\log(1/\delta)}{2|B|_{\mathrm{eff}}}} .
 \]
+In particular, if $\widehat{\mathsf G}_B\le\varepsilon-\gamma_B(\delta)$, then $\mathsf G^\star\le\varepsilon$ with probability at least $1-\delta$.
 
-\paragraph{Proof of Theorem~\ref{thm:detection}.}
-\textbf{Step 1 (Bernstein tail bound).}
-For sub–exponential $X:=\Delta-\mathbb{E}[\Delta]$ with proxy $(\nu,b)$,
-\[
-\Pr(X\le -t)\;\le\;\exp\!\Big(-\frac{t^2}{2\nu^2 + 2 b t/3}\Big),\qquad t>0.
-\]
-This is the standard one-sided Bernstein inequality derived from the MGF condition.
-
-\textbf{Step 2: From Mean Gain to High-Probability Gain.}
-We seek $\Pr(\Delta\ge \varepsilon)\ge 1-\delta$. Write
-\[
-\Pr(\Delta<\varepsilon)
-=
-\Pr\big(\Delta-\mathbb{E}[\Delta] < \varepsilon-\mathbb{E}[\Delta]\big)
-=
-\Pr\big(X < -t\big),\quad t:=\mathbb{E}[\Delta]-\varepsilon.
-\]
-If the \emph{expected} gain satisfies $\mathbb{E}[\Delta]\ge \varepsilon$ then $t\ge 0$ and
-\[
-\Pr(\Delta<\varepsilon)\le \exp\!\Big(-\frac{t^2}{2\nu^2 + 2 b t/3}\Big)
-\;\le\;
-\exp\!\Big(-\frac{\varepsilon^2}{2\nu^2 + 2 b \varepsilon/3}\Big),
-\]
-using monotonicity of $t\mapsto t^2/(2\nu^2+2bt/3)$ on $t\ge 0$. To make this $\le \delta$ it suffices that
-\[
-\frac{\varepsilon^2}{2\nu^2 + 2 b \varepsilon/3}\;\ge\;\log(1/\delta)
-\quad\Longleftrightarrow\quad
-2\nu^2\log(1/\delta) + \frac{2b}{3}\varepsilon \log(1/\delta) \;\le\; \varepsilon^2.
-\]
-Rearranging gives the stated sufficient condition on $|B|_{\mathrm{eff}}$ once we note that the proxies $\nu^2,b$ scale as $1/|B|_{\mathrm{eff}}$ for averages. Equivalently, write $\nu^2=\tilde{\nu}^2/|B|_{\mathrm{eff}}$ and $b=\tilde{b}/|B|_{\mathrm{eff}}$ for single-sample proxies $(\tilde{\nu}^2,\tilde{b})$, and then solve the resulting inequality for $|B|_{\mathrm{eff}}$:
-\[
-|B|_{\mathrm{eff}}
-\;\ge\;
-\frac{2\tilde{\nu}^2}{\varepsilon^2}\log\!\frac{1}{\delta}
-+\frac{2\tilde{b}}{3\,\varepsilon}\log\!\frac{1}{\delta}.
-\]
-We re-denote $(\tilde{\nu}^2,\tilde{b})$ as $(\nu^2,b)$ in the theorem statement.
+\paragraph{Proof of Proposition~\ref{thm:detection}.}
+Condition on the adaptation data. Because $B$ is disjoint from it, $\Theta$ is fixed, and $\mathsf{Gap}_{\Theta}(S_1),\ldots,\mathsf{Gap}_{\Theta}(S_{|B|})$ are $m$-dependent with mean $\mathsf G^\star$ and range $R=1$. The lower-tail inequality gives $\Pr(\widehat{\mathsf G}_B-\mathsf G^\star\le-u)\le\exp(-2|B|_{\mathrm{eff}}u^2)$, and setting the right-hand side to $\delta$ gives $u=\gamma_B(\delta)$. On the complementary event, $\mathsf G^\star<\widehat{\mathsf G}_B+\gamma_B(\delta)\le\varepsilon$ if $\widehat{\mathsf G}_B\le\varepsilon-\gamma_B(\delta)$.
 \hfill$\square$
 
-\bigskip
+\textbf{When the acceptance batch is reused.}
+If $B$ overlaps the adaptation data, $\Theta$ depends on the $S_j$ in $B$. The gaps then no longer have mean $\mathsf G^\star$ given $\Theta$, $\widehat{\mathsf G}_B$ is biased downward by the fit, and Proposition~\ref{thm:detection} does not apply. Our implementation reuses the warm-start turns in this way (Appendix~\ref{sec:app_rationale}); holding out part of the warm-start window would restore the bound at the cost of fewer adaptation examples. The bound is also loose at the sample sizes used here: for $\delta=0.05$, $m=0$, and $|B|=24$, $\gamma_B=0.25$, which already exceeds the thresholds $\varepsilon\in[0.05,0.12]$. It therefore describes how the required margin scales with $|B|_{\mathrm{eff}}$ rather than setting the thresholds.
 
 \begin{corollary}[Switching Rule]\label{cor:switch}
-Choose $W$ so that the warm-start uncertainty in Lemma~\ref{lem:warmstart} is at most $\eta$ (i.e., $W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$), and choose $|B|_{\mathrm{eff}}$ so that $\gamma_B(\delta)\le \gamma$ in Theorem~\ref{thm:detection}. Switching is justified when the adapted surrogate passes both the output-fidelity gate and the locality gate with margins larger than $\eta+\gamma$. The combined decision error is controlled at confidence at least $1-2\delta$ by a union bound over the warm-start and acceptance events.
+Let the locality statistic $h$ satisfy the conditions of Lemma~\ref{lem:warmstart}, and let $B$ satisfy those of Proposition~\ref{thm:detection}. If $\widehat{\mathsf G}_B\le\varepsilon-\gamma_B(\delta)$ and $\hat h_W\le\tau-\eta_W(\delta)$, then, with probability at least $1-2\delta$, both $\mathsf G^\star\le\varepsilon$ and $h^\star\le\tau$.
 \end{corollary}
 
 \paragraph{Proof of Corollary~\ref{cor:switch}.}
-Lemma~\ref{lem:warmstart} ensures $|\widehat{F}_W-F^\star|\le \eta$ with prob.\ $\ge 1-\delta$ when 
-$W_{\mathrm{eff}}\ge 2\log(2/\delta)/\eta^2$.
-Theorem~\ref{thm:detection} ensures $\Pr(\Delta\ge \varepsilon)\ge 1-\delta$ when the batch bound holds.
-By a union bound, the probability that both events hold is at least $1-2\delta$.
-If both hold, the total decision error (warm–start approximation plus detection slack) is at most $\eta+\varepsilon$.
+By Lemma~\ref{lem:warmstart}, $h^\star\le\hat h_W+\eta_W(\delta)\le\tau$ with probability at least $1-\delta$. By Proposition~\ref{thm:detection}, $\mathsf G^\star\le\varepsilon$ with probability at least $1-\delta$. A union bound shows that both hold with probability at least $1-2\delta$.
 \hfill$\square$
 
 \bigskip
-\textbf{Coverage and Suboptimality to Determine the Number of Soft–Prompt Candidates.}
+\textbf{Coverage and Suboptimality to Determine the Number of Soft-Prompt Candidates}
 
-\begin{theorem}[Coverage of the Best Local Direction]\label{thm:coverage}
-Let the active local subspace be $r_{\mathrm{act}}$-dimensional with $r_{\mathrm{act}}\ge 2$, and draw $M$ i.i.d.\ unit vectors $\boldsymbol{u}_1,\ldots,\boldsymbol{u}_M\sim\mathrm{Unif}(\mathbb{S}^{r_{\mathrm{act}}-1})$. Let $p_{r_{\mathrm{act}}}(\theta)=\frac{1}{2}I_{\sin^2\theta}\!\left(\frac{r_{\mathrm{act}}-1}{2},\frac{1}{2}\right)$ be the spherical-cap probability of falling within angle $\theta\in(0,\pi/2]$ of the dominant direction $\boldsymbol v_1$, where $I_x(\cdot,\cdot)$ is the regularized incomplete beta function. Then
+Assume that the mining objective is locally quadratic with curvature $\mathbf H_T\succeq 0$ whose top eigenvector $\boldsymbol v_1$ lies in an $r_{\mathrm{act}}$-dimensional active subspace. SOMA draws its $M$ candidate prompts from an isotropic Gaussian, so their projections onto this subspace point in independent, uniformly random directions. The results below bound the probability that one of them starts within angle $\theta$ of $\boldsymbol v_1$, and the fraction of the top curvature that such a direction retains. They concern the initial directions rather than the optimized prompts, and we set $M\in\{3,4,5\}$ empirically (Appendix~\ref{sec:app_implementation}).
+
+\begin{proposition}[Coverage of the Best Local Direction]\label{thm:coverage}
+Let $r_{\mathrm{act}}\ge 2$, let $\boldsymbol v_1$ be a unit vector in an $r_{\mathrm{act}}$-dimensional subspace, and draw $\boldsymbol u_1,\ldots,\boldsymbol u_M$ i.i.d.\ from $\mathrm{Unif}(\mathbb S^{r_{\mathrm{act}}-1})$ in that subspace. For $\theta\in(0,\pi/2]$, let
 \[
-\Pr\!\Big(\min_{m\le M}\angle(\boldsymbol{u}_m,\boldsymbol{v}_1)\le \theta\Big)
-=1-\big(1-p_{r_{\mathrm{act}}}(\theta)\big)^M
-\;\ge\;
-1-\Big(1-(\sin\theta)^{\,r_{\mathrm{act}}-1}\Big)^M .
+p_{r_{\mathrm{act}}}(\theta)=\Pr\big(\angle(\boldsymbol u_1,\boldsymbol v_1)\le\theta\big)=\tfrac12\,I_{\sin^2\theta}\Big(\tfrac{r_{\mathrm{act}}-1}{2},\tfrac12\Big),
 \]
-For $r_{\mathrm{act}}=1$, one candidate suffices.
-\end{theorem}
+where $I_x(\cdot,\cdot)$ is the regularized incomplete beta function. Then
+\[
+\Pr\Big(\min_{m\le M}\angle(\boldsymbol u_m,\boldsymbol v_1)\le\theta\Big)=1-\big(1-p_{r_{\mathrm{act}}}(\theta)\big)^M,
+\qquad
+p_{r_{\mathrm{act}}}(\theta)\ge\frac{(\sin\theta)^{r_{\mathrm{act}}-1}}{(r_{\mathrm{act}}-1)\,\mathrm B\big(\frac{r_{\mathrm{act}}-1}{2},\frac12\big)} .
+\]
+For example, $p_{r_{\mathrm{act}}}(\pi/2)=1/2$ for every $r_{\mathrm{act}}$. Isotropic Gaussian initializations satisfy the sampling assumption, because the normalized projection of $\mathcal N(\boldsymbol 0,\sigma^2\mathbf I)$ onto a fixed subspace is uniformly distributed on the unit sphere of that subspace.
+\end{proposition}
 
-\paragraph{Proof of Theorem~\ref{thm:coverage}.}
+\paragraph{Proof of Proposition~\ref{thm:coverage}.}
 \textbf{Step 1: Exact cap probability.}
-WLOG set $\boldsymbol{v}_1$ as the north pole. For $\boldsymbol{U}\sim\mathrm{Unif}(\mathbb{S}^{r_{\mathrm{act}}-1})$, 
-the random variable $T=\langle \boldsymbol{U},\boldsymbol{v}_1\rangle$ has density 
-$f_T(t)\propto (1-t^2)^{(r_{\mathrm{act}}-3)/2}$ on $t\in[-1,1]$. 
-Hence $\Pr(\angle(\boldsymbol{U},\boldsymbol{v}_1)\le \theta)=\Pr(T\ge \cos\theta)=I_{\sin^2\theta}(\frac{r_{\mathrm{act}}-1}{2},\frac{1}{2})$.
-
-\textbf{Step 2: Lower Bound}
-For $\theta\in(0,\pi/2]$, $\sin\theta\in(0,1]$ and we have the elementary bound
+Write $r=r_{\mathrm{act}}$ and $T=\langle\boldsymbol u_1,\boldsymbol v_1\rangle$. For $\boldsymbol u_1$ uniform on $\mathbb S^{r-1}$, $T$ is symmetric about $0$ and $T^2\sim\mathrm{Beta}(\frac12,\frac{r-1}{2})$, so $1-T^2\sim\mathrm{Beta}(\frac{r-1}{2},\frac12)$. For $\theta\le\pi/2$ we have $\cos\theta\ge0$, hence
 \[
-I_{\sin^2\theta}\!\Big(\tfrac{r_{\mathrm{act}}-1}{2},\tfrac{1}{2}\Big)
-\;\ge\;
-(\sin\theta)^{\,r_{\mathrm{act}}-1}.
+\Pr(T\ge\cos\theta)=\tfrac12\Pr(T^2\ge\cos^2\theta)=\tfrac12\Pr(1-T^2\le\sin^2\theta)=\tfrac12\,I_{\sin^2\theta}\big(\tfrac{r-1}{2},\tfrac12\big).
 \]
-(Proof: $I_x(a,b)=\frac{1}{\mathrm{B}(a,b)}\int_0^{x} t^{a-1}(1-t)^{b-1}\mathrm{d}t
-\ge \frac{1}{\mathrm{B}(a,b)}\int_0^{x} t^{a-1}\mathrm{d}t
-= \frac{x^{a}}{a\,\mathrm{B}(a,b)} \ge x^{a}$ since $a\,\mathrm{B}(a,b)\le 1$ for $a\ge 1/2,b\ge 1/2$; let $x=\sin^2\theta$ and $a=(r_{\mathrm{act}}-1)/2$.)
 
-\textbf{Step 3: Independence across $M$ Samples.}
-Thus, for one sample,
-$p_\theta:=\Pr(\angle(\boldsymbol{U},\boldsymbol{v}_1)\le \theta)\ge (\sin\theta)^{r_{\mathrm{act}}-1}$.
-The probability \emph{none} among $M$ falls in the cap is $(1-p_\theta)^M\le (1-(\sin\theta)^{r_{\mathrm{act}}-1})^M$.
-Therefore
+\textbf{Step 2: Lower bound.}
+Let $a=(r-1)/2$ and $x=\sin^2\theta$. Since $(1-s)^{-1/2}\ge1$ on $[0,1)$,
 \[
-\Pr\!\Big(\min_{m\le M}\angle(\boldsymbol{u}_m,\boldsymbol{v}_1)\le \theta\Big)
-=
-1-(1-p_\theta)^M
-\;\ge\;
-1-\Big(1-(\sin\theta)^{r_{\mathrm{act}}-1}\Big)^M.
+I_x\big(a,\tfrac12\big)=\frac{1}{\mathrm B(a,\frac12)}\int_0^x s^{a-1}(1-s)^{-1/2}\,\mathrm ds\;\ge\;\frac{1}{\mathrm B(a,\frac12)}\int_0^x s^{a-1}\,\mathrm ds=\frac{x^{a}}{a\,\mathrm B(a,\frac12)},
 \]
+so $p_r(\theta)\ge x^{a}/\big(2a\,\mathrm B(a,\frac12)\big)=(\sin\theta)^{r-1}/\big((r-1)\,\mathrm B(\frac{r-1}{2},\frac12)\big)$.
+
+\textbf{Step 3: Independence across $M$ samples.}
+The $M$ draws are independent, so none of them falls in the cap with probability $(1-p_r(\theta))^M$, which gives the coverage probability.
 \hfill$\square$
 
 \bigskip
 \begin{lemma}[Directional Suboptimality]\label{lem:subopt}
-Let $\mathbf H_T\succeq 0$ have largest eigenvalue $\lambda_1$ and top eigenvector $\boldsymbol v_1$. For any unit $\boldsymbol{\hat u}$ with $\angle(\boldsymbol{\hat u},\boldsymbol v_1)\le\theta$,
+Let $\mathbf H_T\succeq 0$ have largest eigenvalue $\lambda_1$ and top eigenvector $\boldsymbol v_1$. For any unit $\boldsymbol{\hat u}$ with $\angle(\boldsymbol{\hat u},\boldsymbol v_1)\le\theta\le\pi/2$,
 \[
 \boldsymbol{\hat u}^{\!\top}\mathbf{H}_T\boldsymbol{\hat u} \;\ge\; \lambda_1 \cos^2\!\theta,
 \qquad
@@ -540,32 +369,27 @@ Let $\mathbf H_T\succeq 0$ have largest eigenvalue $\lambda_1$ and top eigenvect
 \end{lemma}
 
 \paragraph{Proof of Lemma~\ref{lem:subopt}.}
-Decompose $\boldsymbol{\hat u}=\cos\theta\,\boldsymbol{v}_1+\sin\theta\,\boldsymbol{w}$ with $\|\boldsymbol{w}\|_2=1$ and $\boldsymbol{w}\perp\boldsymbol{v}_1$.
-Then
+Let $\varphi=\angle(\boldsymbol{\hat u},\boldsymbol v_1)\le\theta$ and decompose $\boldsymbol{\hat u}=\cos\varphi\,\boldsymbol{v}_1+\sin\varphi\,\boldsymbol{w}$ with $\|\boldsymbol{w}\|_2=1$ and $\boldsymbol{w}\perp\boldsymbol{v}_1$. Because $\mathbf H_T\boldsymbol v_1=\lambda_1\boldsymbol v_1$, the cross term vanishes, and
 \[
 \boldsymbol{\hat u}^{\!\top}\mathbf{H}_T\boldsymbol{\hat u}
 =
-\lambda_1\cos^2\!\theta
+\lambda_1\cos^2\!\varphi
 +
-\sum_{j\ge 2}\lambda_j \langle \boldsymbol{v}_j,\boldsymbol{w}\rangle^2 \sin^2\!\theta
+\sin^2\!\varphi\sum_{j\ge 2}\lambda_j \langle \boldsymbol{v}_j,\boldsymbol{w}\rangle^2
 \;\ge\;
-\lambda_1\cos^2\!\theta,
+\lambda_1\cos^2\!\varphi\;\ge\;\lambda_1\cos^2\!\theta,
 \]
-since $\lambda_j\ge 0$. Subtract from $\lambda_1$ to obtain the residual bound.
+since $\lambda_j\ge 0$ and $\cos^2$ is decreasing on $[0,\pi/2]$. Subtracting from $\lambda_1$ gives the residual bound.
 \hfill$\square$
 
 \bigskip
 \begin{corollary}[Candidate Budget]\label{col:M}
-For $r_{\mathrm{act}}\ge 2$, to obtain coverage probability at least $1-\delta$ within angle $\theta$ in Theorem~\ref{thm:coverage}, it suffices to choose $M\ge\left\lceil \log \delta/\log\left(1-p_{r_{\mathrm{act}}}(\theta)\right)\right\rceil$, where $p_{r_{\mathrm{act}}}(\theta)=\frac{1}{2}I_{\sin^2\theta}\!\left(\frac{r_{\mathrm{act}}-1}{2},\frac{1}{2}\right)$ and $I_x(\cdot,\cdot)$ is the regularized incomplete beta function. Together with Lemma~\ref{lem:subopt}, this gives an explicit tradeoff between candidate count and local directional quality.
+Under the conditions of Proposition~\ref{thm:coverage}, the coverage probability within angle $\theta$ is at least $1-\delta$ whenever $M\ge\log(1/\delta)\big/\log\big(1/(1-p_{r_{\mathrm{act}}}(\theta))\big)$. Because $\log(1/(1-p))\ge p$, the simpler condition $M\ge(r_{\mathrm{act}}-1)\,\mathrm B\big(\frac{r_{\mathrm{act}}-1}{2},\frac12\big)\log(1/\delta)/(\sin\theta)^{r_{\mathrm{act}}-1}$ also suffices. Together with Lemma~\ref{lem:subopt}, this trades candidate count against the quality of the best direction.
 \end{corollary}
 
 \paragraph{Proof of Corollary~\ref{col:M}.}
-We require $1-(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\ge 1-\delta$. 
-Equivalently $(1-(\sin\theta)^{r_{\mathrm{act}}-1})^M\le \delta$, which gives the candidate budget
-\[
-M\;\ge\;\frac{\log(1/\delta)}{\log\big((1-(\sin\theta)^{r_{\mathrm{act}}-1})^{-1}\big)}.
-\]
-\hfill$\square$
+Coverage fails with probability $(1-p)^M$, where $p=p_{r_{\mathrm{act}}}(\theta)$, and $(1-p)^M\le\delta$ holds if and only if $M\log(1/(1-p))\ge\log(1/\delta)$. The second condition follows from $\log(1/(1-p))\ge p$ and the lower bound on $p$ in Proposition~\ref{thm:coverage}.
+\hfill$\square$}
 
 
 \section{Additional Experimental Results}
@@ -605,7 +429,7 @@ The main text (Figure~\ref{fig:app_switching}) reports how final similarity depe
 \subsection{Empirical Variance Concentration}
 \label{sec:app_variance}
 
-Finally, we examine how the variance of surrogate--teacher similarity changes with the warm-start window \(W\). For each dataset, we compute the empirical standard deviation across dialogues at each truncation point. Figure~\ref{fig:variance} shows that variance decreases as \(W\) grows: early turns are highly variable, while larger warm-start windows enter a more stable regime. This trend is consistent with the concentration behavior used in Lemma~\ref{lem:warmstart} and the switching bound in Theorem~\ref{thm:detection}. In other words, early turns provide the largest information gain, while later warm-start turns mainly reduce uncertainty until the switching decision becomes stable.
+Finally, we examine how the variance of surrogate--teacher similarity changes with the warm-start window \(W\). For each dataset, we compute the empirical standard deviation across dialogues at each truncation point. Figure~\ref{fig:variance} shows that variance decreases as \(W\) grows: early turns are highly variable, while larger warm-start windows enter a more stable regime. This trend is consistent with the concentration behavior used in Lemma~\ref{lem:warmstart} and the switching bound in \rev{Proposition}~\ref{thm:detection}. In other words, early turns provide the largest information gain, while later warm-start turns mainly reduce uncertainty until the switching decision becomes stable.
 
 \begin{figure}[t]
   \centering
@@ -620,19 +444,19 @@ Finally, we examine how the variance of surrogate--teacher similarity changes wi
 \rev{This section collects design questions raised in review that the main text only touches on.
 
 \textbf{Choice of soft prompts and of an adversarial objective.}
-Soft prompts are a convenient probe for three practical reasons: they are differentiable, so a handful of gradient steps on the surrogate $G$ can search a continuous neighborhood of the warm-start context instead of enumerating discrete paraphrases; they live in $G$'s own embedding space, so the semantic neighborhood $\mathcal N_k(\cdot)$ and the expected-embedding weight are computed with the same token embeddings and reuse the logits of a single forward pass; and the ANN-based neighborhood keeps the per-step cost proportional to $k+m$ rather than $|\mathcal V|$. Alternative perturbations (input noise, paraphrasing, or adversarial token substitution) can also explore beyond the finite warm-start turns, but they either require an external paraphraser or a discrete search, and they do not directly expose which \emph{directions} in $G$'s input space make $G$ diverge from $F$. We maximize rather than minimize divergence because the goal of the mining stage is to find hard cases, not to align $G$. A constructive (divergence-minimizing) prompt would fit the few warm-start turns and yield a signal that is confounded with the limited capacity of the prompt itself; an adversarial prompt instead ranks warm-start turns by how easily $G$ can be pushed away from $F$ around them, and Theorem~\ref{thm:dir_recovery} shows that this ranking is aligned with the dominant directions of the local discrepancy Fisher matrix. The prompts are then discarded, and only the hardness scores $r_t$ enter Eq.~\ref{eq:lora-ft} as per-turn training weights.
+Soft prompts are a convenient probe for three practical reasons: they are differentiable, so a handful of gradient steps on the surrogate $G$ can search a continuous neighborhood of the warm-start context instead of enumerating discrete paraphrases; they live in $G$'s own embedding space, so the semantic neighborhood $\mathcal N_k(\cdot)$ and the expected-embedding weight are computed with the same token embeddings and reuse the logits of a single forward pass; and the ANN-based neighborhood keeps the per-step cost proportional to $k+m$ rather than $|\mathcal V|$. Alternative perturbations (input noise, paraphrasing, or adversarial token substitution) can also explore beyond the finite warm-start turns, but they either require an external paraphraser or a discrete search, and they do not directly expose which \emph{directions} in $G$'s input space make $G$ diverge from $F$. We push $G$ away from $F$ rather than toward it because the score must measure how robust the agreement is, not how much agreement a prompt can add. A constructive (divergence-minimizing) prompt would raise the agreement on every turn and yield a signal confounded with the capacity of the prompt itself; an adversarial prompt removes the agreement that is easy to remove, and $r_t$ records what survives. The prompts are then discarded, and only the anchoring scores $r_t$ enter the LoRA objective in Eq.~\ref{eq:lora-ft} as per-turn training weights.
 
 \textbf{Relation to divergence-weighted History-FT and Random-FT.}
-The LoRA objective in Eq.~\ref{eq:lora-ft} already weights every warm-start turn by its hardness $\omega_t\propto r_t$, so SOMA can be read as a divergence-weighted History-FT in which the weights come from prompt mining rather than from the raw output divergence between $G$ and $F$ on the warm-start turn. The two weightings differ in what they measure: raw output divergence scores a turn by how far the \emph{unperturbed} surrogate already is from the teacher, whereas the mined score measures how \emph{unstable} the surrogate is around that turn under small input perturbations, which is the quantity Theorem~\ref{thm:dir_recovery} relates to the local discrepancy geometry. The ablation in Figure~\ref{fig:llama_ablation} isolates the contributions of the mining objective's two terms, but it does not include a baseline that weights History-FT by raw output divergence or one that samples training turns uniformly at random with the same LoRA budget; we consider both important controls and leave them, together with a prompt-length sweep, to future work.
+The LoRA objective in Eq.~\ref{eq:lora-ft} weights every warm-start turn by its anchoring score $\omega_t\propto r_t$, so SOMA can be read as a weighted History-FT whose weights come from prompt probing rather than from the raw output divergence between $G$ and $F$ on the warm-start turn. The two weightings measure different things and point in opposite directions: raw output divergence emphasizes turns that the \emph{unperturbed} surrogate currently gets wrong, whereas the anchoring score emphasizes turns whose teacher response the surrogate still predicts \emph{after} an adversarial perturbation, i.e., responses that are determined by the dialogue state and hence likely to transfer to later turns. The ablation in Figure~\ref{fig:llama_ablation} isolates the contributions of the mining objective's two terms, but it does not include a baseline that weights History-FT by raw output divergence or one that samples training turns uniformly at random with the same LoRA budget; we consider both key controls and leave them, with a prompt-length sweep, to future work.
 
-\textbf{Sensitivity, divergence, and the perturbation space.}
-Theorem~\ref{thm:dir_recovery} characterizes what the mining objective recovers; it does not by itself prove that sensitivity to prompt perturbations is a better predictor of adaptation utility than direct output divergence, nor that the continuous perturbation space of $\mathbf P$ covers the space of natural-language future turns. We therefore treat these as modeling assumptions and test them indirectly: the topic-shift stress test (Figure~\ref{fig:operating}(c)) probes future turns that leave the mined region, and the warm-start sweep (Appendix~\ref{sec:app_switch}) shows how much of the local behavior is captured as the window grows. A direct empirical comparison of the two weightings is the most informative next step for validating the mining objective.
+\textbf{Robustness, divergence, and the perturbation space.}
+We do not prove that robustness under prompt perturbations is a better predictor of adaptation utility than direct output divergence, nor that the continuous perturbation space of $\mathbf P$ covers the space of natural-language future turns. We therefore treat these as modeling assumptions and test them indirectly: the topic-shift stress test (Figure~\ref{fig:operating}(c)) probes future turns that leave the mined region, and the warm-start sweep (Appendix~\ref{sec:app_switch}) shows how much of the local behavior is captured as the window grows. A direct empirical comparison of the two weightings is the most informative next step for validating the mining objective.
 
 \textbf{Number of large-model calls and target consistency.}
-The original model $F$ is queried once per warm-start turn to serve the user; these $W$ responses are stored and reused as the mining targets $a_t^F$, as the LoRA targets, and as the references for the acceptance gate. $F$ is not re-queried while $\mathbf P$ is optimized, so the targets are never stale with respect to the dialogue state, and the verbalized prompt $V(\mathbf P)$ only affects how the surrogate side of the objective is conditioned. Prompt mining and LoRA adaptation run entirely on the surrogate and consist of a small number of forward--backward passes over the $W$ warm-start turns ($M$ candidate prompts times the mining iterations, followed by the LoRA steps). Their wall-clock cost is part of the end-to-end latency reported in Figure~\ref{fig:operating}(a).
+The original model $F$ is queried once per warm-start turn to serve the user; these $W$ responses are stored and reused as the mining targets $a_t^F$, as the LoRA targets, and as the references for the acceptance gate. $F$ is not re-queried while $\mathbf P$ is optimized, so the targets are never stale with respect to the dialogue state, and the soft prompt perturbs only the surrogate side of the objective. Because the acceptance gate reuses these turns, the acceptance bound of Section~\ref{sec:warm-start} does not certify the gate as implemented; holding out part of the warm-start window would restore it at the cost of fewer adaptation examples. Prompt mining and LoRA adaptation run entirely on the surrogate and consist of a small number of forward--backward passes over the $W$ warm-start turns ($M$ candidate prompts times the mining iterations, followed by the LoRA steps). Their wall-clock cost is part of the end-to-end latency reported in Figure~\ref{fig:operating}(a).
 
 \textbf{Drift detection.}
-The drift statistic is the cosine distance between recent queries and the warm-start centroid, monitored over a sliding window; rollback triggers after $m_{\mathrm{cons}}$ consecutive violations. Because the statistic is continuous, gradual drift lowers it progressively rather than only at abrupt shifts, and Corollary~\ref{cor:switch} bounds the probability that the gate accepts or keeps a surrogate whose true gap exceeds the margin. The corollary controls the decision error of the gate; it does not certify that the centroid distance tracks every form of quality degradation, which is why we also report the false-rollback and detection rates in Figure~\ref{fig:operating}(c).
+The drift statistic is the cosine distance between recent queries and the warm-start centroid, monitored over a sliding window; rollback triggers after $m_{\mathrm{cons}}$ consecutive violations. Because the statistic is continuous, gradual drift lowers it progressively rather than only at abrupt shifts, and Corollary~\ref{cor:switch} would bound the probability of accepting a surrogate whose true gap exceeds the margin if the acceptance batch were held out and the centroid fixed in advance. As implemented, both come from the warm-start turns, so the gate is a heuristic check (Section~\ref{sec:warm-start}), and it does not certify that the centroid distance tracks every form of quality degradation, which is why we also report the false-rollback and detection rates in Figure~\ref{fig:operating}(c).
 
 \textbf{Serving many session-local adapters.}
 A LoRA adapter of rank $r$ on the attention and MLP projections of LLaMA-2-7B has about $2.5r$ million parameters ($\approx 20$M parameters, or roughly 40~MB in bfloat16, for $r=8$), i.e., well under $1\%$ of the surrogate. Multi-adapter serving systems batch requests from many adapters over a single copy of the base weights and page adapters between host and GPU memory~\citep{sheng2023slora}, so GPU residency is bounded by the number of concurrently \emph{switched} sessions rather than by the total number of sessions, and an adapter is discarded when its session ends or rolls back permanently. The mining and adaptation steps for a session are independent of other sessions and can be scheduled as short background jobs on the surrogate replica. We did not benchmark multi-node concurrent adapter scheduling; the reported latencies are for the single-session serving path described in Section~\ref{sec:method}.}

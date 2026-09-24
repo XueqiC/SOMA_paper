@@ -3,8 +3,8 @@
 
 One left-to-right storyline, mirrored by a session timeline underneath:
   (1) Warm-start          F answers turns 1..W                      -> context-reply pairs
-  (2) Soft-prompt mining  prompt P on frozen G, three-term objective -> hardness of each turn
-  (3) Localized LoRA      frozen weights + low-rank update, hardness-weighted -> adapted G
+  (2) Soft-prompt mining  prompt P on frozen G, three-term objective -> anchoring score of each turn
+  (3) Localized LoRA      frozen weights + low-rank update, anchoring-weighted -> adapted G
   (4) Gated serving       fidelity + locality gate, compressed context, drift monitor
   bottom: turns 1-3 by F | one-time adaptation | turns 4-7 by G | drift at turn 8 -> back to (1)
 
@@ -108,8 +108,8 @@ def chip(x, y, w, label, h=24):
 # =====================================================================
 W, H = 800, 330
 add(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" '
-    'aria-label="SOMA overview. Warm-start: F answers the first turns. Soft-prompt mining on the frozen G scores '
-    'how hard each warm-start turn is. Localized LoRA fits G to F on the hard turns. Gated serving: G takes over '
+    'aria-label="SOMA overview. Warm-start: F answers the first turns. An adversarial soft prompt on the frozen G scores '
+    'how robustly G still reproduces F on each warm-start turn. Localized LoRA fits G to F, weighted by this score. Gated serving: G takes over '
     'after a fidelity and locality check and serves from a compressed context; a drift monitor rolls back to F.">')
 add('<defs>' + "".join(
     f'<marker id="{mid}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" '
@@ -180,7 +180,7 @@ bars(lx + 1, 193, (6, 8, 7), TEAL, w=3, gap=1.5)
 text(lx + 20, 193, "entropy", size=12)
 text(lx + 20, 206, "regularizer", size=12)
 rect(x0 + 8, CHIP_Y, P[2][1] - 16, 24, r=4, fill=SOFT, stroke=RULE, sw=1)
-text(x0 + 16, CHIP_Y + 16, "hardness of each turn", size=12.5, weight="bold")
+text(x0 + 16, CHIP_Y + 16, "anchoring score per turn", size=12.5, weight="bold")
 for i, h in enumerate((15, 5, 12)):
     add(f'<rect x="{x0 + 170 + i*10:.1f}" y="{CHIP_Y + 20 - h:.1f}" width="7" height="{h}" rx="1" fill="{TEAL}"/>')
 
@@ -195,14 +195,14 @@ text(x0 + 34, 116, "frozen", size=12.5, fill=INK2, anchor="middle")
 text(x0 + 94, 86, "low-rank", size=12.5, fill=INK2)
 text(x0 + 94, 99, "update", size=12.5, fill=INK2)
 text(x0 + 10, 134, "on attention and MLP", size=12.5, fill=INK2)
-for i, wgt in enumerate((30, 9, 25)):          # warm-start turns weighted by hardness
+for i, wgt in enumerate((30, 9, 25)):          # warm-start turns weighted by anchoring score
     yy = 148 + i * 17
     rect(x0 + 12, yy, 22, 12, r=2, fill="#ffffff", stroke=MUTED, sw=1)
     add(f'<rect x="{x0 + 38:.1f}" y="{yy + 2:.1f}" width="{wgt}" height="8" rx="1" fill="{TEAL}"/>')
 line(x0 + 74, 171, x0 + 86, 171, stroke=INK2, sw=1.3, marker="arr")
 rect(x0 + 90, 158, 68, 26, r=4, fill=NAVY_T, stroke=NAVY, sw=1)
 text(x0 + 124, 175, "F's replies", size=12.5, anchor="middle")
-text(x0 + 10, 206, "turns weighted by hardness", size=12.5, fill=INK2)
+text(x0 + 10, 206, "turns weighted by anchoring", size=12.5, fill=INK2)
 chip(x0 + 8, CHIP_Y, P[3][1] - 16, "adapted G")
 model(x0 + 110, CHIP_Y + 4, 22, 16, "G", OCHRE, OCHRE_T, adapter=True, size=11)
 
