@@ -2,7 +2,7 @@
 
 We evaluate SOMA through five questions. \textbf{RQ1}: Can a small surrogate preserve the original model's responses? \textbf{RQ2}: Does higher response similarity also improve task-grounded quality? \textbf{RQ3}: When does SOMA provide net efficiency gains after warm-start and adaptation overhead? \textbf{RQ4}: Which components of SOMA are most important? \textbf{RQ5}: When is session-local serving reliable, and when should SOMA fall back to the large model?
 
-\textbf{Datasets.} We evaluate SOMA on six multi-turn benchmarks: ShareGPT~\citep{sharegpt2023}, ReMeDi~\citep{yan2022remedi}, Craigslist~\citep{he2018decoupling}, Multi-Char~\citep{agentlans_multi-character_dialogue_2024}, MATH~\citep{hendrycks2021measuring}, and MT-Bench~\citep{zheng2023judging}. Dataset details and the context-dependence filtering are in Appendix~\ref{sec:app_dataset}.
+\textbf{Datasets.} We evaluate SOMA on six multi-turn benchmarks: ShareGPT~\citep{sharegpt}, ReMeDi~\citep{yan2022remedi}, Craigslist~\citep{he2018decoupling}, Multi-Char~\citep{agentlans_multi-character_dialogue_2024}, MATH~\citep{hendrycks2021measuring}, and MT-Bench~\citep{zheng2023judging}. Dataset details and the context-dependence filtering are in Appendix~\ref{sec:app_dataset}.
 
 \textbf{Models and baselines.} We test two families: LLaMA, using LLaMA-3.1-70B~\citep{grattafiori2024llama3} as \(F\) and LLaMA-2-7B~\citep{touvron2023llama2} as \(G\), and Qwen~\citep{yang2025qwen3}, using Qwen-3-8B as \(F\) and Qwen-3-0.6B as \(G\). The baselines are Original, Surrogate, History-Prefix, History-FT, LLMLingua-2~\citep{pan2024llmlingua}, and RouteLLM~\citep{ong2024routellmlearningroutellms} (Appendix~\ref{sec:app_baseline}).
 
