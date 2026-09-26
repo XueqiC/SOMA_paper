@@ -31,7 +31,7 @@ N = len(abilities)
 angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist(); angles += angles[:1]
 close = lambda v: list(v) + [v[0]]
 
-W_IN, H_IN = 1.62, 0.99
+W_IN, H_IN = 1.76, 1.076   # printed size: 0.32\textwidth, same height as the ablation panels
 import matplotlib.patheffects as pe
 fig = plt.figure(figsize=(W_IN, H_IN))
 D = 0.64                                                # circle diameter as a fraction of the height
@@ -46,13 +46,13 @@ for vals, lab, col, lw, a in series:
     ax.fill(angles, close(vals), color=col, alpha=a, lw=0, zorder=2)
 halo = [pe.withStroke(linewidth=1.6, foreground="white")]
 for r in (6, 8, 10):                                     # radial scale along the gap between two spokes
-    ax.text(np.radians(360 / 7 / 2), r, str(r), fontsize=4.6, color="#333333", ha="center", va="center",
+    ax.text(np.radians(360 / 7 / 2), r, str(r), fontsize=5.0, color="#333333", ha="center", va="center",
             path_effects=halo, zorder=6)
 for k, name in enumerate(abilities):                     # ability labels outside the circle, aligned by angle
     th = angles[k]; sx, cy = np.sin(th), np.cos(th)
     ha = "center" if abs(sx) < 0.2 else ("left" if sx > 0 else "right")
     va = "bottom" if cy > 0.5 else ("top" if cy < -0.5 else "center")
-    ax.text(th, 10.9, name, fontsize=5.8, fontweight="bold", color="#000000", ha=ha, va=va, clip_on=False)
+    ax.text(th, 10.9, name, fontsize=6.3, fontweight="bold", color="#000000", ha=ha, va=va, clip_on=False)
 fig.savefig(os.path.join(HERE, "..", "mt_radar.pdf"))
 fig.savefig(os.path.join(HERE, "mt_radar.png"), dpi=400)
 print("wrote figure/mt_radar.pdf", W_IN, "x", H_IN, "in")

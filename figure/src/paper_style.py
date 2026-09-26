@@ -10,32 +10,33 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-NAVY, OCHRE, TEAL, RED = "#3A62A0", "#D08A45", "#2A9D8F", "#B5454A"
+# 2026-09-26: one muted, low-saturation palette for every figure in the paper (author request)
+NAVY, OCHRE, TEAL, RED = "#5A76A0", "#CFAB72", "#4E9588", "#B25E59"
 GRAY_L, GRAY_M, GRAY_D = "#CFCFCF", "#9A9A9A", "#5E5E5E"
 SLATE_D, SLATE_L = "#46586B", "#A9B6C4"
-INK, GRID = "#000000", "#E3E3E3"
+INK, GRID = "#1F1F1F", "#E6E6E6"
 
 # ---- one colour and one marker per method, shared by every figure in the paper ----
 # The two history baselines use grays that also read as lines and as caption text.
 METHOD_COLOR = {
-    "Original": NAVY, "Surrogate": OCHRE, "History-Prefix": "#A8A8A8", "History-FT": "#5E5E5E",
-    "LLMLingua-2": "#B8AED6", "RouteLLM": "#E7CBA9", "SOMA": TEAL,
+    "Original": NAVY, "Surrogate": OCHRE, "History-Prefix": "#BDB8B0", "History-FT": "#6F6B66",
+    "LLMLingua-2": "#B3A9CB", "RouteLLM": "#DDBBA8", "SOMA": TEAL,
 }
 METHOD_MARKER = {
     "Original": "s", "Surrogate": "^", "History-Prefix": "v", "History-FT": "D",
     "LLMLingua-2": "P", "RouteLLM": "X", "SOMA": "o",
 }
 SOMA_HATCH = "////"                        # SOMA bars are teal and hatched everywhere
-TEAL_D = "#1D6E64"                         # dark teal for SOMA text labels
-SOMA_VARIANT = {"SOMA": TEAL, "SOMA w/o ADL": "#7FC4BA", "SOMA w/o ExpW+ADL": "#C4E5E0"}  # ablations: teal tints
+TEAL_D = "#2E6B60"                         # dark teal for SOMA text labels
+SOMA_VARIANT = {"SOMA": TEAL, "SOMA w/o ADL": "#8EC0B6", "SOMA w/o ExpW+ADL": "#C9E2DC"}  # ablations: teal tints
 DEGRADED = RED                             # conditions that remove context or rollback (no history, no rollback)
 DEGRADED_MARKER = "v"
 
 # ---- one colour and one marker per dataset (palette checked with the dataviz validator:
 #      chroma, lightness and adjacent CVD separation pass; mustard needs markers/legend relief) ----
 DATASET_COLOR = {
-    "ShareGPT": "#6A4FB0", "ReMeDi": "#4E9A3A", "Craigslist": "#C44E8C",
-    "Multi-Char": "#2C8FC9", "MATH": "#C99A1E", "MT-Bench": "#9A4F2A",
+    "ShareGPT": "#8474B3", "ReMeDi": "#92A86D", "Craigslist": "#C78387",
+    "Multi-Char": "#7ABEC6", "MATH": "#8A5E3F", "MT-Bench": "#4B5888",
 }
 DATASET_COLOR["Multi-Character"] = DATASET_COLOR["Multi-Char"]
 DATASET_MARKER = {

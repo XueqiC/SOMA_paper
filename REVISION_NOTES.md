@@ -39,6 +39,20 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 17 — one muted palette and one style for every figure (2026-09-26)
+
+- The author found the figures inconsistent in tone. All figures now use one fresh, low-saturation palette (`figure/src/paper_style.py`):
+  - Methods: Original #5A76A0, Surrogate #CFAB72, SOMA #4E9588, History-Prefix #BDB8B0, History-FT #6F6B66, drift/rollback #B25E59.
+  - Datasets: ShareGPT #8474B3, ReMeDi #92A86D, Craigslist #C78387, Multi-Char #7ABEC6, MATH #8A5E3F, MT-Bench #4B5888.
+  - Markers and legends back up the colors for colour-vision safety.
+- Re-rendered with identical geometry: Fig. 1, Fig. 3, Fig. 4, Fig. 5(c) radar and the App. token-cost figure.
+- Redrawn in the paper style from the notebook computations, with every data array checked to be identical: Fig. 5(a)(b) ablation,
+  Fig. 6(a)(b) and the App. variance plot (`../notes/make_notebook_figs_paperstyle.py`). Figures 5 and 6 are now designed at their printed
+  size (Fig. 5: 0.33/0.33/0.32 textwidth, 1.08 in tall; Fig. 6: 1.45 in tall), so their text matches the other figures.
+- Fig. 2 (the author's overview SVG) was recolored by colour family in OKLCH (`figure/src/recolor_overview.py`): teacher in steel blue, student in
+  sage-teal, trainable parts in muted violet, rollback in brick.
+- App. prompt boxes: the pure-red and bright-blue borders are now amber and steel blue with pale fills.
+
 ## Round 16 — final citation pass (2026-09-24)
 
 See `../notes/bib_check_2026-09-24.md` ("Final citation pass").
