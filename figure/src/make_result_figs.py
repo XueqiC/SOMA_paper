@@ -18,7 +18,7 @@ import paper_style as ps   # shared method colours/markers: Original navy square
 NAVY, OCHRE, RED, GRAY = ps.METHOD_COLOR["Original"], ps.METHOD_COLOR["Surrogate"], ps.DEGRADED, "#8C8C8C"
 TEAL, TEAL_D = ps.METHOD_COLOR["SOMA"], ps.TEAL_D
 MK_ORIG, MK_SOMA, MK_DEG = ps.METHOD_MARKER["Original"], ps.METHOD_MARKER["SOMA"], ps.DEGRADED_MARKER
-INK, INK2, GRID = "#000000", "#1A1A1A", "#E3E3E3"
+INK, INK2, GRID = "#1E2A2F", "#2E3B40", "#E4E8E7"
 NAVY_D, OCHRE_D, RED_D = "#2B4C80", "#9C5A22", "#96303A"   # darker shades for text labels
 plt.rcParams.update({
     "font.family": "serif", "font.serif": ["Times New Roman", "Liberation Serif", "DejaVu Serif"],

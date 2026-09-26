@@ -39,6 +39,17 @@ asked not to force it). Any further edit needs a recompile and a page check.
   page break was filled by restoring Theorem 4.2 (coverage) and one sentence in §4.1; the
   forced `\newpage` before Section 5 was then removed at the user's request.
 
+## Round 18 — figure palette taken from the author's new overview (2026-09-26)
+
+- The author replaced Figure 2 with `figure/SOMA_Overview_Vector_Text.pdf` (via Overleaf). Figures 1 and 3–6 and the appendix figures now use
+  the overview's palette:
+  - Methods: Original/teacher tan #B89A6C and SOMA teal #4E9588 (hatched in bars; ablation tints #84B4A7 and #C6DDD5). The cheap
+    baselines are slate neutrals: Surrogate #B7C7C3, History-Prefix #8A9D99, History-FT #4F5F63. Degraded conditions are brick #B25E59.
+  - Datasets: ShareGPT violet #8474B3, ReMeDi teal #4E9588, Craigslist tan #B89A6C, Multi-Char light blue #86AECB, MATH brick #B25E59,
+    MT-Bench dark slate #3F5560.
+  - Text and edges use the overview's dark slate.
+- Only colours changed; every figure kept its exact geometry.
+
 ## Round 17 — one muted palette and one style for every figure (2026-09-26)
 
 - The author found the figures inconsistent in tone. All figures now use one fresh, low-saturation palette (`figure/src/paper_style.py`):

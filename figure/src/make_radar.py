@@ -46,7 +46,7 @@ for vals, lab, col, lw, a in series:
     ax.fill(angles, close(vals), color=col, alpha=a, lw=0, zorder=2)
 halo = [pe.withStroke(linewidth=1.6, foreground="white")]
 for r in (6, 8, 10):                                     # radial scale along the gap between two spokes
-    ax.text(np.radians(360 / 7 / 2), r, str(r), fontsize=5.0, color="#333333", ha="center", va="center",
+    ax.text(np.radians(360 / 7 / 2), r, str(r), fontsize=5.0, color="#3A4A50", ha="center", va="center",
             path_effects=halo, zorder=6)
 for k, name in enumerate(abilities):                     # ability labels outside the circle, aligned by angle
     th = angles[k]; sx, cy = np.sin(th), np.cos(th)

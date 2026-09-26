@@ -75,7 +75,7 @@ for name, data, ylim in (("llama_through", llama, (10, 400)), ("qwen_through", q
     fig, ax = plt.subplots(figsize=(2.7, 1.6))
     x = np.arange(len(datasets)); w = 0.16
     for j, m in enumerate(methods):
-        ax.bar(x + (j - 2) * w, data[:, j], width=w, color=ps.METHOD_COLOR[m], edgecolor="#1A1A1A", lw=0.35,
+        ax.bar(x + (j - 2) * w, data[:, j], width=w, color=ps.METHOD_COLOR[m], edgecolor="#2E3B40", lw=0.35,
                hatch=ps.SOMA_HATCH if m == "SOMA" else None, label=m, zorder=2)
     ax.set_yscale("log"); ax.set_ylim(*ylim)
     ax.set_xticks(x); ax.set_xticklabels(datasets, rotation=30, ha="right", rotation_mode="anchor", fontsize=6.8)
@@ -97,8 +97,8 @@ x = np.arange(len(tm)); w = 0.36
 from matplotlib.patches import Patch
 for k, m in enumerate(tm):
     c = ps.METHOD_COLOR[m]; hatch = "////" if m == "SOMA" else None
-    ax.bar(x[k] - w / 2, llama_means[k], width=w, color=c, edgecolor="#1A1A1A", lw=0.35, hatch=hatch, zorder=2)
-    ax.bar(x[k] + w / 2, qwen_means[k], width=w, color=c, alpha=0.45, edgecolor="#1A1A1A", lw=0.35,
+    ax.bar(x[k] - w / 2, llama_means[k], width=w, color=c, edgecolor="#2E3B40", lw=0.35, hatch=hatch, zorder=2)
+    ax.bar(x[k] + w / 2, qwen_means[k], width=w, color=c, alpha=0.45, edgecolor="#2E3B40", lw=0.35,
            hatch=hatch, zorder=2)
 ax.set_yscale("log"); ax.set_ylim(8.5e3, 2.1e4)
 ax.yaxis.set_major_locator(FixedLocator([1e4, 1.5e4, 2e4]))
@@ -107,8 +107,8 @@ ax.set_ylabel("Tokens per dialogue (×$10^4$)", labelpad=1.5)
 ax.set_xticks(x); ax.set_xticklabels(tm, rotation=30, ha="right", rotation_mode="anchor", fontsize=6.8)
 ax.tick_params(axis="x", length=0)
 ps.ygrid(ax)
-ax.legend(handles=[Patch(facecolor="#8A8A8A", edgecolor="#1A1A1A", lw=0.35, label="LLaMA (left)"),
-                   Patch(facecolor="#8A8A8A", alpha=0.45, edgecolor="#1A1A1A", lw=0.35, label="Qwen (right)")],
+ax.legend(handles=[Patch(facecolor="#8A8A8A", edgecolor="#2E3B40", lw=0.35, label="LLaMA (left)"),
+                   Patch(facecolor="#8A8A8A", alpha=0.45, edgecolor="#2E3B40", lw=0.35, label="Qwen (right)")],
           loc="upper right", handlelength=1.2)
 fig.tight_layout(pad=0.2)
 save(fig, "overall_avg_token")
@@ -133,7 +133,7 @@ for name, data in tok.items():
     fig, ax = plt.subplots(figsize=(2.65, 1.65))
     x = np.arange(len(datasets)); w = 0.16
     for j, m in enumerate(methods):
-        ax.bar(x + (j - 2) * w, data[:, j], width=w, color=ps.METHOD_COLOR[m], edgecolor="#1A1A1A", lw=0.35,
+        ax.bar(x + (j - 2) * w, data[:, j], width=w, color=ps.METHOD_COLOR[m], edgecolor="#2E3B40", lw=0.35,
                hatch=ps.SOMA_HATCH if m == "SOMA" else None, label=m, zorder=2)
     ax.set_yscale("log"); ax.set_ylim(400, 6e5)
     ax.set_xticks(x); ax.set_xticklabels(datasets, rotation=30, ha="right", rotation_mode="anchor", fontsize=6.8)
