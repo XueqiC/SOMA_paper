@@ -2,7 +2,7 @@
 
 \begin{figure}[!t]
   \centering
-  \includegraphics[width=\textwidth]{figure/soma_overview.pdf}
+  \includegraphics[width=\textwidth]{figure/SOMA_Overview_Vector_Text}
   \vspace{-2mm}
   \caption{\rev{Overview of SOMA. (1) The original model (teacher) $F$ serves the first $W$ turns, and its replies are cached. (2) A soft prompt on the frozen surrogate (student) $G$ is trained to push $G$ away from these replies, which gives each turn an anchoring score $r_t$. (3) LoRA distills $F$'s replies into $G$ on all warm-start turns, weighted by $r_t$. (4) Once both checks pass, the adapted $G_\Theta$ serves later turns from a compressed context, and a drift monitor rolls back to $F$.}}
   \label{fig:overview}
