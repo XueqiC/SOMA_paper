@@ -12,3 +12,6 @@
 *.dvi
 _build/
 _build.log
+
+__pycache__/
+*.pyc
